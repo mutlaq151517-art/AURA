@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA Admin</title>
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0b1d3a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+.box{
+background:#08152b;
+padding:30px;
+border-radius:10px;
+width:300px;
+text-align:center;
+}
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+border:none;
+border-radius:5px;
+}
+button{
+background:#4da6ff;
+border:none;
+padding:10px;
+width:100%;
+border-radius:5px;
+font-weight:bold;
+cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>لوحة تحكم AURA 🔐</h2>
+<input type="password" id="pass" placeholder="ادخل كلمة السر">
+<button onclick="check()">دخول</button>
+<p id="msg"></p>
+</div>
+
+<script>
+function check(){
+var password = "Aa10010010050555710";
+var input = document.getElementById("pass").value;
+if(input === password){
+window.location.href = "/";
+}else{
+document.getElementById("msg").innerHTML = "كلمة السر خطأ ❌";
+}
+}
+</script>
+
+</body>
+</html>
