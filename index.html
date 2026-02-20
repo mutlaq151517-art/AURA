@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA</title>
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#0b1d3a;
+    color:white;
+}
+header{
+    background:#08152b;
+    padding:20px;
+    text-align:center;
+    font-size:30px;
+    font-weight:bold;
+    letter-spacing:3px;
+    color:#4da6ff;
+}
+.container{
+    padding:20px;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:20px;
+}
+.card{
+    background:#102a52;
+    padding:10px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.5);
+    transition:0.3s;
+}
+.card:hover{
+    transform:scale(1.05);
+}
+.card img{
+    width:100%;
+    border-radius:8px;
+}
+button{
+    padding:8px 15px;
+    background:#1e3a8a;
+    border:none;
+    color:white;
+    cursor:pointer;
+    border-radius:5px;
+    margin-top:5px;
+}
+button:hover{
+    background:#2563eb;
+}
+.admin{
+    margin-top:40px;
+    padding:20px;
+    background:#0e2447;
+    border-radius:10px;
+}
+input{
+    padding:10px;
+    margin:5px 0;
+    width:100%;
+    border:none;
+    border-radius:5px;
+}
+video{
+    width:100%;
+    border-radius:8px;
+    margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<header>AURA 🎬</header>
+
+<div class="container">
+<h2>الأفلام والمسلسلات</h2>
+<div class="grid" id="movieList"></div>
+
+<div class="admin">
+<h2>لوحة التحكم</h2>
+<input type="text" id="title" placeholder="اسم الفيلم أو المسلسل">
+<input type="text" id="video" placeholder="رابط الفيديو mp4">
+<input type="text" id="image" placeholder="رابط صورة الغلاف">
+<button onclick="addMovie()">إضافة</button>
+</div>
+</div>
+
+<script>
+let movies = JSON.parse(localStorage.getItem("movies")) || [];
+
+function render(){
+const list = document.getElementById("movieList");
+list.innerHTML="";
+movies.forEach((movie,index)=>{
+list.innerHTML+=`
+<div class="card">
+<img src="${movie.image}" alt="poster">
+<h4>${movie.title}</h4>
+<video controls src="${movie.video}"></video>
+<button onclick="deleteMovie(${index})">حذف</button>
+</div>
+`;
+});
+}
+
+function addMovie(){
+const title=document.getElementById("title").value;
+const video=document.getElementById("video").value;
+const image=document.getElementById("image").value;
+if(title && video && image){
+movies.push({title,video,image});
+localStorage.setItem("movies",JSON.stringify(movies));
+render();
+document.getElementById("title").value="";
+document.getElementById("video").value="";
+document.getElementById("image").value="";
+}
+}
+
+function deleteMovie(index){
+movies.splice(index,1);
+localStorage.setItem("movies",JSON.stringify(movies));
+render();
+}
+
+render();
+</script>
+
+</body>
+</html>
