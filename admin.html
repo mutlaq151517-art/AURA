@@ -67,6 +67,32 @@ document.querySelector(".box").innerHTML = `
 document.getElementById("msg").innerHTML = "كلمة السر خطأ ❌";
 }
 }
+function addMovie(){
+    const title = document.getElementById("title").value;
+    const image = document.getElementById("image").value;
+    const video = document.getElementById("video").value;
+
+    fetch("https://aura-api-vwl4.onrender.com/movies", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            title: title,
+            image: image,
+            video: video
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("result").innerHTML = "تمت الإضافة بنجاح ✅";
+    })
+    .catch(err => {
+        document.getElementById("result").innerHTML = "صار 
+});
+}
+          
+ 
   // تحميل المسلسلات من السيرفر
 fetch("https://aura-api-vwl4.onrender.com/movies")
 .then(res => res.json())
