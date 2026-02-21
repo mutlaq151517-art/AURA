@@ -42,12 +42,14 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
-  watchHistory: [{
-    movieId: mongoose.Schema.Types.ObjectId,
-    episodeVideo: String,
-    currentTime: Number,
-    updatedAt: Date
-  }]
+  watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
+  continueWatching: [
+    {
+      movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" },
+      episodeId: String,
+      currentTime: Number
+    }
+  ]
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -89,8 +91,8 @@ app.post("/register", async (req, res) => {
     });
 
     await newUser.save();
-
     res.json({ message: "User created ✅" });
+
   }catch(err){
     res.status(500).json({ error: err.message });
   }
@@ -113,47 +115,51 @@ app.post("/login", async (req, res) => {
     );
 
     res.json({ token });
+
   }catch(err){
     res.status(500).json({ error: err.message });
   }
 });
 
 /* =========================
-   Save Watch Progress
+   Progress (Continue Watching)
 ========================= */
 
-app.post("/save-progress", verifyToken, async (req, res) => {
-  const { movieId, episodeVideo, currentTime } = req.body;
+app.post("/progress", verifyToken, async (req, res) => {
+  const { movieId, episodeId, currentTime } = req.body;
 
-  await User.findByIdAndUpdate(req.userId, {
-    $pull: { watchHistory: { movieId } }
-  });
-
-  await User.findByIdAndUpdate(req.userId, {
-    $push: {
-      watchHistory: {
-        movieId,
-        episodeVideo,
-        currentTime,
-        updatedAt: new Date()
-      }
-    }
-  });
-
-  res.json({ message: "Progress saved" });
-});
-
-/* =========================
-   Get Watch Progress
-========================= */
-
-app.get("/get-progress/:movieId", verifyToken, async (req, res) => {
   const user = await User.findById(req.userId);
-  const progress = user.watchHistory.find(
-    item => item.movieId.toString() === req.params.movieId
+
+  const existing = user.continueWatching.find(
+    item =>
+      item.movieId.toString() === movieId &&
+      item.episodeId === episodeId
   );
 
-  res.json(progress || null);
+  if(existing){
+    existing.currentTime = currentTime;
+  } else {
+    user.continueWatching.push({
+      movieId,
+      episodeId,
+      currentTime
+    });
+  }
+
+  await user.save();
+  res.json({ message: "Progress saved ✅" });
+});
+
+app.get("/progress/:movieId/:episodeId", verifyToken, async (req, res) => {
+  const user = await User.findById(req.userId);
+
+  const item = user.continueWatching.find(
+    p =>
+      p.movieId.toString() === req.params.movieId &&
+      p.episodeId === req.params.episodeId
+  );
+
+  res.json(item || { currentTime: 0 });
 });
 
 /* =========================
