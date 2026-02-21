@@ -6,133 +6,138 @@
 <title>AURA</title>
 
 <style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
 body{
-    margin:0;
-    font-family:Arial;
-    background:#0b1d36;
-    color:white;
+font-family:'Segoe UI', sans-serif;
+background:#0b1d3a;
+color:white;
+direction:rtl;
 }
 
-.header{
-    padding:15px;
-    font-size:28px;
-    font-weight:bold;
-    text-align:center;
+/* Navbar */
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+background:#08142b;
+position:fixed;
+width:100%;
+z-index:1000;
 }
 
+.logo{
+font-size:22px;
+font-weight:bold;
+color:#00c3ff;
+}
+
+/* Hero */
 .hero{
-    position:relative;
-    height:60vh;
-    background-size:cover;
-    background-position:center;
-    display:flex;
-    align-items:flex-end;
-    padding:20px;
+height:70vh;
+display:flex;
+align-items:flex-end;
+padding:50px;
+background:
+linear-gradient(to top, #0b1d3a 20%, transparent),
+url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4');
+background-size:cover;
+background-position:center;
 }
 
-.hero-overlay{
-    background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-    position:absolute;
-    width:100%;
-    height:100%;
-    top:0;
-    left:0;
+.hero h1{
+font-size:40px;
 }
 
-.hero-content{
-    position:relative;
-    z-index:2;
-}
-
-.watch-btn{
-    background:#00c3ff;
-    border:none;
-    padding:10px 20px;
-    border-radius:20px;
-    color:white;
-    cursor:pointer;
-    margin-top:10px;
-}
-
+/* Section */
 .section{
-    padding:20px;
+padding:100px 30px 40px 30px;
 }
 
+.section h2{
+margin-bottom:20px;
+}
+
+/* Grid */
 .movies{
-    display:flex;
-    gap:15px;
-    overflow-x:auto;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+gap:20px;
 }
 
-.movie{
-    min-width:140px;
-    cursor:pointer;
+/* Card */
+.card{
+background:#122c5c;
+border-radius:15px;
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
 }
 
-.movie img{
-    width:100%;
-    border-radius:10px;
+.card img{
+width:100%;
+height:250px;
+object-fit:cover;
+}
+
+.card:hover{
+transform:scale(1.07);
+box-shadow:0 0 25px rgba(0,195,255,0.5);
+}
+
+.card-title{
+padding:12px;
+font-size:14px;
+text-align:center;
 }
 </style>
 </head>
-
 <body>
 
-<div class="header">AURA 🎬</div>
+<div class="navbar">
+<div class="logo">🎬 AURA</div>
+</div>
 
-<div id="hero" class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h2 id="heroTitle"></h2>
-        <button class="watch-btn" onclick="playHero()">شاهد الآن</button>
-    </div>
+<div class="hero">
+<h1>اكتشف أحدث المسلسلات</h1>
 </div>
 
 <div class="section">
-    <h3>الأفلام والمسلسلات</h3>
-    <div class="movies" id="moviesList"></div>
+<h2>المضاف حديثاً</h2>
+<div class="movies" id="movies"></div>
 </div>
 
 <script>
-
-let heroVideo = "";
-
-fetch("https://aura-api-vwl4.onrender.com/movies")
+fetch("https://aura-backend-mpvi.onrender.com/movies")
 .then(res => res.json())
 .then(data => {
 
-    if(data.length > 0){
+const container = document.getElementById("movies");
 
-        // أول فيلم يصير الصورة الكبيرة
-        document.getElementById("hero").style.backgroundImage =
-            `url(${data[0].image})`;
+data.reverse().forEach(movie => {
 
-        document.getElementById("heroTitle").innerText =
-            data[0].title;
+const card = document.createElement("div");
+card.className = "card";
 
-        heroVideo = data[0].video;
+card.innerHTML = `
+<img src="${movie.image}">
+<div class="card-title">${movie.title}</div>
+`;
 
-        // عرض باقي الأفلام
-        data.forEach(movie => {
+card.onclick = () => {
+window.open(movie.video, "_blank");
+};
 
-            document.getElementById("moviesList").innerHTML += `
-                <div class="movie" onclick="openMovie('${movie.video}')">
-                    <img src="${movie.image}">
-                    <p>${movie.title}</p>
-                </div>
-            `;
-        });
-    }
+container.appendChild(card);
+
 });
 
-function openMovie(video){
-    window.open(video, "_blank");
-}
-
-function playHero(){
-    window.open(heroVideo, "_blank");
-}
-
+});
 </script>
 
 </body>
