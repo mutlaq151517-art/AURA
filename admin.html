@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AURA Admin</title>
+
 <style>
 body{
 margin:0;
@@ -40,31 +41,31 @@ cursor:pointer;
 }
 </style>
 </head>
+
 <body>
 
 <div class="box">
-<h2>لوحة تحكم AURA 🔐</h2>
+<h2>إضافة فيلم 🎬</h2>
 
-        <h2>إضافة فيلم 🎬</h2>
-        <input type="text" id="title" placeholder="اسم الفيلم">
-        <input type="text" id="image" placeholder="رابط صورة الفيلم">
-        <input type="text" id="video" placeholder="رابط الفيديو">
-        <button onclick="addMovie()">إضافة</button>
-        <p id="result"></p>
-    `;
-}
-}else{
-    document.getElementById("msg").innerHTML = "كلمة السر خطأ";
-}
-  
-}else{
-document.getElementById("msg").innerHTML = "كلمة السر خطأ ❌";
-}
-}
+<input type="text" id="title" placeholder="اسم الفيلم">
+<input type="text" id="image" placeholder="رابط صورة الفيلم">
+<input type="text" id="video" placeholder="رابط الفيديو">
+<button onclick="addMovie()">إضافة</button>
+<p id="result"></p>
+
+</div>
+
+<script>
+
 function addMovie(){
     const title = document.getElementById("title").value;
     const image = document.getElementById("image").value;
     const video = document.getElementById("video").value;
+
+    if(!title || !image || !video){
+        document.getElementById("result").innerHTML = "عبي كل الحقول ❗";
+        return;
+    }
 
     fetch("https://aura-api-vwl4.onrender.com/movies", {
         method: "POST",
@@ -82,17 +83,10 @@ function addMovie(){
         document.getElementById("result").innerHTML = "تمت الإضافة بنجاح ✅";
     })
     .catch(err => {
-        document.getElementById("result").innerHTML = "صار 
-});
+        document.getElementById("result").innerHTML = "صار خطأ ❌";
+    });
 }
-          
- 
-  // تحميل المسلسلات من السيرفر
-fetch("https://aura-api-vwl4.onrender.com/movies")
-.then(res => res.json())
-.then(data => {
-    console.log("Movies:", data);
-});
+
 </script>
 
 </body>
