@@ -17,6 +17,17 @@ body {
   padding:20px;
 }
 
+.search-box {
+  margin-bottom:20px;
+}
+
+.search-box input {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+
 .grid {
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
@@ -56,13 +67,16 @@ body {
 
 <div class="container">
 
-  <!-- قائمة الأعمال -->
   <div id="seriesSection">
     <h2>🎬 AURA</h2>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔎 ابحث عن مسلسل..." oninput="filterSeries()">
+    </div>
+
     <div class="grid" id="seriesGrid"></div>
   </div>
 
-  <!-- قسم الحلقات -->
   <div id="episodesSection" class="episodes-section">
     <button class="back-btn" onclick="goBack()">⬅ رجوع</button>
     <h2 id="seriesTitle"></h2>
@@ -74,11 +88,16 @@ body {
 <script>
 
 const API = "https://aura-backend-mpvi.onrender.com/movies";
+let allSeries = [];
 
 async function loadSeries() {
   const res = await fetch(API);
   const data = await res.json();
+  allSeries = data;
+  renderSeries(data);
+}
 
+function renderSeries(data) {
   const grid = document.getElementById("seriesGrid");
   grid.innerHTML = "";
 
@@ -91,12 +110,19 @@ async function loadSeries() {
   });
 }
 
+function filterSeries() {
+  const searchValue = document.getElementById("searchInput").value.toLowerCase();
+
+  const filtered = allSeries.filter(item =>
+    item.title.toLowerCase().includes(searchValue)
+  );
+
+  renderSeries(filtered);
+}
+
 async function openSeries(id) {
 
-  const res = await fetch(API);
-  const data = await res.json();
-
-  const series = data.find(item => item._id === id);
+  const series = allSeries.find(item => item._id === id);
 
   document.getElementById("seriesSection").style.display = "none";
   document.getElementById("episodesSection").style.display = "block";
@@ -107,7 +133,6 @@ async function openSeries(id) {
 
   let episodes = series.episodes;
 
-  // إذا ما فيه حلقات نعتبر الفيديو حلقة 1
   if (!episodes && series.video) {
     episodes = [
       { name: "الحلقة 1", video: series.video }
