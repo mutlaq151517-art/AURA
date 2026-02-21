@@ -137,20 +137,37 @@ body::before{
   font-size:14px;
 }
 
+/* 🎬 سينما مود */
 #videoModal{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.95);
+  background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(14px);
   z-index:9999;
   align-items:center;
   justify-content:center;
+  animation:fadeIn 0.35s ease;
 }
 
 #videoModal video{
   width:95%;
   max-width:900px;
-  border-radius:12px;
+  border-radius:22px;
+  background:#000;
+  box-shadow:
+    0 0 25px rgba(0,191,255,0.6),
+    0 0 60px rgba(0,191,255,0.3);
+  transition:0.4s;
+}
+
+#videoModal video:hover{
+  transform:scale(1.01);
+}
+
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
 }
 
 .bottom-nav{
@@ -200,8 +217,18 @@ body::before{
 
 <div id="videoModal">
   <div>
-    <button onclick="closePlayer()" style="margin-bottom:10px;background:#00bfff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">
-      ✖ إغلاق
+    <button onclick="closePlayer()" style="
+    margin-bottom:18px;
+    background:linear-gradient(45deg,#00bfff,#008cff);
+    border:none;
+    padding:8px 22px;
+    border-radius:25px;
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 0 15px rgba(0,191,255,0.6);
+    transition:0.3s;">
+    ✖ إغلاق
     </button>
     <video id="videoPlayer" controls></video>
   </div>
