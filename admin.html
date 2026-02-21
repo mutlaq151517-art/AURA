@@ -59,6 +59,12 @@ window.location.href = "/";
 document.getElementById("msg").innerHTML = "كلمة السر خطأ ❌";
 }
 }
+  // تحميل المسلسلات من السيرفر
+fetch("https://aura-api-vwl4.onrender.com/movies")
+.then(res => res.json())
+.then(data => {
+    console.log("Movies:", data);
+});
 </script>
 
 </body>
