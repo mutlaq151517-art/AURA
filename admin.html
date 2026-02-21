@@ -87,7 +87,7 @@ function addMovie(){
     const video = document.getElementById("video").value;
 
     if(!title || !image || !video){
-        document.getElementById("result").innerHTML = "⚠️ عبي كل الحقول";
+        document.getElementById("result").innerHTML = "⚠️ قم بتعبئة كل الحقول";
         return;
     }
 
@@ -107,7 +107,7 @@ function addMovie(){
         document.getElementById("result").innerHTML="✅ تمت الإضافة بنجاح";
     })
     .catch(err=>{
-        document.getElementById("result").innerHTML="❌ صار خطأ";
+        document.getElementById("result").innerHTML="❌ شغلك غلط";
     });
 
 }
