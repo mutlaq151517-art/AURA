@@ -2,12 +2,15 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
+const JWT_SECRET = "AURA_SECRET_KEY_2025";
 
 /* =========================
    MongoDB Connection
@@ -25,31 +28,93 @@ mongoose.connect(
 
 const episodeSchema = new mongoose.Schema({
   name: String,
-  video: String,
-  image: String   // ✅ أضفنا صورة للحلقة
+  video: String
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
-  video: String,
+  video: String, 
   episodes: [episodeSchema]
 });
 
+const userSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  password: String,
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
+  watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }]
+});
+
 const Movie = mongoose.model("Movie", movieSchema);
+const User = mongoose.model("User", userSchema);
 
 /* =========================
-   Static Files (Frontend)
+   Auth Middleware
 ========================= */
 
-app.use(express.static(path.join(__dirname, "public")));
+function verifyToken(req, res, next){
+  const token = req.headers.authorization;
+  if(!token) return res.status(401).json({ message: "No token" });
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  try{
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.id;
+    next();
+  }catch(err){
+    return res.status(403).json({ message: "Invalid token" });
+  }
+}
+
+/* =========================
+   Auth Routes
+========================= */
+
+app.post("/register", async (req, res) => {
+  try{
+    const { username, password } = req.body;
+
+    const existing = await User.findOne({ username });
+    if(existing) return res.status(400).json({ message: "User exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      username,
+      password: hashed
+    });
+
+    await newUser.save();
+
+    res.json({ message: "User created ✅" });
+  }catch(err){
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try{
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if(!user) return res.status(400).json({ message: "User not found" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if(!valid) return res.status(400).json({ message: "Wrong password" });
+
+    const token = jwt.sign(
+      { id: user._id },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token });
+  }catch(err){
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /* =========================
-   API Routes
+   Movies API
 ========================= */
 
 app.get("/movies", async (req, res) => {
@@ -77,19 +142,14 @@ app.delete("/movies/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-app.post("/movies/:id/episodes", async (req, res) => {
-  const movie = await Movie.findById(req.params.id);
-  movie.episodes.push(req.body);
-  await movie.save();
-  res.json(movie);
-});
+/* =========================
+   Static Files
+========================= */
 
-app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
-  await Movie.findByIdAndUpdate(
-    req.params.seriesId,
-    { $pull: { episodes: { _id: req.params.episodeId } } }
-  );
-  res.json({ message: "Episode deleted" });
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* =========================
