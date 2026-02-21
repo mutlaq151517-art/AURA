@@ -7,86 +7,110 @@
 
 <style>
 body{
-margin:0;
-font-family:Arial;
-background:#0b1d3a;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#0b1d3a,#08152b);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
-.box{
-background:#08152b;
-padding:30px;
-border-radius:10px;
-width:300px;
-text-align:center;
+
+.container{
+    background:#0f2347;
+    padding:40px;
+    border-radius:15px;
+    width:400px;
+    box-shadow:0 0 30px rgba(0,0,0,0.4);
 }
+
+h2{
+    text-align:center;
+    margin-bottom:25px;
+}
+
 input{
-width:100%;
-padding:10px;
-margin:10px 0;
-border:none;
-border-radius:5px;
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
 }
+
 button{
-background:#4da6ff;
-border:none;
-padding:10px;
-width:100%;
-border-radius:5px;
-font-weight:bold;
-cursor:pointer;
+    width:100%;
+    padding:12px;
+    margin-top:15px;
+    border:none;
+    border-radius:8px;
+    background:#4da6ff;
+    color:white;
+    font-weight:bold;
+    font-size:15px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#3399ff;
+}
+
+#result{
+    text-align:center;
+    margin-top:15px;
+    font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-<h2>إضافة فيلم 🎬</h2>
+<div class="container">
+    <h2>🎬 لوحة تحكم AURA</h2>
 
-<input type="text" id="title" placeholder="اسم الفيلم">
-<input type="text" id="image" placeholder="رابط صورة الفيلم">
-<input type="text" id="video" placeholder="رابط الفيديو">
-<button onclick="addMovie()">إضافة</button>
-<p id="result"></p>
+    <input type="text" id="title" placeholder="اسم الفيلم">
+    <input type="text" id="image" placeholder="رابط صورة الفيلم">
+    <input type="text" id="video" placeholder="رابط الفيديو (mp4)">
 
+    <button onclick="addMovie()">إضافة الفيلم</button>
+
+    <p id="result"></p>
 </div>
 
 <script>
-
 function addMovie(){
+
     const title = document.getElementById("title").value;
     const image = document.getElementById("image").value;
     const video = document.getElementById("video").value;
 
     if(!title || !image || !video){
-        document.getElementById("result").innerHTML = "عبي كل الحقول ❗";
+        document.getElementById("result").innerHTML = "⚠️ عبي كل الحقول";
         return;
     }
 
-    fetch("https://aura-api-vwl4.onrender.com/movies", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
+    fetch("https://aura-api-vwl4.onrender.com/movies",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
         },
-        body: JSON.stringify({
-            title: title,
-            image: image,
-            video: video
+        body:JSON.stringify({
+            title:title,
+            image:image,
+            video:video
         })
     })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("result").innerHTML = "تمت الإضافة بنجاح ✅";
+    .then(res=>res.json())
+    .then(data=>{
+        document.getElementById("result").innerHTML="✅ تمت الإضافة بنجاح";
     })
-    .catch(err => {
-        document.getElementById("result").innerHTML = "صار خطأ ❌";
+    .catch(err=>{
+        document.getElementById("result").innerHTML="❌ صار خطأ";
     });
-}
 
+}
 </script>
 
 </body>
