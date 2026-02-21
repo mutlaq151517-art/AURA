@@ -20,7 +20,7 @@ body {
 
 .search-box {
   margin-bottom:20px;
-  display:none; /* مخفي بالبداية */
+  display:none;
 }
 
 .search-box input {
@@ -63,7 +63,6 @@ body {
   cursor:pointer;
 }
 
-/* Bottom Nav */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -119,7 +118,7 @@ body {
   <div class="nav-item" onclick="openSearch()">🔍<span>البحث</span></div>
   <div class="nav-item">⬇️<span>التحميلات</span></div>
   <div class="nav-item">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item">👤<span>الملف</span></div>
+  <div class="nav-item" onclick="goProfile()">👤<span>الملف</span></div>
 </div>
 
 <script>
@@ -164,6 +163,10 @@ function goHome() {
   document.getElementById("searchBox").style.display = "none";
   document.getElementById("searchInput").value = "";
   renderSeries(allSeries);
+}
+
+function goProfile() {
+  window.location.href = "profile.html";
 }
 
 async function openSeries(id) {
