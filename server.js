@@ -8,18 +8,14 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
-// 🔥 MongoDB Connection
+/* 🔥 MongoDB Connection */
 mongoose.connect(
-  "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/?appName=Cluster0",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
+  "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
 )
 .then(() => console.log("MongoDB Connected ✅"))
 .catch((err) => console.log("MongoDB Error ❌", err));
 
-// 🎬 Movie Schema
+/* 🎬 Movie Schema */
 const movieSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -31,12 +27,12 @@ const movieSchema = new mongoose.Schema(
 
 const Movie = mongoose.model("Movie", movieSchema);
 
-// ✅ Test route
+/* 🟢 Test Route */
 app.get("/", (req, res) => {
   res.send("AURA Backend Running 🚀");
 });
 
-// 📥 Get all movies
+/* 📥 Get All Movies */
 app.get("/movies", async (req, res) => {
   try {
     const movies = await Movie.find().sort({ createdAt: -1 });
@@ -46,7 +42,7 @@ app.get("/movies", async (req, res) => {
   }
 });
 
-// ➕ Add movie
+/* ➕ Add Movie */
 app.post("/movies", async (req, res) => {
   try {
     const newMovie = new Movie(req.body);
@@ -57,16 +53,16 @@ app.post("/movies", async (req, res) => {
   }
 });
 
-// ❌ Delete movie
+/* 🗑 Delete Movie */
 app.delete("/movies/:id", async (req, res) => {
   try {
     await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted successfully ❌" });
+    res.json({ message: "Movie deleted successfully 🗑" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting movie" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log(`Server running on port ${PORT}`);
 });
