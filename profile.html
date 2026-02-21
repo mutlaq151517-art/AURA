@@ -1,0 +1,34 @@
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDiVH5t5T-_4AvbIz61PBCjHeO0mHGK2Z4",
+  authDomain: "aura-aab58.firebaseapp.com",
+  projectId: "aura-aab58",
+  storageBucket: "aura-aab58.firebasestorage.app",
+  messagingSenderId: "610072707422",
+  appId: "1:610072707422:web:7ca3edf2a8f9974a120fcf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+window.login = async function(){
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+
+  document.getElementById("profileBox").style.display="block";
+  document.getElementById("userImg").src = user.photoURL;
+  document.getElementById("userName").innerText = user.displayName;
+  document.getElementById("userEmail").innerText = user.email;
+}
+
+window.logout = async function(){
+  await signOut(auth);
+  location.reload();
+}
+
+</script>
