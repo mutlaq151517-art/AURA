@@ -25,13 +25,14 @@ mongoose.connect(
 
 const episodeSchema = new mongoose.Schema({
   name: String,
-  video: String
+  video: String,
+  image: String   // ✅ أضفنا صورة للحلقة
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
-  video: String, 
+  video: String,
   episodes: [episodeSchema]
 });
 
