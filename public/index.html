@@ -21,14 +21,46 @@ body{
   color:#111;
 }
 
+/* 🌙 Ramadan vibes */
+body::before{
+  content:"🌙 ✨ 🏮 ✨ 🌙";
+  position:fixed;
+  top:15px;
+  width:100%;
+  text-align:center;
+  font-size:38px;
+  opacity:0.07;
+  pointer-events:none;
+}
+
+/* Header */
 .header{
   padding:20px;
   text-align:center;
-  font-size:22px;
+  font-size:24px;
   font-weight:bold;
-  text-shadow:0 0 10px rgba(0,191,255,0.8);
+  text-shadow:0 0 12px rgba(0,191,255,0.8);
 }
 
+/* Search */
+.search-container{
+  padding:0 20px 20px 20px;
+}
+
+.search-container input{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:none;
+  outline:none;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(10px);
+  color:white;
+  font-size:14px;
+  box-shadow:0 0 15px rgba(0,191,255,0.3);
+}
+
+/* Sections */
 .section{
   padding:20px;
 }
@@ -36,6 +68,7 @@ body{
 .section-title{
   font-size:18px;
   margin-bottom:15px;
+  text-shadow:0 0 8px rgba(0,191,255,0.6);
 }
 
 .row{
@@ -52,7 +85,7 @@ body{
   border-radius:18px;
   overflow:hidden;
   cursor:pointer;
-  transition:0.3s;
+  transition:0.4s;
   box-shadow:0 0 15px rgba(0,191,255,0.2);
 }
 
@@ -66,6 +99,7 @@ body{
   box-shadow:0 0 25px rgba(0,191,255,0.6);
 }
 
+/* Series Page */
 .series-page{
   display:none;
 }
@@ -108,6 +142,7 @@ body{
 
 .episode-card:hover{
   transform:scale(1.05);
+  box-shadow:0 0 20px rgba(0,191,255,0.5);
 }
 
 .episode-title{
@@ -134,6 +169,7 @@ body{
   border-radius:12px;
 }
 
+/* Bottom Nav */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -163,6 +199,10 @@ body{
 <body>
 
 <div class="header">🌙 AURA</div>
+
+<div class="search-container">
+  <input type="text" id="searchInput" placeholder="ابحث عن مسلسل..." oninput="searchSeries()">
+</div>
 
 <div id="homeContent">
   <div class="section">
@@ -216,6 +256,14 @@ function renderSeries(data){
         <img src="${item.image}">
       </div>`;
   });
+}
+
+function searchSeries(){
+  const value=document.getElementById("searchInput").value.toLowerCase();
+  const filtered=allSeries.filter(item=>
+    item.title.toLowerCase().includes(value)
+  );
+  renderSeries(filtered);
 }
 
 function openSeries(id){
