@@ -56,9 +56,9 @@ body {
 
 <div class="container">
 
-  <!-- قائمة المسلسلات -->
+  <!-- قائمة الأعمال -->
   <div id="seriesSection">
-    <h2>📺 المسلسلات</h2>
+    <h2>🎬 AURA</h2>
     <div class="grid" id="seriesGrid"></div>
   </div>
 
@@ -83,20 +83,21 @@ async function loadSeries() {
   grid.innerHTML = "";
 
   data.forEach(item => {
-
-    // نعرض فقط اللي عنده حلقات
-    if (item.episodes && item.episodes.length > 0) {
-      grid.innerHTML += `
-        <div class="card">
-          <img src="${item.image}" onclick="openSeries(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-        </div>
-      `;
-    }
-
+    grid.innerHTML += `
+      <div class="card">
+        <img src="${item.image}" onclick="openSeries('${item._id}')">
+      </div>
+    `;
   });
 }
 
-function openSeries(series) {
+async function openSeries(id) {
+
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const series = data.find(item => item._id === id);
+
   document.getElementById("seriesSection").style.display = "none";
   document.getElementById("episodesSection").style.display = "block";
   document.getElementById("seriesTitle").innerText = series.title;
@@ -104,13 +105,23 @@ function openSeries(series) {
   const list = document.getElementById("episodesList");
   list.innerHTML = "";
 
-  series.episodes.forEach(ep => {
+  let episodes = series.episodes;
+
+  // إذا ما فيه حلقات نعتبر الفيديو حلقة 1
+  if (!episodes && series.video) {
+    episodes = [
+      { name: "الحلقة 1", video: series.video }
+    ];
+  }
+
+  episodes.forEach(ep => {
     list.innerHTML += `
       <div class="episode-item" onclick="playEpisode('${ep.video}')">
         ${ep.name}
       </div>
     `;
   });
+
 }
 
 function playEpisode(videoUrl) {
