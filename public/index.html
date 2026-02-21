@@ -16,17 +16,20 @@ body{
 
 .container{ padding:20px; }
 
-h2{ margin-top:0; }
+h2{
+  margin-top:0;
+  margin-bottom:20px;
+}
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:15px;
 }
 
 .card{
-  position:relative;
   cursor:pointer;
+  transition:0.3s;
 }
 
 .card img{
@@ -35,7 +38,7 @@ h2{ margin-top:0; }
   transition:0.3s;
 }
 
-.card:hover img{
+.card:hover{
   transform:scale(1.05);
 }
 
@@ -46,13 +49,13 @@ h2{ margin-top:0; }
   padding:8px 14px;
   background:#00bfff;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
 }
 
 .episodes-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
   gap:15px;
 }
 
@@ -75,7 +78,7 @@ h2{ margin-top:0; }
 }
 
 .episode-title{
-  padding:8px;
+  padding:10px;
   font-size:14px;
   text-align:center;
 }
@@ -83,7 +86,6 @@ h2{ margin-top:0; }
 .bottom-nav{
   position: fixed;
   bottom: 0;
-  right: 0;
   width: 100%;
   background: #071a2f;
   display: flex;
@@ -150,10 +152,14 @@ const API = "https://aura-backend-mpvi.onrender.com/movies";
 let allSeries = [];
 
 async function loadSeries(){
-  const res = await fetch(API);
-  const data = await res.json();
-  allSeries = data;
-  renderSeries(data);
+  try{
+    const res = await fetch(API);
+    const data = await res.json();
+    allSeries = data;
+    renderSeries(data);
+  }catch(err){
+    console.log("API Error:", err);
+  }
 }
 
 function renderSeries(data){
@@ -194,9 +200,10 @@ function goProfile(){
   window.location.href="profile.html";
 }
 
-async function openSeries(id){
+function openSeries(id){
 
   const series = allSeries.find(item=>item._id===id);
+  if(!series) return;
 
   document.getElementById("seriesSection").style.display="none";
   document.getElementById("episodesSection").style.display="block";
@@ -207,9 +214,11 @@ async function openSeries(id){
 
   let episodes = series.episodes;
 
-  if(!episodes && series.video){
+  if((!episodes || episodes.length===0) && series.video){
     episodes=[{ name:"الحلقة 1", video:series.video, image:series.image }];
   }
+
+  if(!episodes) return;
 
   episodes.forEach(ep=>{
     list.innerHTML+=`
