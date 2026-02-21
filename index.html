@@ -11,7 +11,7 @@ body {
   font-family:Arial;
   background:#071a2f;
   color:white;
-  padding-bottom:80px; /* عشان ما تغطي القائمة */
+  padding-bottom:80px;
 }
 
 .container {
@@ -20,6 +20,7 @@ body {
 
 .search-box {
   margin-bottom:20px;
+  display:none; /* مخفي بالبداية */
 }
 
 .search-box input {
@@ -62,8 +63,7 @@ body {
   cursor:pointer;
 }
 
-/* ===== Bottom Navigation ===== */
-
+/* Bottom Nav */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -78,20 +78,16 @@ body {
 }
 
 .nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-decoration: none;
-  color: #ccc;
-  font-size: 13px;
-}
-
-.nav-item span {
-  margin-top: 4px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  color:#ccc;
+  font-size:13px;
+  cursor:pointer;
 }
 
 .nav-item.active {
-  color: #00bfff;
+  color:#00bfff;
 }
 </style>
 </head>
@@ -103,7 +99,7 @@ body {
   <div id="seriesSection">
     <h2>🎬 AURA</h2>
 
-    <div class="search-box">
+    <div class="search-box" id="searchBox">
       <input type="text" id="searchInput" placeholder="🔎 ابحث عن مسلسل..." oninput="filterSeries()">
     </div>
 
@@ -118,40 +114,12 @@ body {
 
 </div>
 
-<!-- Bottom Navigation -->
 <div class="bottom-nav">
-  <a href="#" class="nav-item active">
-    🏠
-    <span>الرئيسية</span>
-  </a>
-
-  <a href="#">
-    <div class="nav-item">
-      🔍
-      <span>البحث</span>
-    </div>
-  </a>
-
-  <a href="#">
-    <div class="nav-item">
-      ⬇️
-      <span>التحميلات</span>
-    </div>
-  </a>
-
-  <a href="#">
-    <div class="nav-item">
-      ⚙️
-      <span>الإعدادات</span>
-    </div>
-  </a>
-
-  <a href="#">
-    <div class="nav-item">
-      👤
-      <span>الملف</span>
-    </div>
-  </a>
+  <div class="nav-item active" onclick="goHome()">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="openSearch()">🔍<span>البحث</span></div>
+  <div class="nav-item">⬇️<span>التحميلات</span></div>
+  <div class="nav-item">⚙️<span>الإعدادات</span></div>
+  <div class="nav-item">👤<span>الملف</span></div>
 </div>
 
 <script>
@@ -181,12 +149,21 @@ function renderSeries(data) {
 
 function filterSeries() {
   const searchValue = document.getElementById("searchInput").value.toLowerCase();
-
   const filtered = allSeries.filter(item =>
     item.title.toLowerCase().includes(searchValue)
   );
-
   renderSeries(filtered);
+}
+
+function openSearch() {
+  document.getElementById("searchBox").style.display = "block";
+  document.getElementById("searchInput").focus();
+}
+
+function goHome() {
+  document.getElementById("searchBox").style.display = "none";
+  document.getElementById("searchInput").value = "";
+  renderSeries(allSeries);
 }
 
 async function openSeries(id) {
@@ -203,9 +180,7 @@ async function openSeries(id) {
   let episodes = series.episodes;
 
   if (!episodes && series.video) {
-    episodes = [
-      { name: "الحلقة 1", video: series.video }
-    ];
+    episodes = [{ name: "الحلقة 1", video: series.video }];
   }
 
   episodes.forEach(ep => {
