@@ -1,3 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الملف الشخصي - AURA</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#071a2f;
+  color:white;
+  text-align:center;
+  padding:40px;
+}
+
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#00bfff;
+  color:white;
+  font-size:16px;
+}
+
+.profile-box{
+  margin-top:30px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>👤 الملف الشخصي</h2>
+
+<button id="loginBtn">تسجيل الدخول عبر Google</button>
+
+<div class="profile-box" id="profileBox" style="display:none;">
+  <img id="userImg" width="100" style="border-radius:50%;"><br><br>
+  <h3 id="userName"></h3>
+  <p id="userEmail"></p>
+  <button onclick="logout()">تسجيل الخروج</button>
+</div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -16,14 +62,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-const loginBtn = document.getElementById("loginBtn");
-const profileBox = document.getElementById("profileBox");
-
-loginBtn.addEventListener("click", async () => {
+document.getElementById("loginBtn").addEventListener("click", async () => {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;
 
-  profileBox.style.display = "block";
+  document.getElementById("profileBox").style.display="block";
   document.getElementById("userImg").src = user.photoURL;
   document.getElementById("userName").innerText = user.displayName;
   document.getElementById("userEmail").innerText = user.email;
@@ -35,3 +78,6 @@ window.logout = async function(){
 };
 
 </script>
+
+</body>
+</html>
