@@ -50,9 +50,6 @@ cursor:pointer;
 </div>
 <script>
 function check(){
-var password = "Aa10010010050555710";
-var input = document.getElementById("pass").value;
-if(input === password){
     document.querySelector(".box").innerHTML = `
         <h2>إضافة فيلم 🎬</h2>
         <input type="text" id="title" placeholder="اسم الفيلم">
@@ -61,6 +58,7 @@ if(input === password){
         <button onclick="addMovie()">إضافة</button>
         <p id="result"></p>
     `;
+}
 }else{
     document.getElementById("msg").innerHTML = "كلمة السر خطأ";
 }
