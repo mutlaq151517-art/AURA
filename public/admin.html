@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA - لوحة التحكم</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(to bottom,#051423,#0a223d);
+  color:white;
+}
+
+.header{
+  padding:25px;
+  font-size:22px;
+  font-weight:bold;
+  text-align:center;
+  background:#081f3a;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.container{
+  max-width:1100px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.card{
+  background:#0f2c50;
+  padding:25px;
+  border-radius:18px;
+  margin-bottom:30px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+.card h3{
+  margin-top:0;
+  margin-bottom:15px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:none;
+  background:#0c3a63;
+  color:white;
+}
+
+button{
+  padding:8px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  margin-top:5px;
+}
+
+.add-btn{ background:#00bfff; color:white; }
+.delete-btn{ background:#ff3b3b; color:white; }
+.edit-btn{ background:#ff9800; color:white; }
+
+.series-box{
+  background:#0b2a4a;
+  padding:20px;
+  border-radius:15px;
+  margin-top:20px;
+}
+
+.series-title{
+  font-size:18px;
+  margin-bottom:10px;
+  font-weight:bold;
+}
+
+.episodes-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
+  margin-top:15px;
+}
+
+.episode-card{
+  background:#0d3a63;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.episode-card img{
+  width:100%;
+  height:110px;
+  object-fit:cover;
+}
+
+.episode-info{
+  padding:8px;
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🎬 لوحة تحكم AURA</div>
+
+<div class="container">
+
+<div class="card">
+<h3>➕ إضافة مسلسل جديد</h3>
+<input type="text" id="title" placeholder="اسم المسلسل">
+<input type="text" id="image" placeholder="رابط صورة المسلسل">
+<button class="add-btn" onclick="addSeries()">إضافة المسلسل</button>
+</div>
+
+<div class="card">
+<h3>📺 إدارة المسلسلات</h3>
+<div id="seriesList"></div>
+</div>
+
+</div>
+
+<script>
+
+const API = "https://aura-backend-mpvi.onrender.com/movies";
+
+async function loadSeries(){
+  const res = await fetch(API);
+  const data = await res.json();
+  const list = document.getElementById("seriesList");
+  list.innerHTML="";
+
+  data.forEach(series=>{
+
+    let episodesHTML="";
+
+    if(series.episodes){
+      episodesHTML += `<div class="episodes-grid">`;
+      series.episodes.forEach(ep=>{
+        episodesHTML+=`
+        <div class="episode-card">
+          <img src="${ep.image || series.image}">
+          <div class="episode-info">
+            ${ep.name}
+            <button class="delete-btn" onclick="deleteEpisode('${series._id}','${ep._id}')">حذف</button>
+          </div>
+        </div>`;
+      });
+      episodesHTML += `</div>`;
+    }
+
+    list.innerHTML+=`
+    <div class="series-box">
+
+      <div class="series-title">${series.title}</div>
+
+      <input type="text" placeholder="اسم جديد" id="editTitle-${series._id}">
+      <input type="text" placeholder="صورة جديدة" id="editImage-${series._id}">
+      <button class="edit-btn" onclick="updateSeries('${series._id}')">تعديل</button>
+      <button class="delete-btn" onclick="deleteSeries('${series._id}')">حذف المسلسل</button>
+
+      <hr style="opacity:0.2;margin:20px 0;">
+
+      <h4>➕ إضافة حلقة</h4>
+      <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
+      <input type="text" placeholder="رابط الحلقة" id="epVideo-${series._id}">
+      <input type="text" placeholder="رابط صورة الحلقة (مشهد)" id="epImage-${series._id}">
+      <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
+
+      ${episodesHTML}
+
+    </div>`;
+  });
+}
+
+async function addSeries(){
+  const title=document.getElementById("title").value;
+  const image=document.getElementById("image").value;
+
+  await fetch(API,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ title,image })
+  });
+
+  loadSeries();
+}
+
+async function updateSeries(id){
+  const title=document.getElementById("editTitle-"+id).value;
+  const image=document.getElementById("editImage-"+id).value;
+
+  await fetch(API+"/"+id,{
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ title,image })
+  });
+
+  loadSeries();
+}
+
+async function deleteSeries(id){
+  await fetch(API+"/"+id,{ method:"DELETE" });
+  loadSeries();
+}
+
+async function addEpisode(id){
+  const name=document.getElementById("epName-"+id).value;
+  const video=document.getElementById("epVideo-"+id).value;
+  const image=document.getElementById("epImage-"+id).value;
+
+  await fetch(API+"/"+id+"/episodes",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ name,video,image })
+  });
+
+  loadSeries();
+}
+
+async function deleteEpisode(seriesId,episodeId){
+  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
+    method:"DELETE"
+  });
+
+  loadSeries();
+}
+
+loadSeries();
+
+</script>
+
+</body>
+</html>
