@@ -188,10 +188,22 @@ body::before{
 <div class="header">🌙 AURA</div>
 
 <div id="homeContent">
+
   <div class="section">
     <div class="section-title">🔥 جديد الآن</div>
     <div class="row" id="seriesRow"></div>
   </div>
+
+  <div class="section">
+    <div class="section-title">⭐ الأكثر مشاهدة</div>
+    <div class="row" id="popularRow"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🎭 مسلسلات مختارة</div>
+    <div class="row" id="dramaRow"></div>
+  </div>
+
 </div>
 
 <div class="series-page" id="seriesPage">
@@ -215,18 +227,37 @@ async function loadSeries(){
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
-  renderRow(data);
+  renderRows(data);
 }
 
-function renderRow(data){
-  const row=document.getElementById("seriesRow");
-  row.innerHTML="";
-  data.forEach(item=>{
-    row.innerHTML+=`
+function renderRows(data){
+
+  const mainRow=document.getElementById("seriesRow");
+  const popularRow=document.getElementById("popularRow");
+  const dramaRow=document.getElementById("dramaRow");
+
+  mainRow.innerHTML="";
+  popularRow.innerHTML="";
+  dramaRow.innerHTML="";
+
+  data.forEach((item,index)=>{
+
+    const card=`
       <div class="card" onclick="openSeries('${item._id}')">
         <img src="${item.image}">
       </div>
     `;
+
+    mainRow.innerHTML+=card;
+
+    if(index<5){
+      popularRow.innerHTML+=card;
+    }
+
+    if(index%2===0){
+      dramaRow.innerHTML+=card;
+    }
+
   });
 }
 
