@@ -34,7 +34,7 @@ const episodeSchema = new mongoose.Schema({
 const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
-  video: String, 
+  video: String,
   episodes: [episodeSchema]
 });
 
@@ -42,7 +42,12 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
-  watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }]
+  watchHistory: [{
+    movieId: mongoose.Schema.Types.ObjectId,
+    episodeVideo: String,
+    currentTime: Number,
+    updatedAt: Date
+  }]
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -111,6 +116,44 @@ app.post("/login", async (req, res) => {
   }catch(err){
     res.status(500).json({ error: err.message });
   }
+});
+
+/* =========================
+   Save Watch Progress
+========================= */
+
+app.post("/save-progress", verifyToken, async (req, res) => {
+  const { movieId, episodeVideo, currentTime } = req.body;
+
+  await User.findByIdAndUpdate(req.userId, {
+    $pull: { watchHistory: { movieId } }
+  });
+
+  await User.findByIdAndUpdate(req.userId, {
+    $push: {
+      watchHistory: {
+        movieId,
+        episodeVideo,
+        currentTime,
+        updatedAt: new Date()
+      }
+    }
+  });
+
+  res.json({ message: "Progress saved" });
+});
+
+/* =========================
+   Get Watch Progress
+========================= */
+
+app.get("/get-progress/:movieId", verifyToken, async (req, res) => {
+  const user = await User.findById(req.userId);
+  const progress = user.watchHistory.find(
+    item => item.movieId.toString() === req.params.movieId
+  );
+
+  res.json(progress || null);
 });
 
 /* =========================
