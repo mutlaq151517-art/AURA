@@ -1,66 +1,70 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AURA Admin</title>
+<title>AURA - لوحة التحكم</title>
 
 <style>
-body{
-    margin:0;
-    font-family:Arial;
-    background:linear-gradient(135deg,#0b1d3a,#08152b);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Cairo", sans-serif;
 }
 
-.container{
-    background:#0f2347;
-    padding:40px;
-    border-radius:15px;
-    width:400px;
-    box-shadow:0 0 30px rgba(0,0,0,0.4);
+body {
+  background: linear-gradient(to bottom, #071a2f, #0d2746);
+  color: white;
+  padding: 20px;
 }
 
-h2{
-    text-align:center;
-    margin-bottom:25px;
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: #0f2c50;
+  padding: 20px;
+  border-radius: 15px;
 }
 
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:none;
-    border-radius:8px;
-    font-size:14px;
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-button{
-    width:100%;
-    padding:12px;
-    margin-top:15px;
-    border:none;
-    border-radius:8px;
-    background:#4da6ff;
-    color:white;
-    font-weight:bold;
-    font-size:15px;
-    cursor:pointer;
-    transition:0.3s;
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: none;
 }
 
-button:hover{
-    background:#3399ff;
+button {
+  width: 100%;
+  padding: 10px;
+  background: #00bfff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-#result{
-    text-align:center;
-    margin-top:15px;
-    font-weight:bold;
+button:hover {
+  opacity: 0.8;
+}
+
+.movie-item {
+  background: #09203a;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.delete-btn {
+  background: red;
+  margin-top: 5px;
 }
 </style>
 </head>
@@ -68,49 +72,73 @@ button:hover{
 <body>
 
 <div class="container">
-    <h2>🎬 لوحة تحكم AURA</h2>
+  <h1>🎬 لوحة تحكم AURA</h1>
 
-    <input type="text" id="title" placeholder="اسم الفيلم">
-    <input type="text" id="image" placeholder="رابط صورة الفيلم">
-    <input type="text" id="video" placeholder="رابط الفيديو (mp4)">
+  <input type="text" id="title" placeholder="اسم الفيلم">
+  <input type="text" id="image" placeholder="رابط الصورة">
+  <input type="text" id="video" placeholder="رابط الفيديو">
 
-    <button onclick="addMovie()">إضافة الفيلم</button>
+  <button onclick="addMovie()">إضافة الفيلم</button>
 
-    <p id="result"></p>
+  <h3 style="margin-top:25px;">الأفلام الحالية</h3>
+  <div id="moviesList"></div>
 </div>
 
 <script>
-function addMovie(){
+const API = "https://aura-backend-mpvi.onrender.com/movies";
 
-    const title = document.getElementById("title").value;
-    const image = document.getElementById("image").value;
-    const video = document.getElementById("video").value;
+async function loadMovies() {
+  const res = await fetch(API);
+  const data = await res.json();
 
-    if(!title || !image || !video){
-        document.getElementById("result").innerHTML = "⚠️ قم بتعبئة كل الحقول";
-        return;
-    }
+  const list = document.getElementById("moviesList");
+  list.innerHTML = "";
 
-    fetch("https://aura-backend-mpvi.onrender.com/movies", {
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            title:title,
-            image:image,
-            video:video
-        })
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        document.getElementById("result").innerHTML="✅ تمت الإضافة بنجاح";
-    })
-    .catch(err=>{
-        document.getElementById("result").innerHTML="❌ شغلك غلط";
-    });
-
+  data.forEach(movie => {
+    list.innerHTML += `
+      <div class="movie-item">
+        <b>${movie.title}</b>
+        <button class="delete-btn" onclick="deleteMovie(${movie.id})">حذف</button>
+      </div>
+    `;
+  });
 }
+
+async function addMovie() {
+  const title = document.getElementById("title").value;
+  const image = document.getElementById("image").value;
+  const video = document.getElementById("video").value;
+
+  if (!title || !image || !video) {
+    alert("عبي كل الحقول 🔴");
+    return;
+  }
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, image, video })
+  });
+
+  alert("تمت الإضافة بنجاح ✅");
+
+  document.getElementById("title").value = "";
+  document.getElementById("image").value = "";
+  document.getElementById("video").value = "";
+
+  loadMovies();
+}
+
+async function deleteMovie(id) {
+  await fetch(API + "/" + id, {
+    method: "DELETE"
+  });
+
+  alert("تم الحذف ✅");
+  loadMovies();
+}
+
+loadMovies();
 </script>
 
 </body>
