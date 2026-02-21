@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width:500px;
+  max-width:600px;
   margin:auto;
   background:#0f2c50;
   padding:20px;
@@ -30,14 +30,28 @@ input, select {
 }
 
 button {
-  width:100%;
-  padding:10px;
+  padding:8px;
   border:none;
-  border-radius:8px;
-  background:#00bfff;
-  color:white;
-  font-weight:bold;
+  border-radius:6px;
   cursor:pointer;
+  margin-top:5px;
+}
+
+.add-btn { background:#00bfff; color:white; width:100%; }
+.delete-btn { background:red; color:white; }
+.edit-btn { background:orange; color:white; }
+
+.series-box {
+  background:#09203a;
+  padding:10px;
+  border-radius:10px;
+  margin-top:15px;
+}
+.episode-item {
+  background:#0d3a63;
+  padding:8px;
+  margin-top:5px;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -47,19 +61,14 @@ button {
 <div class="container">
 
 <h2>➕ إضافة مسلسل</h2>
-
 <input type="text" id="title" placeholder="اسم المسلسل">
 <input type="text" id="image" placeholder="رابط الصورة">
-<button onclick="addSeries()">إضافة المسلسل</button>
+<button class="add-btn" onclick="addSeries()">إضافة</button>
 
 <hr style="margin:20px 0;">
 
-<h2>🎬 إضافة حلقة</h2>
-
-<select id="seriesSelect"></select>
-<input type="text" id="episodeName" placeholder="اسم الحلقة">
-<input type="text" id="episodeVideo" placeholder="رابط الحلقة">
-<button onclick="addEpisode()">إضافة الحلقة</button>
+<h2>📺 المسلسلات الحالية</h2>
+<div id="seriesList"></div>
 
 </div>
 
@@ -71,12 +80,43 @@ async function loadSeries() {
   const res = await fetch(API);
   const data = await res.json();
 
-  const select = document.getElementById("seriesSelect");
-  select.innerHTML = "";
+  const list = document.getElementById("seriesList");
+  list.innerHTML = "";
 
-  data.forEach(item => {
-    select.innerHTML += `
-      <option value="${item._id}">${item.title}</option>
+  data.forEach(series => {
+
+    let episodesHTML = "";
+
+    if (series.episodes) {
+      series.episodes.forEach(ep => {
+        episodesHTML += `
+          <div class="episode-item">
+            ${ep.name}
+            <button class="delete-btn" onclick="deleteEpisode('${series._id}','${ep._id}')">حذف الحلقة</button>
+          </div>
+        `;
+      });
+    }
+
+    list.innerHTML += `
+      <div class="series-box">
+        <b>${series.title}</b>
+
+        <br><br>
+        <input type="text" placeholder="اسم جديد" id="editTitle-${series._id}">
+        <input type="text" placeholder="صورة جديدة" id="editImage-${series._id}">
+        <button class="edit-btn" onclick="updateSeries('${series._id}')">تعديل</button>
+        <button class="delete-btn" onclick="deleteSeries('${series._id}')">حذف المسلسل</button>
+
+        <hr>
+
+        <h4>➕ إضافة حلقة</h4>
+        <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
+        <input type="text" placeholder="رابط الحلقة" id="epVideo-${series._id}">
+        <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
+
+        <div>${episodesHTML}</div>
+      </div>
     `;
   });
 }
@@ -91,22 +131,50 @@ async function addSeries() {
     body: JSON.stringify({ title, image })
   });
 
-  alert("تم إضافة المسلسل ✅");
   loadSeries();
 }
 
-async function addEpisode() {
-  const id = document.getElementById("seriesSelect").value;
-  const name = document.getElementById("episodeName").value;
-  const video = document.getElementById("episodeVideo").value;
+async function updateSeries(id) {
+  const title = document.getElementById("editTitle-"+id).value;
+  const image = document.getElementById("editImage-"+id).value;
 
-  await fetch(API + "/" + id + "/episodes", {
+  await fetch(API+"/"+id, {
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ title, image })
+  });
+
+  alert("تم التعديل ✅");
+  loadSeries();
+}
+
+async function deleteSeries(id) {
+  await fetch(API+"/"+id, { method:"DELETE" });
+  alert("تم حذف المسلسل ✅");
+  loadSeries();
+}
+
+async function addEpisode(id) {
+  const name = document.getElementById("epName-"+id).value;
+  const video = document.getElementById("epVideo-"+id).value;
+
+  await fetch(API+"/"+id+"/episodes", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ name, video })
   });
 
   alert("تم إضافة الحلقة ✅");
+  loadSeries();
+}
+
+async function deleteEpisode(seriesId, episodeId) {
+  await fetch(API+"/"+seriesId+"/episodes/"+episodeId, {
+    method:"DELETE"
+  });
+
+  alert("تم حذف الحلقة ✅");
+  loadSeries();
 }
 
 loadSeries();
