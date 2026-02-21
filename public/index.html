@@ -11,16 +11,16 @@ body{
   font-family:Arial;
   background:#071a2f;
   color:white;
-  padding-bottom:90px;
+  padding-bottom:80px;
 }
 
-/* ===== Hero Section ===== */
+/* ===== Hero Section (أصغر) ===== */
 .hero{
   position:relative;
-  height:70vh;
+  height:40vh; /* كان 70 */
   display:flex;
   align-items:flex-end;
-  padding:40px;
+  padding:25px;
   background-size:cover;
   background-position:center;
   border-bottom:1px solid rgba(255,255,255,0.1);
@@ -39,35 +39,35 @@ body{
 }
 
 .hero h1{
-  font-size:32px;
-  margin-bottom:10px;
+  font-size:22px; /* كان 32 */
+  margin-bottom:8px;
 }
 
 .hero button{
-  padding:10px 20px;
+  padding:8px 16px;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   background:#00bfff;
   color:white;
   cursor:pointer;
-  font-size:14px;
+  font-size:13px;
 }
 
 /* ===== Sections ===== */
 .section{
-  padding:25px;
+  padding:18px;
 }
 
 .section-title{
-  font-size:20px;
-  margin-bottom:15px;
+  font-size:17px;
+  margin-bottom:12px;
 }
 
 /* Horizontal scroll */
 .row{
   display:flex;
   overflow-x:auto;
-  gap:15px;
+  gap:12px;
   scroll-behavior:smooth;
 }
 
@@ -76,7 +76,7 @@ body{
 }
 
 .card{
-  min-width:150px;
+  min-width:115px; /* كان 150 */
   flex-shrink:0;
   cursor:pointer;
   transition:0.3s;
@@ -84,11 +84,11 @@ body{
 
 .card img{
   width:100%;
-  border-radius:12px;
+  border-radius:10px;
 }
 
 .card:hover{
-  transform:scale(1.08);
+  transform:scale(1.05);
 }
 
 /* ===== Series Page ===== */
@@ -98,12 +98,12 @@ body{
 
 .series-header{
   position:relative;
-  height:50vh;
+  height:32vh; /* كان 50 */
   background-size:cover;
   background-position:center;
   display:flex;
   align-items:flex-end;
-  padding:30px;
+  padding:20px;
 }
 
 .series-header::after{
@@ -119,30 +119,32 @@ body{
 }
 
 .series-info h2{
-  margin-bottom:10px;
+  margin-bottom:8px;
+  font-size:20px;
 }
 
 .back-btn{
   position:absolute;
-  top:20px;
-  right:20px;
+  top:15px;
+  right:15px;
   background:#00bfff;
   border:none;
-  padding:6px 12px;
+  padding:5px 10px;
   border-radius:6px;
   cursor:pointer;
+  font-size:12px;
 }
 
 .episodes-grid{
-  padding:25px;
+  padding:18px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:15px;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); /* أصغر */
+  gap:12px;
 }
 
 .episode-card{
   background:#0f2c50;
-  border-radius:12px;
+  border-radius:10px;
   overflow:hidden;
   cursor:pointer;
   transition:0.3s;
@@ -150,18 +152,18 @@ body{
 
 .episode-card img{
   width:100%;
-  height:130px;
+  height:95px; /* كان 130 */
   object-fit:cover;
 }
 
 .episode-card:hover{
-  transform:scale(1.05);
+  transform:scale(1.04);
 }
 
 .episode-title{
-  padding:10px;
+  padding:8px;
   text-align:center;
-  font-size:14px;
+  font-size:13px;
 }
 
 /* ===== Bottom Nav ===== */
@@ -172,7 +174,7 @@ body{
   background: #071a2f;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0;
+  padding: 10px 0;
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
@@ -181,7 +183,7 @@ body{
   flex-direction:column;
   align-items:center;
   color:#ccc;
-  font-size:13px;
+  font-size:12px;
   cursor:pointer;
 }
 
@@ -202,12 +204,10 @@ body{
 
 <!-- Main Section -->
 <div id="homeContent">
-
 <div class="section">
   <div class="section-title">🔥 جديد في AURA</div>
   <div class="row" id="seriesRow"></div>
 </div>
-
 </div>
 
 <!-- Series Page -->
