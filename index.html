@@ -11,6 +11,7 @@ body {
   font-family:Arial;
   background:#071a2f;
   color:white;
+  padding-bottom:80px; /* عشان ما تغطي القائمة */
 }
 
 .container {
@@ -60,6 +61,38 @@ body {
   border-radius:6px;
   cursor:pointer;
 }
+
+/* ===== Bottom Navigation ===== */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  background: #071a2f;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  z-index: 9999;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #ccc;
+  font-size: 13px;
+}
+
+.nav-item span {
+  margin-top: 4px;
+}
+
+.nav-item.active {
+  color: #00bfff;
+}
 </style>
 </head>
 
@@ -83,6 +116,42 @@ body {
     <div id="episodesList"></div>
   </div>
 
+</div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+  <a href="#" class="nav-item active">
+    🏠
+    <span>الرئيسية</span>
+  </a>
+
+  <a href="#">
+    <div class="nav-item">
+      🔍
+      <span>البحث</span>
+    </div>
+  </a>
+
+  <a href="#">
+    <div class="nav-item">
+      ⬇️
+      <span>التحميلات</span>
+    </div>
+  </a>
+
+  <a href="#">
+    <div class="nav-item">
+      ⚙️
+      <span>الإعدادات</span>
+    </div>
+  </a>
+
+  <a href="#">
+    <div class="nav-item">
+      👤
+      <span>الملف</span>
+    </div>
+  </a>
 </div>
 
 <script>
