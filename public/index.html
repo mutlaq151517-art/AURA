@@ -21,7 +21,6 @@ body{
   color:#111;
 }
 
-/* 🌙 Ramadan vibes */
 body::before{
   content:"🌙 ✨ 🏮 ✨ 🌙";
   position:fixed;
@@ -33,7 +32,6 @@ body::before{
   pointer-events:none;
 }
 
-/* Header */
 .header{
   padding:20px;
   text-align:center;
@@ -42,7 +40,6 @@ body::before{
   text-shadow:0 0 12px rgba(0,191,255,0.8);
 }
 
-/* Search */
 .search-container{
   padding:0 20px 20px 20px;
 }
@@ -60,10 +57,7 @@ body::before{
   box-shadow:0 0 15px rgba(0,191,255,0.3);
 }
 
-/* Sections */
-.section{
-  padding:20px;
-}
+.section{ padding:20px; }
 
 .section-title{
   font-size:18px;
@@ -89,20 +83,14 @@ body::before{
   box-shadow:0 0 15px rgba(0,191,255,0.2);
 }
 
-.card img{
-  width:100%;
-  display:block;
-}
+.card img{ width:100%; display:block; }
 
 .card:hover{
   transform:scale(1.08);
   box-shadow:0 0 25px rgba(0,191,255,0.6);
 }
 
-/* Series Page */
-.series-page{
-  display:none;
-}
+.series-page{ display:none; }
 
 .series-header{
   padding:20px;
@@ -136,9 +124,7 @@ body::before{
   transition:0.3s;
 }
 
-.episode-card img{
-  width:100%;
-}
+.episode-card img{ width:100%; }
 
 .episode-card:hover{
   transform:scale(1.05);
@@ -151,7 +137,6 @@ body::before{
   font-size:14px;
 }
 
-/* Video Modal */
 #videoModal{
   display:none;
   position:fixed;
@@ -162,14 +147,12 @@ body::before{
   justify-content:center;
 }
 
-#videoModal iframe{
+#videoModal video{
   width:95%;
   max-width:900px;
-  height:500px;
   border-radius:12px;
 }
 
-/* Bottom Nav */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -190,9 +173,7 @@ body::before{
   cursor:pointer;
 }
 
-.nav-item:hover{
-  color:#00bfff;
-}
+.nav-item:hover{ color:#00bfff; }
 </style>
 </head>
 
@@ -222,7 +203,7 @@ body::before{
     <button onclick="closePlayer()" style="margin-bottom:10px;background:#00bfff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">
       ✖ إغلاق
     </button>
-    <iframe id="videoFrame" frameborder="0" allowfullscreen></iframe>
+    <video id="videoPlayer" controls></video>
   </div>
 </div>
 
@@ -235,10 +216,9 @@ body::before{
 <script>
 const API="https://aura-backend-mpvi.onrender.com/movies";
 let allSeries=[];
-
-if(localStorage.getItem("theme")==="light"){
-  document.body.classList.add("light-mode");
-}
+let currentMovieId=null;
+let currentEpisodeId=null;
+let saveInterval=null;
 
 async function loadSeries(){
   const res=await fetch(API);
@@ -279,29 +259,63 @@ function openSeries(id){
 
   let episodes=series.episodes;
   if((!episodes||episodes.length===0)&&series.video){
-    episodes=[{name:"الحلقة 1",video:series.video,image:series.image}];
+    episodes=[{_id:"ep1",name:"الحلقة 1",video:series.video,image:series.image}];
   }
 
   episodes.forEach(ep=>{
     list.innerHTML+=`
-      <div class="episode-card" onclick="playEpisode('${ep.video}')">
+      <div class="episode-card" onclick="playEpisode('${series._id}','${ep._id}','${ep.video}')">
         <img src="${ep.image||series.image}">
         <div class="episode-title">${ep.name}</div>
       </div>`;
   });
 }
 
-function playEpisode(url){
-  if(url.includes("drive.google.com")){
-    const id=url.split("/d/")[1]?.split("/")[0];
-    if(id) url="https://drive.google.com/file/d/"+id+"/preview";
-  }
-  document.getElementById("videoFrame").src=url;
+async function playEpisode(movieId,episodeId,url){
+  const token=localStorage.getItem("token");
+  currentMovieId=movieId;
+  currentEpisodeId=episodeId;
+
+  const video=document.getElementById("videoPlayer");
+  video.src=url;
   document.getElementById("videoModal").style.display="flex";
+
+  if(token){
+    const res=await fetch(`/progress/${movieId}/${episodeId}`,{
+      headers:{Authorization:token}
+    });
+    const data=await res.json();
+    if(data.currentTime){
+      video.currentTime=data.currentTime;
+    }
+  }
+
+  video.onplay=()=>{
+    saveInterval=setInterval(()=>{
+      if(token){
+        fetch("/progress",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            Authorization:token
+          },
+          body:JSON.stringify({
+            movieId:currentMovieId,
+            episodeId:currentEpisodeId,
+            currentTime:video.currentTime
+          })
+        });
+      }
+    },5000);
+  };
+
+  video.onpause=()=>clearInterval(saveInterval);
+  video.onended=()=>clearInterval(saveInterval);
 }
 
 function closePlayer(){
-  document.getElementById("videoFrame").src="";
+  clearInterval(saveInterval);
+  document.getElementById("videoPlayer").src="";
   document.getElementById("videoModal").style.display="none";
 }
 
@@ -310,7 +324,6 @@ function goHome(){
   document.getElementById("homeContent").style.display="block";
 }
 
-/* 👤 تعديل هنا فقط */
 function goProfile(){
   window.location.href="account.html";
 }
