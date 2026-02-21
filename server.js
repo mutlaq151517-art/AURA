@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -8,13 +9,20 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 
+/* =========================
+   MongoDB Connection
+========================= */
+
 mongoose.connect(
   "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
 )
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => console.log(err));
 
-/* Schema */
+/* =========================
+   Schemas
+========================= */
+
 const episodeSchema = new mongoose.Schema({
   name: String,
   video: String
@@ -23,13 +31,25 @@ const episodeSchema = new mongoose.Schema({
 const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
-  video: String,       // نخليه عشان ما نخرب القديم
+  video: String, 
   episodes: [episodeSchema]
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
 
-/* Routes */
+/* =========================
+   Static Files (Frontend)
+========================= */
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* =========================
+   API Routes
+========================= */
 
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
@@ -70,6 +90,10 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   );
   res.json({ message: "Episode deleted" });
 });
+
+/* =========================
+   Start Server
+========================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
