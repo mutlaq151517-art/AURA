@@ -98,7 +98,7 @@ async function loadMovies() {
     list.innerHTML += `
       <div class="movie-item">
         <b>${movie.title}</b>
-        <button class="delete-btn" onclick="deleteMovie(${movie.id})">حذف</button>
+        <button class="delete-btn" onclick="deleteMovie('${movie._id}')">حذف</button>
       </div>
     `;
   });
