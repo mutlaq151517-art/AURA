@@ -16,19 +16,22 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-window.login = async function(){
+const loginBtn = document.getElementById("loginBtn");
+const profileBox = document.getElementById("profileBox");
+
+loginBtn.addEventListener("click", async () => {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;
 
-  document.getElementById("profileBox").style.display="block";
+  profileBox.style.display = "block";
   document.getElementById("userImg").src = user.photoURL;
   document.getElementById("userName").innerText = user.displayName;
   document.getElementById("userEmail").innerText = user.email;
-}
+});
 
 window.logout = async function(){
   await signOut(auth);
   location.reload();
-}
+};
 
 </script>
