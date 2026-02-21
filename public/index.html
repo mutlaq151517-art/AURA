@@ -3,226 +3,191 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AURA</title>
+<title>AURA X</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:#071a2f;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
+  background-size:400% 400%;
+  animation:bgMove 12s ease infinite;
   color:white;
-  padding-bottom:80px;
+  padding-bottom:90px;
+  overflow-x:hidden;
 }
 
-/* ===== Hero Section (أصغر) ===== */
-.hero{
-  position:relative;
-  height:40vh; /* كان 70 */
-  display:flex;
-  align-items:flex-end;
-  padding:25px;
-  background-size:cover;
-  background-position:center;
-  border-bottom:1px solid rgba(255,255,255,0.1);
+@keyframes bgMove{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
 }
 
-.hero::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top, rgba(7,26,47,1), rgba(7,26,47,0.2));
+/* Header */
+.header{
+  padding:20px;
+  font-size:22px;
+  font-weight:bold;
+  text-align:center;
+  letter-spacing:2px;
+  text-shadow:0 0 12px rgba(0,191,255,0.7);
 }
 
-.hero-content{
-  position:relative;
-  z-index:2;
-}
-
-.hero h1{
-  font-size:22px; /* كان 32 */
-  margin-bottom:8px;
-}
-
-.hero button{
-  padding:8px 16px;
-  border:none;
-  border-radius:6px;
-  background:#00bfff;
-  color:white;
-  cursor:pointer;
-  font-size:13px;
-}
-
-/* ===== Sections ===== */
+/* Section */
 .section{
-  padding:18px;
+  padding:20px;
 }
 
 .section-title{
-  font-size:17px;
-  margin-bottom:12px;
+  font-size:18px;
+  margin-bottom:15px;
+  text-shadow:0 0 8px rgba(0,191,255,0.6);
 }
 
-/* Horizontal scroll */
+/* Horizontal Scroll */
 .row{
   display:flex;
+  gap:15px;
   overflow-x:auto;
-  gap:12px;
   scroll-behavior:smooth;
 }
 
-.row::-webkit-scrollbar{
-  display:none;
-}
+.row::-webkit-scrollbar{ display:none; }
 
+/* Glass Card */
 .card{
-  min-width:115px; /* كان 150 */
-  flex-shrink:0;
+  min-width:130px;
+  border-radius:16px;
+  overflow:hidden;
   cursor:pointer;
-  transition:0.3s;
+  backdrop-filter:blur(10px);
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:0.4s;
+  box-shadow:0 0 15px rgba(0,191,255,0.15);
 }
 
 .card img{
   width:100%;
-  border-radius:10px;
+  display:block;
 }
 
 .card:hover{
-  transform:scale(1.05);
+  transform:scale(1.08);
+  box-shadow:0 0 25px rgba(0,191,255,0.6);
 }
 
-/* ===== Series Page ===== */
+/* Series Page */
 .series-page{
   display:none;
+  animation:fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
 .series-header{
-  position:relative;
-  height:32vh; /* كان 50 */
-  background-size:cover;
-  background-position:center;
-  display:flex;
-  align-items:flex-end;
   padding:20px;
-}
-
-.series-header::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top, rgba(7,26,47,1), rgba(7,26,47,0.3));
-}
-
-.series-info{
-  position:relative;
-  z-index:2;
-}
-
-.series-info h2{
-  margin-bottom:8px;
   font-size:20px;
+  font-weight:bold;
+  text-align:center;
+  text-shadow:0 0 10px rgba(0,191,255,0.8);
 }
 
 .back-btn{
-  position:absolute;
-  top:15px;
-  right:15px;
-  background:#00bfff;
-  border:none;
-  padding:5px 10px;
-  border-radius:6px;
+  margin:10px 20px;
+  background:rgba(0,191,255,0.15);
+  border:1px solid rgba(0,191,255,0.4);
+  padding:6px 12px;
+  border-radius:8px;
+  color:#00bfff;
   cursor:pointer;
-  font-size:12px;
 }
 
 .episodes-grid{
-  padding:18px;
+  padding:20px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); /* أصغر */
-  gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:15px;
 }
 
 .episode-card{
-  background:#0f2c50;
-  border-radius:10px;
+  backdrop-filter:blur(10px);
+  background:rgba(255,255,255,0.05);
+  border-radius:14px;
   overflow:hidden;
   cursor:pointer;
   transition:0.3s;
+  border:1px solid rgba(255,255,255,0.08);
 }
 
 .episode-card img{
   width:100%;
-  height:95px; /* كان 130 */
+  height:95px;
   object-fit:cover;
 }
 
 .episode-card:hover{
-  transform:scale(1.04);
+  transform:scale(1.05);
+  box-shadow:0 0 20px rgba(0,191,255,0.5);
 }
 
 .episode-title{
   padding:8px;
-  text-align:center;
   font-size:13px;
+  text-align:center;
 }
 
-/* ===== Bottom Nav ===== */
+/* Bottom Nav */
 .bottom-nav{
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: #071a2f;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:rgba(7,26,47,0.9);
+  backdrop-filter:blur(12px);
+  display:flex;
+  justify-content:space-around;
+  padding:12px 0;
+  border-top:1px solid rgba(255,255,255,0.1);
 }
 
 .nav-item{
   display:flex;
   flex-direction:column;
   align-items:center;
-  color:#ccc;
   font-size:12px;
+  color:#ccc;
   cursor:pointer;
+  transition:0.3s;
 }
 
-.nav-item.active{ color:#00bfff; }
-
+.nav-item.active,
+.nav-item:hover{
+  color:#00bfff;
+  text-shadow:0 0 10px rgba(0,191,255,0.8);
+}
 </style>
 </head>
 
 <body>
 
-<!-- Hero -->
-<div class="hero" id="heroSection">
-  <div class="hero-content">
-    <h1 id="heroTitle">AURA</h1>
-    <button id="heroBtn">▶ مشاهدة الآن</button>
-  </div>
-</div>
+<div class="header">⚡ AURA X</div>
 
-<!-- Main Section -->
 <div id="homeContent">
-<div class="section">
-  <div class="section-title">🔥 جديد في AURA</div>
-  <div class="row" id="seriesRow"></div>
-</div>
-</div>
-
-<!-- Series Page -->
-<div class="series-page" id="seriesPage">
-  <div class="series-header" id="seriesHeader">
-    <button class="back-btn" onclick="goHome()">⬅ رجوع</button>
-    <div class="series-info">
-      <h2 id="seriesTitle"></h2>
-    </div>
+  <div class="section">
+    <div class="section-title">🔥 جديد الآن</div>
+    <div class="row" id="seriesRow"></div>
   </div>
+</div>
 
+<div class="series-page" id="seriesPage">
+  <button class="back-btn" onclick="goHome()">⬅ رجوع</button>
+  <div class="series-header" id="seriesTitle"></div>
   <div class="episodes-grid" id="episodesList"></div>
 </div>
 
-<!-- Bottom Nav -->
 <div class="bottom-nav">
   <div class="nav-item active" onclick="goHome()">🏠<span>الرئيسية</span></div>
   <div class="nav-item">⬇️<span>التحميلات</span></div>
@@ -231,33 +196,18 @@ body{
 </div>
 
 <script>
-
-const API = "https://aura-backend-mpvi.onrender.com/movies";
-let allSeries = [];
-let featuredSeries = null;
+const API="https://aura-backend-mpvi.onrender.com/movies";
+let allSeries=[];
 
 async function loadSeries(){
-  const res = await fetch(API);
-  const data = await res.json();
-  allSeries = data;
-
-  if(data.length > 0){
-    featuredSeries = data[0];
-    setupHero(featuredSeries);
-  }
-
+  const res=await fetch(API);
+  const data=await res.json();
+  allSeries=data;
   renderRow(data);
 }
 
-function setupHero(series){
-  document.getElementById("heroSection").style.backgroundImage =
-    `url('${series.image}')`;
-  document.getElementById("heroTitle").innerText = series.title;
-  document.getElementById("heroBtn").onclick = () => openSeries(series._id);
-}
-
 function renderRow(data){
-  const row = document.getElementById("seriesRow");
+  const row=document.getElementById("seriesRow");
   row.innerHTML="";
   data.forEach(item=>{
     row.innerHTML+=`
@@ -269,24 +219,20 @@ function renderRow(data){
 }
 
 function openSeries(id){
-  const series = allSeries.find(item=>item._id===id);
+  const series=allSeries.find(s=>s._id===id);
   if(!series) return;
 
   document.getElementById("homeContent").style.display="none";
-  document.getElementById("heroSection").style.display="none";
   document.getElementById("seriesPage").style.display="block";
+  document.getElementById("seriesTitle").innerText=series.title;
 
-  document.getElementById("seriesHeader").style.backgroundImage =
-    `url('${series.image}')`;
-  document.getElementById("seriesTitle").innerText = series.title;
-
-  const list = document.getElementById("episodesList");
+  const list=document.getElementById("episodesList");
   list.innerHTML="";
 
-  let episodes = series.episodes;
+  let episodes=series.episodes;
 
-  if((!episodes || episodes.length===0) && series.video){
-    episodes=[{ name:"الحلقة 1", video:series.video, image:series.image }];
+  if((!episodes||episodes.length===0)&&series.video){
+    episodes=[{name:"الحلقة 1",video:series.video,image:series.image}];
   }
 
   if(!episodes) return;
@@ -294,7 +240,7 @@ function openSeries(id){
   episodes.forEach(ep=>{
     list.innerHTML+=`
       <div class="episode-card" onclick="playEpisode('${ep.video}')">
-        <img src="${ep.image || series.image}">
+        <img src="${ep.image||series.image}">
         <div class="episode-title">${ep.name}</div>
       </div>
     `;
@@ -304,7 +250,6 @@ function openSeries(id){
 function goHome(){
   document.getElementById("seriesPage").style.display="none";
   document.getElementById("homeContent").style.display="block";
-  document.getElementById("heroSection").style.display="flex";
 }
 
 function playEpisode(url){
@@ -316,7 +261,6 @@ function goProfile(){
 }
 
 loadSeries();
-
 </script>
 
 </body>
