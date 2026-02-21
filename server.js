@@ -8,14 +8,13 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 
-/* 🔥 MongoDB Connection */
 mongoose.connect(
   "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
 )
 .then(() => console.log("MongoDB Connected ✅"))
-.catch(err => console.log("MongoDB Error ❌", err));
+.catch(err => console.log(err));
 
-/* 🎬 Schema */
+/* Schema */
 const episodeSchema = new mongoose.Schema({
   name: String,
   video: String
@@ -24,102 +23,54 @@ const episodeSchema = new mongoose.Schema({
 const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
+  video: String,       // نخليه عشان ما نخرب القديم
   episodes: [episodeSchema]
-}, { timestamps: true });
+});
 
 const Movie = mongoose.model("Movie", movieSchema);
 
-/* ========================= */
-/* 🎬 Routes */
-/* ========================= */
+/* Routes */
 
-/* جلب جميع المسلسلات */
 app.get("/movies", async (req, res) => {
-  try {
-    const movies = await Movie.find().sort({ createdAt: -1 });
-    res.json(movies);
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching movies" });
-  }
+  const movies = await Movie.find();
+  res.json(movies);
 });
 
-/* إضافة مسلسل */
 app.post("/movies", async (req, res) => {
-  try {
-    const { title, image } = req.body;
-
-    const newMovie = new Movie({
-      title,
-      image,
-      episodes: []
-    });
-
-    await newMovie.save();
-    res.json(newMovie);
-  } catch (err) {
-    res.status(500).json({ error: "Error adding movie" });
-  }
+  const newMovie = new Movie(req.body);
+  await newMovie.save();
+  res.json(newMovie);
 });
 
-/* تعديل مسلسل */
 app.put("/movies/:id", async (req, res) => {
-  try {
-    const { title, image } = req.body;
-
-    const updated = await Movie.findByIdAndUpdate(
-      req.params.id,
-      { title, image },
-      { new: true }
-    );
-
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Error updating movie" });
-  }
+  const updated = await Movie.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(updated);
 });
 
-/* حذف مسلسل */
 app.delete("/movies/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted" });
-  } catch (err) {
-    res.status(500).json({ error: "Error deleting movie" });
-  }
+  await Movie.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
-/* إضافة حلقة */
 app.post("/movies/:id/episodes", async (req, res) => {
-  try {
-    const { name, video } = req.body;
-
-    const movie = await Movie.findById(req.params.id);
-    movie.episodes.push({ name, video });
-
-    await movie.save();
-    res.json(movie);
-  } catch (err) {
-    res.status(500).json({ error: "Error adding episode" });
-  }
+  const movie = await Movie.findById(req.params.id);
+  movie.episodes.push(req.body);
+  await movie.save();
+  res.json(movie);
 });
 
-/* حذف حلقة */
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
-  try {
-    const { seriesId, episodeId } = req.params;
-
-    const updated = await Movie.findByIdAndUpdate(
-      seriesId,
-      { $pull: { episodes: { _id: episodeId } } },
-      { new: true }
-    );
-
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Error deleting episode" });
-  }
+  await Movie.findByIdAndUpdate(
+    req.params.seriesId,
+    { $pull: { episodes: { _id: req.params.episodeId } } }
+  );
+  res.json({ message: "Episode deleted" });
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("AURA Backend Running 🚀");
 });
