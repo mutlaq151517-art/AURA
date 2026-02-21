@@ -4,132 +4,135 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AURA</title>
+
 <style>
 body{
     margin:0;
-    font-family:Arial, sans-serif;
-    background:#0b1d3a;
+    font-family:Arial;
+    background:#0b1d36;
     color:white;
 }
-header{
-    background:#08152b;
-    padding:20px;
-    text-align:center;
-    font-size:30px;
+
+.header{
+    padding:15px;
+    font-size:28px;
     font-weight:bold;
-    letter-spacing:3px;
-    color:#4da6ff;
+    text-align:center;
 }
-.container{
+
+.hero{
+    position:relative;
+    height:60vh;
+    background-size:cover;
+    background-position:center;
+    display:flex;
+    align-items:flex-end;
     padding:20px;
 }
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-    gap:20px;
-}
-.card{
-    background:#102a52;
-    padding:10px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.5);
-    transition:0.3s;
-}
-.card:hover{
-    transform:scale(1.05);
-}
-.card img{
+
+.hero-overlay{
+    background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    position:absolute;
     width:100%;
-    border-radius:8px;
+    height:100%;
+    top:0;
+    left:0;
 }
-button{
-    padding:8px 15px;
-    background:#1e3a8a;
+
+.hero-content{
+    position:relative;
+    z-index:2;
+}
+
+.watch-btn{
+    background:#00c3ff;
     border:none;
+    padding:10px 20px;
+    border-radius:20px;
     color:white;
     cursor:pointer;
-    border-radius:5px;
-    margin-top:5px;
-}
-button:hover{
-    background:#2563eb;
-}
-.admin{
-    margin-top:40px;
-    padding:20px;
-    background:#0e2447;
-    border-radius:10px;
-}
-input{
-    padding:10px;
-    margin:5px 0;
-    width:100%;
-    border:none;
-    border-radius:5px;
-}
-video{
-    width:100%;
-    border-radius:8px;
     margin-top:10px;
+}
+
+.section{
+    padding:20px;
+}
+
+.movies{
+    display:flex;
+    gap:15px;
+    overflow-x:auto;
+}
+
+.movie{
+    min-width:140px;
+    cursor:pointer;
+}
+
+.movie img{
+    width:100%;
+    border-radius:10px;
 }
 </style>
 </head>
+
 <body>
 
-<header>AURA 🎬</header>
+<div class="header">AURA 🎬</div>
 
-<div class="container">
-<h2>الأفلام والمسلسلات</h2>
-<div class="grid" id="movieList"></div>
-
-<div class="admin">
-<h2>لوحة التحكم</h2>
-<input type="text" id="title" placeholder="اسم الفيلم أو المسلسل">
-<input type="text" id="video" placeholder="رابط الفيديو mp4">
-<input type="text" id="image" placeholder="رابط صورة الغلاف">
-<button onclick="addMovie()">إضافة</button>
+<div id="hero" class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h2 id="heroTitle"></h2>
+        <button class="watch-btn" onclick="playHero()">شاهد الآن</button>
+    </div>
 </div>
+
+<div class="section">
+    <h3>الأفلام والمسلسلات</h3>
+    <div class="movies" id="moviesList"></div>
 </div>
 
 <script>
-let movies = JSON.parse(localStorage.getItem("movies")) || [];
 
-function render(){
-const list = document.getElementById("movieList");
-list.innerHTML="";
-movies.forEach((movie,index)=>{
-list.innerHTML+=`
-<div class="card">
-<img src="${movie.image}" alt="poster">
-<h4>${movie.title}</h4>
-<video controls src="${movie.video}"></video>
-<button onclick="deleteMovie(${index})">حذف</button>
-</div>
-`;
+let heroVideo = "";
+
+fetch("https://aura-api-vwl4.onrender.com/movies")
+.then(res => res.json())
+.then(data => {
+
+    if(data.length > 0){
+
+        // أول فيلم يصير الصورة الكبيرة
+        document.getElementById("hero").style.backgroundImage =
+            `url(${data[0].image})`;
+
+        document.getElementById("heroTitle").innerText =
+            data[0].title;
+
+        heroVideo = data[0].video;
+
+        // عرض باقي الأفلام
+        data.forEach(movie => {
+
+            document.getElementById("moviesList").innerHTML += `
+                <div class="movie" onclick="openMovie('${movie.video}')">
+                    <img src="${movie.image}">
+                    <p>${movie.title}</p>
+                </div>
+            `;
+        });
+    }
 });
+
+function openMovie(video){
+    window.open(video, "_blank");
 }
 
-function addMovie(){
-const title=document.getElementById("title").value;
-const video=document.getElementById("video").value;
-const image=document.getElementById("image").value;
-if(title && video && image){
-movies.push({title,video,image});
-localStorage.setItem("movies",JSON.stringify(movies));
-render();
-document.getElementById("title").value="";
-document.getElementById("video").value="";
-document.getElementById("image").value="";
-}
+function playHero(){
+    window.open(heroVideo, "_blank");
 }
 
-function deleteMovie(index){
-movies.splice(index,1);
-localStorage.setItem("movies",JSON.stringify(movies));
-render();
-}
-
-render();
 </script>
 
 </body>
