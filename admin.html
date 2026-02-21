@@ -6,65 +6,38 @@
 <title>AURA - لوحة التحكم</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Cairo", sans-serif;
-}
-
 body {
-  background: linear-gradient(to bottom, #071a2f, #0d2746);
-  color: white;
-  padding: 20px;
+  background:#071a2f;
+  font-family:Arial;
+  color:white;
+  padding:20px;
 }
 
 .container {
-  max-width: 500px;
-  margin: auto;
-  background: #0f2c50;
-  padding: 20px;
-  border-radius: 15px;
+  max-width:500px;
+  margin:auto;
+  background:#0f2c50;
+  padding:20px;
+  border-radius:15px;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  border: none;
+input, select {
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:none;
 }
 
 button {
-  width: 100%;
-  padding: 10px;
-  background: #00bfff;
-  border: none;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.8;
-}
-
-.movie-item {
-  background: #09203a;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-}
-
-.delete-btn {
-  background: red;
-  margin-top: 5px;
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#00bfff;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -72,73 +45,72 @@ button:hover {
 <body>
 
 <div class="container">
-  <h1>🎬 لوحة تحكم AURA</h1>
 
-  <input type="text" id="title" placeholder="اسم الفيلم">
-  <input type="text" id="image" placeholder="رابط الصورة">
-  <input type="text" id="video" placeholder="رابط الفيديو">
+<h2>➕ إضافة مسلسل</h2>
 
-  <button onclick="addMovie()">إضافة الفيلم</button>
+<input type="text" id="title" placeholder="اسم المسلسل">
+<input type="text" id="image" placeholder="رابط الصورة">
+<button onclick="addSeries()">إضافة المسلسل</button>
 
-  <h3 style="margin-top:25px;">الأفلام الحالية</h3>
-  <div id="moviesList"></div>
+<hr style="margin:20px 0;">
+
+<h2>🎬 إضافة حلقة</h2>
+
+<select id="seriesSelect"></select>
+<input type="text" id="episodeName" placeholder="اسم الحلقة">
+<input type="text" id="episodeVideo" placeholder="رابط الحلقة">
+<button onclick="addEpisode()">إضافة الحلقة</button>
+
 </div>
 
 <script>
+
 const API = "https://aura-backend-mpvi.onrender.com/movies";
 
-async function loadMovies() {
+async function loadSeries() {
   const res = await fetch(API);
   const data = await res.json();
 
-  const list = document.getElementById("moviesList");
-  list.innerHTML = "";
+  const select = document.getElementById("seriesSelect");
+  select.innerHTML = "";
 
-  data.forEach(movie => {
-    list.innerHTML += `
-      <div class="movie-item">
-        <b>${movie.title}</b>
-        <button class="delete-btn" onclick="deleteMovie('${movie._id}')">حذف</button>
-      </div>
+  data.forEach(item => {
+    select.innerHTML += `
+      <option value="${item._id}">${item.title}</option>
     `;
   });
 }
 
-async function addMovie() {
+async function addSeries() {
   const title = document.getElementById("title").value;
   const image = document.getElementById("image").value;
-  const video = document.getElementById("video").value;
-
-  if (!title || !image || !video) {
-    alert("عبي كل الحقول 🔴");
-    return;
-  }
 
   await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, image, video })
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ title, image })
   });
 
-  alert("تمت الإضافة بنجاح ✅");
-
-  document.getElementById("title").value = "";
-  document.getElementById("image").value = "";
-  document.getElementById("video").value = "";
-
-  loadMovies();
+  alert("تم إضافة المسلسل ✅");
+  loadSeries();
 }
 
-async function deleteMovie(id) {
-  await fetch(API + "/" + id, {
-    method: "DELETE"
+async function addEpisode() {
+  const id = document.getElementById("seriesSelect").value;
+  const name = document.getElementById("episodeName").value;
+  const video = document.getElementById("episodeVideo").value;
+
+  await fetch(API + "/" + id + "/episodes", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ name, video })
   });
 
-  alert("تم الحذف ✅");
-  loadMovies();
+  alert("تم إضافة الحلقة ✅");
 }
 
-loadMovies();
+loadSeries();
+
 </script>
 
 </body>
