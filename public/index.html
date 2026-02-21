@@ -35,7 +35,6 @@ body::before{
   to{transform:translateY(20px)}
 }
 
-/* Header */
 .header{
   padding:20px;
   font-size:22px;
@@ -45,10 +44,7 @@ body::before{
   text-shadow:0 0 12px rgba(0,191,255,0.7);
 }
 
-/* Section */
-.section{
-  padding:20px;
-}
+.section{ padding:20px; }
 
 .section-title{
   font-size:18px;
@@ -56,7 +52,6 @@ body::before{
   text-shadow:0 0 8px rgba(0,191,255,0.6);
 }
 
-/* Horizontal Scroll */
 .row{
   display:flex;
   gap:18px;
@@ -66,7 +61,6 @@ body::before{
 
 .row::-webkit-scrollbar{ display:none; }
 
-/* Cards */
 .card{
   min-width:160px;
   max-width:160px;
@@ -91,7 +85,6 @@ body::before{
   box-shadow:0 0 25px rgba(0,191,255,0.6);
 }
 
-/* Series Page */
 .series-page{
   display:none;
   animation:fadeIn 0.4s ease;
@@ -153,7 +146,6 @@ body::before{
   text-align:center;
 }
 
-/* Bottom Nav */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -179,6 +171,24 @@ body::before{
 .nav-item:hover{
   color:#00bfff;
   text-shadow:0 0 10px rgba(0,191,255,0.8);
+}
+
+/* 🎬 Video Modal */
+#videoModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.95);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+}
+
+#videoModal iframe{
+  width:95%;
+  max-width:900px;
+  height:500px;
+  border-radius:12px;
 }
 </style>
 </head>
@@ -212,6 +222,16 @@ body::before{
   <div class="episodes-grid" id="episodesList"></div>
 </div>
 
+<!-- 🎬 Video Player Modal -->
+<div id="videoModal">
+  <div>
+    <button onclick="closePlayer()" style="margin-bottom:10px;background:#00bfff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;">
+      ✖ إغلاق
+    </button>
+    <iframe id="videoFrame" frameborder="0" allowfullscreen></iframe>
+  </div>
+</div>
+
 <div class="bottom-nav">
   <div class="nav-item active" onclick="goHome()">🏠<span>الرئيسية</span></div>
   <div class="nav-item">⬇️<span>التحميلات</span></div>
@@ -240,25 +260,25 @@ function renderRows(data){
   popularRow.innerHTML="";
   dramaRow.innerHTML="";
 
-  data.forEach((item,index)=>{
-
-    const card=`
-      <div class="card" onclick="openSeries('${item._id}')">
-        <img src="${item.image}">
-      </div>
-    `;
-
-    mainRow.innerHTML+=card;
-
-    if(index<5){
-      popularRow.innerHTML+=card;
-    }
-
-    if(index%2===0){
-      dramaRow.innerHTML+=card;
-    }
-
+  data.forEach(item=>{
+    mainRow.innerHTML+=createCard(item);
   });
+
+  data.slice(0,5).forEach(item=>{
+    popularRow.innerHTML+=createCard(item);
+  });
+
+  data.slice(5,10).forEach(item=>{
+    dramaRow.innerHTML+=createCard(item);
+  });
+}
+
+function createCard(item){
+  return `
+    <div class="card" onclick="openSeries('${item._id}')">
+      <img src="${item.image}">
+    </div>
+  `;
 }
 
 function openSeries(id){
@@ -290,13 +310,28 @@ function openSeries(id){
   });
 }
 
+function playEpisode(url){
+
+  // دعم Google Drive preview
+  if(url.includes("drive.google.com")){
+    const id = url.split("/d/")[1]?.split("/")[0];
+    if(id){
+      url = "https://drive.google.com/file/d/" + id + "/preview";
+    }
+  }
+
+  document.getElementById("videoFrame").src=url;
+  document.getElementById("videoModal").style.display="flex";
+}
+
+function closePlayer(){
+  document.getElementById("videoFrame").src="";
+  document.getElementById("videoModal").style.display="none";
+}
+
 function goHome(){
   document.getElementById("seriesPage").style.display="none";
   document.getElementById("homeContent").style.display="block";
-}
-
-function playEpisode(url){
-  window.open(url,"_blank");
 }
 
 function goProfile(){
