@@ -6,120 +6,124 @@
 <title>AURA</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Cairo", sans-serif;
-}
-
 body {
-  background: linear-gradient(to bottom, #071a2f, #0d2746);
-  color: white;
+  margin:0;
+  font-family:Arial;
+  background:#071a2f;
+  color:white;
 }
 
-header {
-  padding: 20px;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  color: #00bfff;
+.container {
+  padding:20px;
 }
 
-.hero {
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.hero h1 {
-  font-size: 28px;
-  line-height: 1.5;
-}
-
-.section-title {
-  padding: 0 20px;
-  margin-bottom: 15px;
-  font-size: 18px;
-  opacity: 0.8;
-}
-
-.movies {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  padding: 0 15px 40px;
-}
-
-.card {
-  background: #0f2c50;
-  border-radius: 15px;
-  overflow: hidden;
-  transition: 0.3s;
-  cursor: pointer;
-}
-
-.card:hover {
-  transform: scale(1.05);
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:15px;
 }
 
 .card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
+  width:100%;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-.card-title {
-  padding: 10px;
-  font-size: 14px;
-  text-align: center;
+.episodes-section {
+  display:none;
 }
 
-/* تحسين خاص للموبايل */
-@media (max-width: 500px) {
-  .hero h1 {
-    font-size: 22px;
-  }
+.episode-item {
+  background:#0f2c50;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
 
-  .card img {
-    height: 180px;
-  }
-
-  .movies {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.back-btn {
+  margin-bottom:15px;
+  padding:8px 12px;
+  background:#00bfff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
 </style>
 </head>
+
 <body>
 
-<header>AURA 🎬</header>
+<div class="container">
 
-<div class="hero">
-  <h1>اكتشف أحدث المسلسلات</h1>
+  <!-- قائمة المسلسلات -->
+  <div id="seriesSection">
+    <h2>📺 المسلسلات</h2>
+    <div class="grid" id="seriesGrid"></div>
+  </div>
+
+  <!-- قسم الحلقات -->
+  <div id="episodesSection" class="episodes-section">
+    <button class="back-btn" onclick="goBack()">⬅ رجوع</button>
+    <h2 id="seriesTitle"></h2>
+    <div id="episodesList"></div>
+  </div>
+
 </div>
 
-<h2 class="section-title">المضاف حديثاً</h2>
-
-<div class="movies" id="movies"></div>
-
 <script>
-fetch("https://aura-backend-mpvi.onrender.com/movies")
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("movies");
 
-    data.reverse().forEach(movie => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <img src="${movie.image}" />
-        <div class="card-title">${movie.title}</div>
+const API = "https://aura-backend-mpvi.onrender.com/movies";
+
+async function loadSeries() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const grid = document.getElementById("seriesGrid");
+  grid.innerHTML = "";
+
+  data.forEach(item => {
+
+    // نعرض فقط اللي عنده حلقات
+    if (item.episodes && item.episodes.length > 0) {
+      grid.innerHTML += `
+        <div class="card">
+          <img src="${item.image}" onclick="openSeries(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+        </div>
       `;
-      card.onclick = () => window.open(movie.video, "_blank");
-      container.appendChild(card);
-    });
+    }
+
   });
+}
+
+function openSeries(series) {
+  document.getElementById("seriesSection").style.display = "none";
+  document.getElementById("episodesSection").style.display = "block";
+  document.getElementById("seriesTitle").innerText = series.title;
+
+  const list = document.getElementById("episodesList");
+  list.innerHTML = "";
+
+  series.episodes.forEach(ep => {
+    list.innerHTML += `
+      <div class="episode-item" onclick="playEpisode('${ep.video}')">
+        ${ep.name}
+      </div>
+    `;
+  });
+}
+
+function playEpisode(videoUrl) {
+  window.open(videoUrl, "_blank");
+}
+
+function goBack() {
+  document.getElementById("episodesSection").style.display = "none";
+  document.getElementById("seriesSection").style.display = "block";
+}
+
+loadSeries();
+
 </script>
 
 </body>
