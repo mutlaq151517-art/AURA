@@ -81,6 +81,49 @@ button:hover{
   color:#00bfff;
   text-decoration:none;
 }
+
+.forgot{
+  text-align:left;
+  font-size:13px;
+  margin-bottom:10px;
+  cursor:pointer;
+  color:#00bfff;
+}
+
+.forgot:hover{
+  text-decoration:underline;
+}
+
+/* Modal */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.modal-content{
+  width:90%;
+  max-width:350px;
+  padding:25px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  box-shadow:0 0 25px rgba(0,191,255,0.5);
+  text-align:center;
+}
+
+.modal-content h3{
+  margin-bottom:15px;
+}
+
+.close-btn{
+  margin-top:10px;
+  background:#ff3b3b;
+}
 </style>
 </head>
 
@@ -92,11 +135,23 @@ button:hover{
   <input type="text" id="username" placeholder="اسم المستخدم">
   <input type="password" id="password" placeholder="كلمة المرور">
 
+  <div class="forgot" onclick="openModal()">نسيت كلمة السر؟</div>
+
   <button onclick="login()">دخول</button>
 
   <div class="register-link">
     ما عندك حساب؟ 
     <a href="register.html">إنشاء حساب</a>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal" id="forgotModal">
+  <div class="modal-content">
+    <h3>استرجاع كلمة السر</h3>
+    <input type="email" id="forgotEmail" placeholder="ادخل بريدك الإلكتروني">
+    <button onclick="sendReset()">إرسال الرابط</button>
+    <button class="close-btn" onclick="closeModal()">إغلاق</button>
   </div>
 </div>
 
@@ -118,6 +173,37 @@ async function login(){
     window.location.href="index.html";
   }else{
     alert(data.message || "خطأ في تسجيل الدخول");
+  }
+}
+
+function openModal(){
+  document.getElementById("forgotModal").style.display="flex";
+}
+
+function closeModal(){
+  document.getElementById("forgotModal").style.display="none";
+}
+
+async function sendReset(){
+  const email=document.getElementById("forgotEmail").value.trim();
+  if(!email){
+    alert("أدخل بريدك الإلكتروني");
+    return;
+  }
+
+  const res=await fetch("/forgot-password",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email})
+  });
+
+  const data=await res.json();
+
+  if(res.ok){
+    alert("تم إرسال رابط إعادة التعيين إلى بريدك ✅");
+    closeModal();
+  }else{
+    alert(data.message || "حدث خطأ");
   }
 }
 </script>
