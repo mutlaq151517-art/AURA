@@ -121,6 +121,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
+/* ✅ NEW: Get Logged User Info */
+app.get("/me", verifyToken, async (req, res) => {
+  try{
+    const user = await User.findById(req.userId).select("username");
+    if(!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ username: user.username });
+  }catch(err){
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* =========================
    Progress (Continue Watching)
 ========================= */
