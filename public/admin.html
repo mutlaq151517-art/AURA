@@ -19,7 +19,6 @@ body{
   font-weight:bold;
   text-align:center;
   background:#081f3a;
-  border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 .container{
@@ -33,12 +32,6 @@ body{
   padding:25px;
   border-radius:18px;
   margin-bottom:30px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
-}
-
-.card h3{
-  margin-top:0;
-  margin-bottom:15px;
 }
 
 input{
@@ -49,6 +42,11 @@ input{
   border:none;
   background:#0c3a63;
   color:white;
+}
+
+input[type="file"]{
+  background:#082a4a;
+  padding:10px;
 }
 
 button{
@@ -128,7 +126,8 @@ button{
 
 <script>
 
-const API = "https://aura-backend-mpvi.onrender.com/movies";
+const API_BASE = "https://aura-backend-mpvi.onrender.com";
+const API = API_BASE + "/movies";
 
 async function loadSeries(){
   const res = await fetch(API);
@@ -169,7 +168,7 @@ async function loadSeries(){
 
       <h4>➕ إضافة حلقة</h4>
       <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
-      <input type="text" placeholder="رابط الحلقة" id="epVideo-${series._id}">
+      <input type="file" accept="video/*" id="epVideoFile-${series._id}">
       <input type="text" placeholder="رابط صورة الحلقة (مشهد)" id="epImage-${series._id}">
       <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
 
@@ -177,6 +176,55 @@ async function loadSeries(){
 
     </div>`;
   });
+}
+
+async function addEpisode(id){
+
+  const name = document.getElementById("epName-"+id).value;
+  const fileInput = document.getElementById("epVideoFile-"+id);
+  const image = document.getElementById("epImage-"+id).value;
+
+  const file = fileInput.files[0];
+
+  if(!file){
+    alert("اختر فيديو أولاً");
+    return;
+  }
+
+  try{
+
+    const formData = new FormData();
+    formData.append("video", file);
+
+    const uploadRes = await fetch(API_BASE+"/upload-video", {
+      method: "POST",
+      body: formData
+    });
+
+    const uploadData = await uploadRes.json();
+
+    if(!uploadData.url){
+      alert("فشل رفع الفيديو");
+      return;
+    }
+
+    await fetch(API+"/"+id+"/episodes",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        name,
+        video: uploadData.url,
+        image
+      })
+    });
+
+    alert("تم رفع الحلقة بنجاح 🔥");
+
+    loadSeries();
+
+  }catch(err){
+    alert("حدث خطأ أثناء الرفع");
+  }
 }
 
 async function addSeries(){
@@ -210,25 +258,10 @@ async function deleteSeries(id){
   loadSeries();
 }
 
-async function addEpisode(id){
-  const name=document.getElementById("epName-"+id).value;
-  const video=document.getElementById("epVideo-"+id).value;
-  const image=document.getElementById("epImage-"+id).value;
-
-  await fetch(API+"/"+id+"/episodes",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ name,video,image })
-  });
-
-  loadSeries();
-}
-
 async function deleteEpisode(seriesId,episodeId){
   await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
     method:"DELETE"
   });
-
   loadSeries();
 }
 
