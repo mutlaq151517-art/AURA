@@ -44,11 +44,6 @@ input{
   color:white;
 }
 
-input[type="file"]{
-  background:#082a4a;
-  padding:10px;
-}
-
 button{
   padding:8px 15px;
   border:none;
@@ -58,34 +53,48 @@ button{
   margin-top:5px;
 }
 
-button:disabled{
-  opacity:0.6;
-  cursor:not-allowed;
-}
-
 .add-btn{ background:#00bfff; color:white; }
 .delete-btn{ background:#ff3b3b; color:white; }
 .edit-btn{ background:#ff9800; color:white; }
 
-.progress-container{
+.series-box{
+  background:#0b2a4a;
+  padding:20px;
+  border-radius:15px;
+  margin-top:20px;
+}
+
+.series-title{
+  font-size:18px;
+  margin-bottom:10px;
+  font-weight:bold;
+}
+
+.episodes-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
+  margin-top:15px;
+}
+
+.episode-card{
+  background:#0d3a63;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.episode-card img{
   width:100%;
-  background:#082a4a;
-  border-radius:10px;
-  margin-top:10px;
-  display:none;
+  height:110px;
+  object-fit:cover;
 }
 
-.progress-bar{
-  height:10px;
-  width:0%;
-  background:#00bfff;
-  border-radius:10px;
-  transition:0.2s;
-}
-
-.progress-text{
-  font-size:12px;
-  margin-top:5px;
+.episode-info{
+  padding:8px;
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 </style>
 </head>
@@ -123,84 +132,79 @@ async function loadSeries(){
 
   data.forEach(series=>{
 
+    let episodesHTML="";
+
+    if(series.episodes && series.episodes.length){
+      episodesHTML += `<div class="episodes-grid">`;
+      series.episodes.forEach(ep=>{
+        episodesHTML+=`
+        <div class="episode-card">
+          <img src="${ep.image || series.image}">
+          <div class="episode-info">
+            ${ep.name}
+            <button class="delete-btn" onclick="deleteEpisode('${series._id}','${ep._id}')">حذف</button>
+          </div>
+        </div>`;
+      });
+      episodesHTML += `</div>`;
+    }
+
     list.innerHTML+=`
-    <div style="background:#0b2a4a;padding:20px;border-radius:15px;margin-top:20px;">
-      <div style="font-size:18px;margin-bottom:10px;font-weight:bold;">${series.title}</div>
+    <div class="series-box">
+
+      <div class="series-title">${series.title}</div>
+
+      <input type="text" placeholder="اسم جديد" id="editTitle-${series._id}">
+      <input type="text" placeholder="صورة جديدة" id="editImage-${series._id}">
+      <button class="edit-btn" onclick="updateSeries('${series._id}')">تعديل</button>
+      <button class="delete-btn" onclick="deleteSeries('${series._id}')">حذف المسلسل</button>
+
+      <hr style="opacity:0.2;margin:20px 0;">
 
       <h4>➕ إضافة حلقة</h4>
       <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
-      <input type="file" accept="video/*" id="epVideoFile-${series._id}">
+      <input type="text" placeholder="رابط الحلقة mp4 أو Google Drive" id="epVideo-${series._id}">
       <input type="text" placeholder="رابط صورة الحلقة (مشهد)" id="epImage-${series._id}">
-      <button class="add-btn" id="uploadBtn-${series._id}" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
+      <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
 
-      <div class="progress-container" id="progressContainer-${series._id}">
-        <div class="progress-bar" id="progressBar-${series._id}"></div>
-        <div class="progress-text" id="progressText-${series._id}">0%</div>
-      </div>
+      ${episodesHTML}
+
     </div>`;
   });
 }
 
-function addEpisode(id){
+async function addEpisode(id){
 
   const name = document.getElementById("epName-"+id).value;
-  const fileInput = document.getElementById("epVideoFile-"+id);
+  const videoLink = document.getElementById("epVideo-"+id).value;
   const image = document.getElementById("epImage-"+id).value;
-  const button = document.getElementById("uploadBtn-"+id);
 
-  const file = fileInput.files[0];
-  if(!file){
-    alert("اختر فيديو أولاً");
+  if(!videoLink){
+    alert("حط رابط الفيديو أولاً");
     return;
   }
 
-  const progressContainer = document.getElementById("progressContainer-"+id);
-  const progressBar = document.getElementById("progressBar-"+id);
-  const progressText = document.getElementById("progressText-"+id);
+  let finalVideo = videoLink;
 
-  progressContainer.style.display="block";
-  button.disabled = true;
-
-  const formData = new FormData();
-  formData.append("video", file);
-
-  const xhr = new XMLHttpRequest();
-  xhr.open("POST", API_BASE + "/upload-video", true);
-
-  xhr.upload.onprogress = function(e){
-    if(e.lengthComputable){
-      let percent = Math.round((e.loaded / e.total) * 100);
-      progressBar.style.width = percent + "%";
-      progressText.innerText = percent + "%";
+  if(videoLink.includes("drive.google.com")){
+    const match = videoLink.match(/\/d\/(.*?)\//);
+    if(match && match[1]){
+      finalVideo = "https://drive.google.com/uc?export=download&id=" + match[1];
     }
-  };
+  }
 
-  xhr.onload = async function(){
-    if(xhr.status === 200){
+  await fetch(API+"/"+id+"/episodes",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      name,
+      video: finalVideo,
+      image
+    })
+  });
 
-      const uploadData = JSON.parse(xhr.responseText);
-
-      await fetch(API+"/"+id+"/episodes",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({
-          name,
-          video: uploadData.url,
-          image
-        })
-      });
-
-      progressText.innerText = "تم الرفع ✅";
-      button.disabled = false;
-      loadSeries();
-
-    }else{
-      alert("فشل رفع الفيديو");
-      button.disabled = false;
-    }
-  };
-
-  xhr.send(formData);
+  alert("تمت إضافة الحلقة 🔥");
+  loadSeries();
 }
 
 async function addSeries(){
@@ -211,6 +215,34 @@ async function addSeries(){
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ title,image })
+  });
+
+  loadSeries();
+}
+
+async function updateSeries(id){
+  const title=document.getElementById("editTitle-"+id).value;
+  const image=document.getElementById("editImage-"+id).value;
+
+  await fetch(API+"/"+id,{
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ title,image })
+  });
+
+  loadSeries();
+}
+
+async function deleteSeries(id){
+  await fetch(API+"/"+id,{ method:"DELETE" });
+  loadSeries();
+}
+
+async function deleteEpisode(seriesId,episodeId){
+  if(!confirm("متأكد من حذف الحلقة؟")) return;
+
+  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
+    method:"DELETE"
   });
 
   loadSeries();
