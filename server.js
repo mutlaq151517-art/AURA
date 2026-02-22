@@ -16,9 +16,15 @@ const JWT_SECRET = "AURA_SECRET_KEY_2025";
    MongoDB
 ========================= */
 
-mongoose.connect("YOUR_MONGODB_URL")
+// 🔥 حط رابطك الحقيقي هنا
+mongoose.connect(
+  "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
+)
 .then(() => console.log("MongoDB Connected ✅"))
-.catch(err => console.log(err));
+.catch(err => {
+  console.log("Mongo Error ❌", err);
+  process.exit(1);
+});
 
 /* =========================
    Schemas
@@ -45,7 +51,7 @@ const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
   video: String,
-  freeEpisodesCount: { type: Number, default: 2 }, // 👈 عدد الحلقات المجانية
+  freeEpisodesCount: { type: Number, default: 2 },
   episodes: [episodeSchema]
 });
 
@@ -94,7 +100,8 @@ app.post("/register", async (req, res) => {
     const { username, email, password } = req.body;
 
     const existing = await User.findOne({ $or: [{ username }, { email }] });
-    if(existing) return res.status(400).json({ message: "User already exists" });
+    if(existing)
+      return res.status(400).json({ message: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -122,10 +129,12 @@ app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-    if(!user) return res.status(400).json({ message: "User not found" });
+    if(!user)
+      return res.status(400).json({ message: "User not found" });
 
     const valid = await bcrypt.compare(password, user.password);
-    if(!valid) return res.status(400).json({ message: "Wrong password" });
+    if(!valid)
+      return res.status(400).json({ message: "Wrong password" });
 
     const token = jwt.sign(
       { id: user._id },
@@ -141,39 +150,50 @@ app.post("/login", async (req, res) => {
 });
 
 /* =========================
-   🎬 حماية تشغيل الحلقة
+   🎬 Watch Route (Subscription Protected)
 ========================= */
 
 app.get("/watch/:movieId/:episodeIndex", verifyToken, async (req,res)=>{
-  const { movieId, episodeIndex } = req.params;
+  try{
+    const { movieId, episodeIndex } = req.params;
 
-  const user = await User.findById(req.userId);
-  const movie = await Movie.findById(movieId);
+    const user = await User.findById(req.userId);
+    const movie = await Movie.findById(movieId);
 
-  if(!movie) return res.status(404).json({message:"Movie not found"});
+    if(!movie)
+      return res.status(404).json({message:"Movie not found"});
 
-  const index = parseInt(episodeIndex);
+    const index = parseInt(episodeIndex);
 
-  if(index < movie.freeEpisodesCount){
-    return res.json({ video: movie.episodes[index].video });
+    if(!movie.episodes[index])
+      return res.status(404).json({message:"Episode not found"});
+
+    // 🎁 إذا الحلقة ضمن المجاني
+    if(index < movie.freeEpisodesCount){
+      return res.json({ video: movie.episodes[index].video });
+    }
+
+    // 👑 إذا عنده اشتراك
+    if(
+      user.subscription.type === "lifetime" ||
+      (user.subscription.type === "premium" &&
+       user.subscription.expiresAt &&
+       user.subscription.expiresAt > new Date())
+    ){
+      return res.json({ video: movie.episodes[index].video });
+    }
+
+    return res.status(403).json({message:"Subscription required"});
+
+  }catch(err){
+    res.status(500).json({message:"Server error"});
   }
-
-  if(
-    user.subscription.type === "lifetime" ||
-    (user.subscription.type === "premium" &&
-     user.subscription.expiresAt > new Date())
-  ){
-    return res.json({ video: movie.episodes[index].video });
-  }
-
-  return res.status(403).json({message:"Subscription required"});
 });
 
 /* =========================
    👑 Admin Control
 ========================= */
 
-// تغيير عدد الحلقات المجانية
 app.put("/admin/set-free-episodes", async (req,res)=>{
   const { movieId, count } = req.body;
 
@@ -184,12 +204,12 @@ app.put("/admin/set-free-episodes", async (req,res)=>{
   res.json({message:"Free episodes updated"});
 });
 
-// إعطاء اشتراك لمستخدم
 app.post("/admin/grant-subscription", async (req,res)=>{
   const { username, type, days } = req.body;
 
   const user = await User.findOne({ username });
-  if(!user) return res.status(404).json({message:"User not found"});
+  if(!user)
+    return res.status(404).json({message:"User not found"});
 
   if(type === "lifetime"){
     user.subscription.type = "lifetime";
