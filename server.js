@@ -16,9 +16,7 @@ const JWT_SECRET = "AURA_SECRET_KEY_2025";
    MongoDB
 ========================= */
 
-mongoose.connect(
-  "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
-)
+mongoose.connect("YOUR_MONGODB_URL")
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => console.log(err));
 
@@ -29,8 +27,6 @@ mongoose.connect(
 const profileSchema = new mongoose.Schema({
   name: String,
   color: String,
-
-  // 🔥 لكل ملف سجل مشاهدة خاص فيه
   continueWatching: [
     {
       movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" },
@@ -38,7 +34,6 @@ const profileSchema = new mongoose.Schema({
       currentTime: Number
     }
   ]
-
 }, { _id: true });
 
 const episodeSchema = new mongoose.Schema({
@@ -50,6 +45,7 @@ const movieSchema = new mongoose.Schema({
   title: String,
   image: String,
   video: String,
+  freeEpisodesCount: { type: Number, default: 2 }, // 👈 عدد الحلقات المجانية
   episodes: [episodeSchema]
 });
 
@@ -58,8 +54,13 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
 
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
-  watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
+  subscription: {
+    type: {
+      type: String,
+      default: "free" // free | premium | lifetime
+    },
+    expiresAt: Date
+  },
 
   profiles: [profileSchema]
 });
@@ -97,15 +98,13 @@ app.post("/register", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const colors = ["#ff4d6d","#00b4d8","#8338ec","#06d6a0","#ffbe0b"];
-
     const newUser = new User({
       username,
       email,
       password: hashed,
       profiles: [{
         name: username,
-        color: colors[Math.floor(Math.random()*colors.length)],
+        color: "#00b4d8",
         continueWatching: []
       }]
     });
@@ -141,139 +140,68 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/me", verifyToken, async (req, res) => {
-  const user = await User.findById(req.userId).select("username");
-  res.json({ username: user.username });
-});
-
 /* =========================
-   Profiles
+   🎬 حماية تشغيل الحلقة
 ========================= */
 
-const profileColors = ["#ff4d6d","#00b4d8","#8338ec","#06d6a0","#ffbe0b","#f72585","#3a86ff"];
+app.get("/watch/:movieId/:episodeIndex", verifyToken, async (req,res)=>{
+  const { movieId, episodeIndex } = req.params;
 
-app.get("/profiles", verifyToken, async (req, res) => {
   const user = await User.findById(req.userId);
-  res.json(user.profiles || []);
-});
+  const movie = await Movie.findById(movieId);
 
-app.post("/profiles", verifyToken, async (req, res) => {
-  try{
-    const { name } = req.body;
-    const user = await User.findById(req.userId);
+  if(!movie) return res.status(404).json({message:"Movie not found"});
 
-    if(user.profiles.length >= 5)
-      return res.status(400).json({ message: "Maximum 5 profiles allowed" });
+  const index = parseInt(episodeIndex);
 
-    user.profiles.push({
-      name,
-      color: profileColors[Math.floor(Math.random()*profileColors.length)],
-      continueWatching: []
-    });
-
-    await user.save();
-    res.json({ message: "Profile created ✅" });
-
-  }catch(err){
-    res.status(500).json({ message: "Error creating profile" });
+  if(index < movie.freeEpisodesCount){
+    return res.json({ video: movie.episodes[index].video });
   }
-});
 
-app.put("/profiles/:profileId", verifyToken, async (req, res) => {
-  try{
-    const { name } = req.body;
-    const user = await User.findById(req.userId);
-
-    const profile = user.profiles.id(req.params.profileId);
-    if(!profile)
-      return res.status(404).json({ message: "Profile not found" });
-
-    profile.name = name;
-    await user.save();
-
-    res.json({ message: "Profile updated ✅" });
-
-  }catch(err){
-    res.status(500).json({ message: "Error updating profile" });
+  if(
+    user.subscription.type === "lifetime" ||
+    (user.subscription.type === "premium" &&
+     user.subscription.expiresAt > new Date())
+  ){
+    return res.json({ video: movie.episodes[index].video });
   }
-});
 
-app.delete("/profiles/:profileId", verifyToken, async (req, res) => {
-  try{
-    const user = await User.findById(req.userId);
-
-    if(user.profiles.length <= 1)
-      return res.status(400).json({ message: "Cannot delete last profile" });
-
-    user.profiles = user.profiles.filter(
-      p => p._id.toString() !== req.params.profileId
-    );
-
-    await user.save();
-    res.json({ message: "Profile deleted ✅" });
-
-  }catch(err){
-    res.status(500).json({ message: "Error deleting profile" });
-  }
+  return res.status(403).json({message:"Subscription required"});
 });
 
 /* =========================
-   🔥 Continue Watching (Per Profile)
+   👑 Admin Control
 ========================= */
 
-app.post("/progress", verifyToken, async (req, res) => {
-  try{
-    const { profileId, movieId, episodeId, currentTime } = req.body;
+// تغيير عدد الحلقات المجانية
+app.put("/admin/set-free-episodes", async (req,res)=>{
+  const { movieId, count } = req.body;
 
-    const user = await User.findById(req.userId);
-    const profile = user.profiles.id(profileId);
+  await Movie.findByIdAndUpdate(movieId,{
+    freeEpisodesCount: count
+  });
 
-    if(!profile)
-      return res.status(404).json({ message: "Profile not found" });
-
-    const existing = profile.continueWatching.find(
-      item =>
-        item.movieId.toString() === movieId &&
-        item.episodeId === episodeId
-    );
-
-    if(existing){
-      existing.currentTime = currentTime;
-    }else{
-      profile.continueWatching.push({
-        movieId,
-        episodeId,
-        currentTime
-      });
-    }
-
-    await user.save();
-    res.json({ message: "Progress saved ✅" });
-
-  }catch(err){
-    res.status(500).json({ message: "Error saving progress" });
-  }
+  res.json({message:"Free episodes updated"});
 });
 
-app.get("/progress/:profileId/:movieId/:episodeId", verifyToken, async (req,res)=>{
-  try{
-    const user = await User.findById(req.userId);
-    const profile = user.profiles.id(req.params.profileId);
+// إعطاء اشتراك لمستخدم
+app.post("/admin/grant-subscription", async (req,res)=>{
+  const { username, type, days } = req.body;
 
-    if(!profile)
-      return res.status(404).json({ message:"Profile not found" });
+  const user = await User.findOne({ username });
+  if(!user) return res.status(404).json({message:"User not found"});
 
-    const item = profile.continueWatching.find(
-      p =>
-        p.movieId.toString() === req.params.movieId &&
-        p.episodeId === req.params.episodeId
-    );
-
-    res.json(item || { currentTime: 0 });
-
-  }catch(err){
-    res.status(500).json({ message:"Error fetching progress" });
+  if(type === "lifetime"){
+    user.subscription.type = "lifetime";
+    user.subscription.expiresAt = null;
+  }else{
+    user.subscription.type = "premium";
+    user.subscription.expiresAt =
+      new Date(Date.now() + days*24*60*60*1000);
   }
+
+  await user.save();
+  res.json({message:"Subscription granted"});
 });
 
 /* =========================
