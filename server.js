@@ -4,8 +4,6 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
 
 const app = express();
 app.use(cors());
@@ -27,6 +25,11 @@ mongoose.connect(
 /* =========================
    Schemas
 ========================= */
+
+const profileSchema = new mongoose.Schema({
+  name: String,
+  color: String
+}, { _id: true });
 
 const episodeSchema = new mongoose.Schema({
   name: String,
@@ -56,15 +59,7 @@ const userSchema = new mongoose.Schema({
     }
   ],
 
-  profiles: [
-    {
-      name: String,
-      color: String
-    }
-  ],
-
-  resetToken: String,
-  resetTokenExpiry: Date
+  profiles: [profileSchema]
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -92,47 +87,55 @@ function verifyToken(req, res, next){
 ========================= */
 
 app.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
+  try{
+    const { username, email, password } = req.body;
 
-  const existing = await User.findOne({ $or: [{ username }, { email }] });
-  if(existing) return res.status(400).json({ message: "User already exists" });
+    const existing = await User.findOne({ $or: [{ username }, { email }] });
+    if(existing) return res.status(400).json({ message: "User already exists" });
 
-  const hashed = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-  const colors = ["#ff4d6d","#00b4d8","#8338ec","#06d6a0","#ffbe0b"];
+    const colors = ["#ff4d6d","#00b4d8","#8338ec","#06d6a0","#ffbe0b"];
 
-  const newUser = new User({
-    username,
-    email,
-    password: hashed,
-    profiles: [
-      {
+    const newUser = new User({
+      username,
+      email,
+      password: hashed,
+      profiles: [{
         name: username,
         color: colors[Math.floor(Math.random()*colors.length)]
-      }
-    ]
-  });
+      }]
+    });
 
-  await newUser.save();
-  res.json({ message: "User created ✅" });
+    await newUser.save();
+    res.json({ message: "User created ✅" });
+
+  }catch(err){
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  try{
+    const { username, password } = req.body;
 
-  const user = await User.findOne({ username });
-  if(!user) return res.status(400).json({ message: "User not found" });
+    const user = await User.findOne({ username });
+    if(!user) return res.status(400).json({ message: "User not found" });
 
-  const valid = await bcrypt.compare(password, user.password);
-  if(!valid) return res.status(400).json({ message: "Wrong password" });
+    const valid = await bcrypt.compare(password, user.password);
+    if(!valid) return res.status(400).json({ message: "Wrong password" });
 
-  const token = jwt.sign(
-    { id: user._id },
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+    const token = jwt.sign(
+      { id: user._id },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-  res.json({ token });
+    res.json({ token });
+
+  }catch(err){
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.get("/me", verifyToken, async (req, res) => {
@@ -146,59 +149,71 @@ app.get("/me", verifyToken, async (req, res) => {
 
 const profileColors = ["#ff4d6d","#00b4d8","#8338ec","#06d6a0","#ffbe0b","#f72585","#3a86ff"];
 
-// GET profiles
 app.get("/profiles", verifyToken, async (req, res) => {
   const user = await User.findById(req.userId);
   res.json(user.profiles || []);
 });
 
-// CREATE profile
 app.post("/profiles", verifyToken, async (req, res) => {
-  const { name } = req.body;
-  const user = await User.findById(req.userId);
+  try{
+    const { name } = req.body;
+    const user = await User.findById(req.userId);
 
-  if(user.profiles.length >= 5){
-    return res.status(400).json({ message: "Maximum 5 profiles allowed" });
+    if(user.profiles.length >= 5)
+      return res.status(400).json({ message: "Maximum 5 profiles allowed" });
+
+    user.profiles.push({
+      name,
+      color: profileColors[Math.floor(Math.random()*profileColors.length)]
+    });
+
+    await user.save();
+    res.json({ message: "Profile created ✅" });
+
+  }catch(err){
+    res.status(500).json({ message: "Error creating profile" });
   }
-
-  user.profiles.push({
-    name,
-    color: profileColors[Math.floor(Math.random()*profileColors.length)]
-  });
-
-  await user.save();
-  res.json({ message: "Profile created ✅" });
 });
 
-// UPDATE profile
 app.put("/profiles/:profileId", verifyToken, async (req, res) => {
-  const { name } = req.body;
-  const user = await User.findById(req.userId);
+  try{
+    const { name } = req.body;
+    const user = await User.findById(req.userId);
 
-  const profile = user.profiles.id(req.params.profileId);
-  if(!profile) return res.status(404).json({ message: "Profile not found" });
+    const index = user.profiles.findIndex(
+      p => p._id.toString() === req.params.profileId
+    );
 
-  profile.name = name;
-  await user.save();
+    if(index === -1)
+      return res.status(404).json({ message: "Profile not found" });
 
-  res.json({ message: "Profile updated ✅" });
+    user.profiles[index].name = name;
+
+    await user.save();
+    res.json({ message: "Profile updated ✅" });
+
+  }catch(err){
+    res.status(500).json({ message: "Error updating profile" });
+  }
 });
 
-// DELETE profile
 app.delete("/profiles/:profileId", verifyToken, async (req, res) => {
-  const user = await User.findById(req.userId);
+  try{
+    const user = await User.findById(req.userId);
 
-  if(user.profiles.length <= 1){
-    return res.status(400).json({ message: "Cannot delete last profile" });
+    if(user.profiles.length <= 1)
+      return res.status(400).json({ message: "Cannot delete last profile" });
+
+    user.profiles = user.profiles.filter(
+      p => p._id.toString() !== req.params.profileId
+    );
+
+    await user.save();
+    res.json({ message: "Profile deleted ✅" });
+
+  }catch(err){
+    res.status(500).json({ message: "Error deleting profile" });
   }
-
-  const profile = user.profiles.id(req.params.profileId);
-  if(!profile) return res.status(404).json({ message: "Profile not found" });
-
-  profile.remove();
-  await user.save();
-
-  res.json({ message: "Profile deleted ✅" });
 });
 
 /* =========================
@@ -208,12 +223,6 @@ app.delete("/profiles/:profileId", verifyToken, async (req, res) => {
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
-});
-
-app.post("/movies", async (req, res) => {
-  const newMovie = new Movie(req.body);
-  await newMovie.save();
-  res.json(newMovie);
 });
 
 /* =========================
