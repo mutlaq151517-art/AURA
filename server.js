@@ -44,8 +44,10 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   email: { type: String, unique: true },
   password: String,
+
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
   watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
+
   continueWatching: [
     {
       movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" },
@@ -53,6 +55,14 @@ const userSchema = new mongoose.Schema({
       currentTime: Number
     }
   ],
+
+  /* 🔥 Profiles System */
+  profiles: [
+    {
+      name: String
+    }
+  ],
+
   resetToken: String,
   resetTokenExpiry: Date
 });
@@ -105,7 +115,8 @@ app.post("/register", async (req, res) => {
     const newUser = new User({
       username,
       email,
-      password: hashed
+      password: hashed,
+      profiles: [{ name: username }] // أول ملف تلقائي
     });
 
     await newUser.save();
@@ -140,63 +151,38 @@ app.post("/login", async (req, res) => {
 });
 
 /* =========================
-   Forgot Password
-========================= */
-
-app.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  const token = crypto.randomBytes(32).toString("hex");
-
-  user.resetToken = token;
-  user.resetTokenExpiry = Date.now() + 1000 * 60 * 15;
-  await user.save();
-
-  const resetLink = `https://aura-backend-mpvi.onrender.com/reset-password/${token}`;
-
-  await transporter.sendMail({
-    to: email,
-    subject: "AURA Reset Password",
-    html: `
-      <h2>إعادة تعيين كلمة المرور</h2>
-      <p>اضغط الرابط التالي:</p>
-      <a href="${resetLink}">${resetLink}</a>
-      <p>صالح لمدة 15 دقيقة</p>
-    `
-  });
-
-  res.json({ message: "Reset email sent ✅" });
-});
-
-app.post("/reset-password/:token", async (req, res) => {
-  const user = await User.findOne({
-    resetToken: req.params.token,
-    resetTokenExpiry: { $gt: Date.now() }
-  });
-
-  if (!user) return res.status(400).json({ message: "Invalid or expired token" });
-
-  const hashed = await bcrypt.hash(req.body.password, 10);
-
-  user.password = hashed;
-  user.resetToken = undefined;
-  user.resetTokenExpiry = undefined;
-
-  await user.save();
-
-  res.json({ message: "Password updated ✅" });
-});
-
-/* =========================
    Logged User Info
 ========================= */
 
 app.get("/me", verifyToken, async (req, res) => {
   const user = await User.findById(req.userId).select("username");
   res.json({ username: user.username });
+});
+
+/* =========================
+   Profiles API
+========================= */
+
+app.get("/profiles", verifyToken, async (req, res) => {
+  const user = await User.findById(req.userId);
+  res.json(user.profiles || []);
+});
+
+app.post("/profiles", verifyToken, async (req, res) => {
+  const { name } = req.body;
+
+  const user = await User.findById(req.userId);
+
+  if (!user.profiles) user.profiles = [];
+
+  if (user.profiles.length >= 5) {
+    return res.status(400).json({ message: "Maximum 5 profiles allowed" });
+  }
+
+  user.profiles.push({ name });
+  await user.save();
+
+  res.json({ message: "Profile created ✅" });
 });
 
 /* =========================
@@ -249,6 +235,10 @@ app.post("/movies", async (req, res) => {
   await newMovie.save();
   res.json(newMovie);
 });
+
+/* =========================
+   Static Files
+========================= */
 
 app.use(express.static(path.join(__dirname, "public")));
 
