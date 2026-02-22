@@ -1,190 +1,6 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AURA</title>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:radial-gradient(circle at top,#0b1f38,#06121f 60%);
-  color:white;
-  overflow-x:hidden;
-}
-
-.header{
-  text-align:center;
-  padding:25px;
-  font-size:28px;
-  font-weight:bold;
-  letter-spacing:2px;
-  text-shadow:0 0 25px #00bfff;
-}
-
-.section{
-  padding:30px 0;
-}
-
-.section-title{
-  padding:0 25px;
-  font-size:20px;
-  margin-bottom:20px;
-  text-shadow:0 0 15px rgba(0,191,255,0.6);
-}
-
-.slider{
-  display:flex;
-  gap:40px;
-  padding:20px 40px;
-  overflow-x:auto;
-  scroll-behavior:smooth;
-  perspective:1200px;
-}
-
-.slider::-webkit-scrollbar{ display:none; }
-
-.card{
-  min-width:220px;
-  height:330px;
-  border-radius:25px;
-  overflow:hidden;
-  position:relative;
-  transition:0.6s ease;
-  cursor:pointer;
-  background:#000;
-}
-
-.card img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  border-radius:25px;
-}
-
-.card:hover{
-  transform:scale(1.08);
-  box-shadow:
-    0 0 30px rgba(0,191,255,0.9),
-    0 0 80px rgba(0,191,255,0.6);
-}
-
-/* ===== Overlay ===== */
-
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.96);
-  backdrop-filter:blur(25px);
-  z-index:9999;
-  overflow-y:auto;
-  padding:40px 20px 100px;
-}
-
-/* 🎬 بطاقات بالطول */
-
-.episodes-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:25px;
-  margin-top:40px;
-}
-
-.episode-card{
-  position:relative;
-  border-radius:25px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:0.4s;
-  background:#000;
-  box-shadow:0 0 25px rgba(0,191,255,0.25);
-}
-
-.episode-card img{
-  width:100%;
-  height:320px;
-  object-fit:contain; /* الصورة كاملة */
-  background:#000;
-}
-
-.episode-card:hover{
-  transform:translateY(-8px) scale(1.05);
-  box-shadow:
-    0 0 40px rgba(0,191,255,0.9),
-    0 0 90px rgba(0,191,255,0.4);
-}
-
-/* رقم الحلقة واضح */
-
-.episode-number{
-  position:absolute;
-  top:12px;
-  left:12px;
-  background:linear-gradient(45deg,#00bfff,#008cff);
-  padding:6px 14px;
-  border-radius:20px;
-  font-size:13px;
-  font-weight:bold;
-  box-shadow:0 0 15px rgba(0,191,255,0.8);
-}
-
-/* زر تشغيل بسيط */
-.play-badge{
-  position:absolute;
-  bottom:15px;
-  right:15px;
-  background:rgba(0,0,0,0.7);
-  padding:6px 12px;
-  border-radius:15px;
-  font-size:12px;
-  backdrop-filter:blur(10px);
-}
-
-.close-btn{
-  margin-top:50px;
-  background:linear-gradient(45deg,#00bfff,#008cff);
-  border:none;
-  padding:14px 35px;
-  border-radius:30px;
-  color:white;
-  cursor:pointer;
-  font-size:15px;
-  box-shadow:0 0 25px rgba(0,191,255,0.8);
-}
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:rgba(7,26,47,0.95);
-  display:flex;
-  justify-content:space-around;
-  padding:15px 0;
-  backdrop-filter:blur(10px);
-}
-.bottom-nav div{ cursor:pointer; }
-
-</style>
-</head>
-
-<body>
-
-<div class="header">🌙 AURA</div>
-
-<div class="section">
-  <div class="section-title">🔥 جديد الآن</div>
-  <div class="slider" id="seriesRow"></div>
-</div>
-
-<div class="bottom-nav">
-  <div onclick="location.reload()">🏠</div>
-  <div onclick="window.location.href='settings.html'">⚙️</div>
-  <div onclick="window.location.href='account.html'">👤</div>
-</div>
-
 <script>
-const API="https://aura-backend-mpvi.onrender.com/movies";
+const API_BASE="https://aura-backend-mpvi.onrender.com";
+const API=API_BASE+"/movies";
 let allSeries=[];
 
 async function loadSeries(){
@@ -221,17 +37,23 @@ function openSeries(id){
       ${
         series.episodes && series.episodes.length
         ? series.episodes.map((ep,index)=>`
-            <div class="episode-card" onclick="playVideo('${ep.video}')">
+            <div class="episode-card" 
+                 onclick="handlePlay('${series._id}', ${index})">
               <img src="${ep.image || series.image}">
               <div class="episode-number">الحلقة ${index+1}</div>
-              <div class="play-badge">▶ تشغيل</div>
+              ${
+                index < 2 
+                ? `<div class="play-badge">▶ مجاني</div>`
+                : `<div class="play-badge">🔒 اشتراك</div>`
+              }
             </div>
           `).join("")
         : `
-            <div class="episode-card" onclick="playVideo('${series.video}')">
+            <div class="episode-card"
+                 onclick="handlePlay('${series._id}', 0)">
               <img src="${series.image}">
               <div class="episode-number">الحلقة 1</div>
-              <div class="play-badge">▶ تشغيل</div>
+              <div class="play-badge">▶ مجاني</div>
             </div>
           `
       }
@@ -245,6 +67,35 @@ function openSeries(id){
   `;
 
   document.body.appendChild(overlay);
+}
+
+async function handlePlay(movieId, episodeIndex){
+  const token=localStorage.getItem("token");
+
+  if(!token){
+    alert("سجل دخول أولاً");
+    return;
+  }
+
+  try{
+    const res=await fetch(
+      `${API_BASE}/watch/${movieId}/${episodeIndex}`,
+      {
+        headers:{ Authorization: token }
+      }
+    );
+
+    if(res.status===403){
+      alert("هذه الحلقة للمشتركين فقط 🔒");
+      return;
+    }
+
+    const data=await res.json();
+    playVideo(data.video);
+
+  }catch(err){
+    alert("خطأ في التشغيل");
+  }
 }
 
 function playVideo(url){
@@ -270,6 +121,3 @@ function playVideo(url){
 
 loadSeries();
 </script>
-
-</body>
-</html>
