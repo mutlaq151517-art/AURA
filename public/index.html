@@ -4,10 +4,27 @@ const API=API_BASE+"/movies";
 let allSeries=[];
 
 async function loadSeries(){
-  const res=await fetch(API);
-  const data=await res.json();
-  allSeries=data;
-  renderSeries(data);
+  try{
+    const res = await fetch(API);
+
+    if(!res.ok){
+      throw new Error("Server not responding");
+    }
+
+    const data = await res.json();
+
+    if(!Array.isArray(data)){
+      throw new Error("Invalid data");
+    }
+
+    allSeries = data;
+    renderSeries(data);
+
+  }catch(err){
+    console.error("LOAD ERROR:", err);
+    document.getElementById("seriesRow").innerHTML =
+      "<p style='padding:20px'>⚠️ السيرفر يتأخر حالياً... حاول بعد ثواني</p>";
+  }
 }
 
 function renderSeries(data){
@@ -41,21 +58,12 @@ function openSeries(id){
                  onclick="handlePlay('${series._id}', ${index})">
               <img src="${ep.image || series.image}">
               <div class="episode-number">الحلقة ${index+1}</div>
-              ${
-                index < 2 
-                ? `<div class="play-badge">▶ مجاني</div>`
-                : `<div class="play-badge">🔒 اشتراك</div>`
-              }
+              <div class="play-badge">
+                ${index < 2 ? "▶ مجاني" : "🔒 اشتراك"}
+              </div>
             </div>
           `).join("")
-        : `
-            <div class="episode-card"
-                 onclick="handlePlay('${series._id}', 0)">
-              <img src="${series.image}">
-              <div class="episode-number">الحلقة 1</div>
-              <div class="play-badge">▶ مجاني</div>
-            </div>
-          `
+        : ""
       }
     </div>
 
@@ -90,11 +98,15 @@ async function handlePlay(movieId, episodeIndex){
       return;
     }
 
+    if(!res.ok){
+      throw new Error("Watch failed");
+    }
+
     const data=await res.json();
     playVideo(data.video);
 
   }catch(err){
-    alert("خطأ في التشغيل");
+    alert("السيرفر مشغول حالياً... حاول بعد لحظة");
   }
 }
 
