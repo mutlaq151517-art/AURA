@@ -16,7 +16,6 @@ const JWT_SECRET = "AURA_SECRET_KEY_2025";
    MongoDB
 ========================= */
 
-// 🔥 حط رابطك الحقيقي هنا
 mongoose.connect(
   "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
 )
@@ -59,15 +58,10 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   email: { type: String, unique: true },
   password: String,
-
   subscription: {
-    type: {
-      type: String,
-      default: "free" // free | premium | lifetime
-    },
+    type: { type: String, default: "free" },
     expiresAt: Date
   },
-
   profiles: [profileSchema]
 });
 
@@ -90,6 +84,17 @@ function verifyToken(req, res, next){
     return res.status(403).json({ message: "Invalid token" });
   }
 }
+
+/* =========================
+   Static Files (المهم 🔥)
+========================= */
+
+app.use(express.static(path.join(__dirname, "public")));
+
+// 👇 هذا هو السطر اللي كان ناقص
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 /* =========================
    Auth
@@ -150,7 +155,7 @@ app.post("/login", async (req, res) => {
 });
 
 /* =========================
-   🎬 Watch Route (Subscription Protected)
+   Watch Route
 ========================= */
 
 app.get("/watch/:movieId/:episodeIndex", verifyToken, async (req,res)=>{
@@ -168,12 +173,10 @@ app.get("/watch/:movieId/:episodeIndex", verifyToken, async (req,res)=>{
     if(!movie.episodes[index])
       return res.status(404).json({message:"Episode not found"});
 
-    // 🎁 إذا الحلقة ضمن المجاني
     if(index < movie.freeEpisodesCount){
       return res.json({ video: movie.episodes[index].video });
     }
 
-    // 👑 إذا عنده اشتراك
     if(
       user.subscription.type === "lifetime" ||
       (user.subscription.type === "premium" &&
@@ -191,40 +194,6 @@ app.get("/watch/:movieId/:episodeIndex", verifyToken, async (req,res)=>{
 });
 
 /* =========================
-   👑 Admin Control
-========================= */
-
-app.put("/admin/set-free-episodes", async (req,res)=>{
-  const { movieId, count } = req.body;
-
-  await Movie.findByIdAndUpdate(movieId,{
-    freeEpisodesCount: count
-  });
-
-  res.json({message:"Free episodes updated"});
-});
-
-app.post("/admin/grant-subscription", async (req,res)=>{
-  const { username, type, days } = req.body;
-
-  const user = await User.findOne({ username });
-  if(!user)
-    return res.status(404).json({message:"User not found"});
-
-  if(type === "lifetime"){
-    user.subscription.type = "lifetime";
-    user.subscription.expiresAt = null;
-  }else{
-    user.subscription.type = "premium";
-    user.subscription.expiresAt =
-      new Date(Date.now() + days*24*60*60*1000);
-  }
-
-  await user.save();
-  res.json({message:"Subscription granted"});
-});
-
-/* =========================
    Movies
 ========================= */
 
@@ -234,10 +203,8 @@ app.get("/movies", async (req, res) => {
 });
 
 /* =========================
-   Static
+   Start Server
 ========================= */
-
-app.use(express.static(path.join(__dirname, "public")));
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
