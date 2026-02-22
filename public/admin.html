@@ -86,12 +86,14 @@ button{
   background:#0d3a63;
   border-radius:12px;
   overflow:hidden;
+  position:relative;
 }
 
 .episode-card img{
   width:100%;
   height:110px;
   object-fit:cover;
+  pointer-events:none; /* 🔥 هذا يمنع الصورة من تعطيل الزر */
 }
 
 .episode-info{
@@ -100,174 +102,9 @@ button{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  position:relative;
+  z-index:2; /* 🔥 يخلي الزر فوق الصورة */
 }
 </style>
 </head>
-
 <body>
-
-<div class="header">🎬 لوحة تحكم AURA</div>
-
-<div class="container">
-
-<div class="card">
-<h3>➕ إضافة مسلسل جديد</h3>
-<input type="text" id="title" placeholder="اسم المسلسل">
-<input type="text" id="image" placeholder="رابط صورة المسلسل">
-<button class="add-btn" onclick="addSeries()">إضافة المسلسل</button>
-</div>
-
-<div class="card">
-<h3>📺 إدارة المسلسلات</h3>
-<div id="seriesList"></div>
-</div>
-
-</div>
-
-<script>
-
-const API_BASE = "https://aura-backend-mpvi.onrender.com";
-const API = API_BASE + "/movies";
-
-async function loadSeries(){
-  const res = await fetch(API);
-  const data = await res.json();
-  const list = document.getElementById("seriesList");
-  list.innerHTML="";
-
-  data.forEach(series=>{
-
-    let episodesHTML="";
-
-    if(series.episodes){
-      episodesHTML += `<div class="episodes-grid">`;
-      series.episodes.forEach(ep=>{
-        episodesHTML+=`
-        <div class="episode-card">
-          <img src="${ep.image || series.image}">
-          <div class="episode-info">
-            ${ep.name}
-            <button class="delete-btn" onclick="deleteEpisode('${series._id}','${ep._id}')">حذف</button>
-          </div>
-        </div>`;
-      });
-      episodesHTML += `</div>`;
-    }
-
-    list.innerHTML+=`
-    <div class="series-box">
-
-      <div class="series-title">${series.title}</div>
-
-      <input type="text" placeholder="اسم جديد" id="editTitle-${series._id}">
-      <input type="text" placeholder="صورة جديدة" id="editImage-${series._id}">
-      <button class="edit-btn" onclick="updateSeries('${series._id}')">تعديل</button>
-      <button class="delete-btn" onclick="deleteSeries('${series._id}')">حذف المسلسل</button>
-
-      <hr style="opacity:0.2;margin:20px 0;">
-
-      <h4>➕ إضافة حلقة</h4>
-      <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
-      <input type="file" accept="video/*" id="epVideoFile-${series._id}">
-      <input type="text" placeholder="رابط صورة الحلقة (مشهد)" id="epImage-${series._id}">
-      <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
-
-      ${episodesHTML}
-
-    </div>`;
-  });
-}
-
-async function addEpisode(id){
-
-  const name = document.getElementById("epName-"+id).value;
-  const fileInput = document.getElementById("epVideoFile-"+id);
-  const image = document.getElementById("epImage-"+id).value;
-
-  const file = fileInput.files[0];
-
-  if(!file){
-    alert("اختر فيديو أولاً");
-    return;
-  }
-
-  try{
-
-    const formData = new FormData();
-    formData.append("video", file);
-
-    const uploadRes = await fetch(API_BASE+"/upload-video", {
-      method: "POST",
-      body: formData
-    });
-
-    const uploadData = await uploadRes.json();
-
-    if(!uploadData.url){
-      alert("فشل رفع الفيديو");
-      return;
-    }
-
-    await fetch(API+"/"+id+"/episodes",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        name,
-        video: uploadData.url,
-        image
-      })
-    });
-
-    alert("تم رفع الحلقة بنجاح 🔥");
-
-    loadSeries();
-
-  }catch(err){
-    alert("حدث خطأ أثناء الرفع");
-  }
-}
-
-async function addSeries(){
-  const title=document.getElementById("title").value;
-  const image=document.getElementById("image").value;
-
-  await fetch(API,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ title,image })
-  });
-
-  loadSeries();
-}
-
-async function updateSeries(id){
-  const title=document.getElementById("editTitle-"+id).value;
-  const image=document.getElementById("editImage-"+id).value;
-
-  await fetch(API+"/"+id,{
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ title,image })
-  });
-
-  loadSeries();
-}
-
-async function deleteSeries(id){
-  await fetch(API+"/"+id,{ method:"DELETE" });
-  loadSeries();
-}
-
-async function deleteEpisode(seriesId,episodeId){
-  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
-    method:"DELETE"
-  });
-  loadSeries();
-}
-
-loadSeries();
-
-</script>
-
-</body>
-</html>
