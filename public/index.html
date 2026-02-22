@@ -64,7 +64,6 @@ body::before{
 
 .row::-webkit-scrollbar{ display:none; }
 
-/* 🔥 التعديل هنا */
 .card{
   min-width:180px;
   max-width:180px;
@@ -77,14 +76,12 @@ body::before{
 
 .card img{
   width:100%;
-  height:270px;
+  aspect-ratio:2/3;
   object-fit:cover;
   display:block;
 }
 
-.card:hover{
-  transform:scale(1.05);
-}
+.card:hover{ transform:scale(1.05); }
 
 .series-page{ display:none; }
 
@@ -121,7 +118,7 @@ body::before{
 
 .episode-card img{
   width:100%;
-  height:220px;
+  aspect-ratio:16/9;
   object-fit:cover;
 }
 
@@ -203,16 +200,20 @@ body::before{
 </div>
 
 <script>
-/* سكربتك نفسه بدون تغيير */
 const API_BASE="https://aura-backend-mpvi.onrender.com";
 const MOVIES_API=API_BASE+"/movies";
+
 let allSeries=[];
+let saveInterval=null;
+
 async function loadSeries(){
   const res=await fetch(MOVIES_API);
   const data=await res.json();
   allSeries=data;
   renderSeries(data);
+  loadContinueWatching();
 }
+
 function renderSeries(data){
   const row=document.getElementById("seriesRow");
   row.innerHTML="";
@@ -223,6 +224,7 @@ function renderSeries(data){
       </div>`;
   });
 }
+
 function searchSeries(){
   const value=document.getElementById("searchInput").value.toLowerCase();
   const filtered=allSeries.filter(item=>
@@ -230,20 +232,116 @@ function searchSeries(){
   );
   renderSeries(filtered);
 }
+
 function openSeries(id){
   const series=allSeries.find(s=>s._id===id);
   if(!series) return;
+
   document.getElementById("homeContent").style.display="none";
   document.getElementById("seriesPage").style.display="block";
   document.getElementById("seriesTitle").innerText=series.title;
+
+  const list=document.getElementById("episodesList");
+  list.innerHTML="";
+
+  let episodes=series.episodes;
+  if((!episodes||episodes.length===0)&&series.video){
+    episodes=[{_id:"ep1",name:"الحلقة 1",video:series.video,image:series.image}];
+  }
+
+  episodes.forEach(ep=>{
+    list.innerHTML+=`
+      <div class="episode-card"
+      onclick="playEpisode('${series._id}','${ep._id}','${ep.video}')">
+        <img src="${ep.image||series.image}">
+        <div class="episode-title">${ep.name}</div>
+      </div>`;
+  });
 }
+
+async function playEpisode(movieId,episodeId,url){
+  const token=localStorage.getItem("token");
+  const profileId=localStorage.getItem("profileId");
+
+  const video=document.getElementById("videoPlayer");
+  video.src=url;
+  document.getElementById("videoModal").style.display="flex";
+
+  if(token && profileId){
+    const res=await fetch(
+      `${API_BASE}/progress/${profileId}/${movieId}/${episodeId}`,
+      { headers:{Authorization:token}}
+    );
+    const data=await res.json();
+    if(data.currentTime){
+      video.currentTime=data.currentTime;
+    }
+  }
+
+  video.onplay=()=>{
+    saveInterval=setInterval(()=>{
+      if(token && profileId){
+        fetch(API_BASE+"/progress",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            Authorization:token
+          },
+          body:JSON.stringify({
+            profileId,
+            movieId,
+            episodeId,
+            currentTime:video.currentTime
+          })
+        });
+      }
+    },5000);
+  };
+}
+
+function closePlayer(){
+  clearInterval(saveInterval);
+  document.getElementById("videoPlayer").src="";
+  document.getElementById("videoModal").style.display="none";
+  loadContinueWatching();
+}
+
 function goHome(){
   document.getElementById("seriesPage").style.display="none";
   document.getElementById("homeContent").style.display="block";
 }
+
 function goProfile(){
   window.location.href="account.html";
 }
+
+async function loadContinueWatching(){
+  const token=localStorage.getItem("token");
+  const profileId=localStorage.getItem("profileId");
+  if(!token || !profileId) return;
+
+  const res=await fetch(API_BASE+"/profiles",{
+    headers:{Authorization:token}
+  });
+
+  const profiles=await res.json();
+  const profile=profiles.find(p=>p._id===profileId);
+  if(!profile || !profile.continueWatching) return;
+
+  const row=document.getElementById("continueRow");
+  row.innerHTML="";
+
+  profile.continueWatching.forEach(item=>{
+    const movie=allSeries.find(m=>m._id===item.movieId);
+    if(movie){
+      row.innerHTML+=`
+        <div class="card" onclick="openSeries('${movie._id}')">
+          <img src="${movie.image}">
+        </div>`;
+    }
+  });
+}
+
 loadSeries();
 </script>
 
