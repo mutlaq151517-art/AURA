@@ -28,7 +28,17 @@ mongoose.connect(
 
 const profileSchema = new mongoose.Schema({
   name: String,
-  color: String
+  color: String,
+
+  // 🔥 لكل ملف سجل مشاهدة خاص فيه
+  continueWatching: [
+    {
+      movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" },
+      episodeId: String,
+      currentTime: Number
+    }
+  ]
+
 }, { _id: true });
 
 const episodeSchema = new mongoose.Schema({
@@ -50,14 +60,6 @@ const userSchema = new mongoose.Schema({
 
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
   watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
-
-  continueWatching: [
-    {
-      movieId: { type: mongoose.Schema.Types.ObjectId, ref: "Movie" },
-      episodeId: String,
-      currentTime: Number
-    }
-  ],
 
   profiles: [profileSchema]
 });
@@ -103,7 +105,8 @@ app.post("/register", async (req, res) => {
       password: hashed,
       profiles: [{
         name: username,
-        color: colors[Math.floor(Math.random()*colors.length)]
+        color: colors[Math.floor(Math.random()*colors.length)],
+        continueWatching: []
       }]
     });
 
@@ -164,7 +167,8 @@ app.post("/profiles", verifyToken, async (req, res) => {
 
     user.profiles.push({
       name,
-      color: profileColors[Math.floor(Math.random()*profileColors.length)]
+      color: profileColors[Math.floor(Math.random()*profileColors.length)],
+      continueWatching: []
     });
 
     await user.save();
@@ -180,16 +184,13 @@ app.put("/profiles/:profileId", verifyToken, async (req, res) => {
     const { name } = req.body;
     const user = await User.findById(req.userId);
 
-    const index = user.profiles.findIndex(
-      p => p._id.toString() === req.params.profileId
-    );
-
-    if(index === -1)
+    const profile = user.profiles.id(req.params.profileId);
+    if(!profile)
       return res.status(404).json({ message: "Profile not found" });
 
-    user.profiles[index].name = name;
-
+    profile.name = name;
     await user.save();
+
     res.json({ message: "Profile updated ✅" });
 
   }catch(err){
@@ -213,6 +214,65 @@ app.delete("/profiles/:profileId", verifyToken, async (req, res) => {
 
   }catch(err){
     res.status(500).json({ message: "Error deleting profile" });
+  }
+});
+
+/* =========================
+   🔥 Continue Watching (Per Profile)
+========================= */
+
+app.post("/progress", verifyToken, async (req, res) => {
+  try{
+    const { profileId, movieId, episodeId, currentTime } = req.body;
+
+    const user = await User.findById(req.userId);
+    const profile = user.profiles.id(profileId);
+
+    if(!profile)
+      return res.status(404).json({ message: "Profile not found" });
+
+    const existing = profile.continueWatching.find(
+      item =>
+        item.movieId.toString() === movieId &&
+        item.episodeId === episodeId
+    );
+
+    if(existing){
+      existing.currentTime = currentTime;
+    }else{
+      profile.continueWatching.push({
+        movieId,
+        episodeId,
+        currentTime
+      });
+    }
+
+    await user.save();
+    res.json({ message: "Progress saved ✅" });
+
+  }catch(err){
+    res.status(500).json({ message: "Error saving progress" });
+  }
+});
+
+app.get("/progress/:profileId/:movieId/:episodeId", verifyToken, async (req,res)=>{
+  try{
+    const user = await User.findById(req.userId);
+    const profile = user.profiles.id(req.params.profileId);
+
+    if(!profile)
+      return res.status(404).json({ message:"Profile not found" });
+
+    const item = profile.continueWatching.find(
+      p =>
+        p.movieId.toString() === req.params.movieId &&
+        p.episodeId === req.params.episodeId
+    );
+
+    res.json(item || { currentTime: 0 });
+
+  }catch(err){
+    res.status(500).json({ message:"Error fetching progress" });
   }
 });
 
