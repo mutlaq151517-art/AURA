@@ -11,37 +11,40 @@ body{
   font-family:Arial, sans-serif;
   background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
   color:white;
-  padding-bottom:90px;
+  padding-bottom:130px;
 }
 
+/* ===== Header ===== */
 .header{
-  padding:20px;
+  padding:25px;
   text-align:center;
-  font-size:22px;
+  font-size:24px;
   font-weight:bold;
-  text-shadow:0 0 12px rgba(0,191,255,0.8);
+  text-shadow:0 0 18px rgba(0,191,255,0.8);
 }
 
+/* ===== Container ===== */
 .container{
   padding:30px 20px;
   text-align:center;
 }
 
 .card{
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(15px);
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(20px);
   padding:30px;
-  border-radius:20px;
-  box-shadow:0 0 30px rgba(0,191,255,0.3);
+  border-radius:25px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.08);
 }
 
-/* Profiles */
+/* ===== Profiles ===== */
 .profiles-container{
   display:flex;
   justify-content:center;
-  gap:20px;
+  gap:25px;
   flex-wrap:wrap;
-  margin-bottom:25px;
+  margin-bottom:30px;
 }
 
 .profile-wrapper{
@@ -49,13 +52,13 @@ body{
 }
 
 .profile-circle{
-  width:75px;
-  height:75px;
+  width:85px;
+  height:85px;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px;
+  font-size:24px;
   font-weight:bold;
   cursor:pointer;
   transition:0.3s;
@@ -63,8 +66,8 @@ body{
 }
 
 .profile-circle:hover{
-  transform:scale(1.1);
-  box-shadow:0 0 20px rgba(255,255,255,0.5);
+  transform:scale(1.12);
+  box-shadow:0 0 25px rgba(0,191,255,0.6);
 }
 
 .profile-add{
@@ -72,20 +75,21 @@ body{
 }
 
 .active-profile{
-  border:3px solid white;
+  border:4px solid #00bfff;
+  box-shadow:0 0 25px rgba(0,191,255,0.8);
 }
 
 .profile-actions{
   position:absolute;
-  top:-8px;
-  right:-8px;
+  top:-10px;
+  right:-10px;
   display:flex;
-  gap:5px;
+  gap:6px;
 }
 
 .action-btn{
-  width:22px;
-  height:22px;
+  width:24px;
+  height:24px;
   border-radius:50%;
   background:black;
   color:white;
@@ -96,42 +100,66 @@ body{
   cursor:pointer;
 }
 
-/* Buttons */
+/* ===== Buttons ===== */
 button{
   width:100%;
-  padding:12px;
-  margin-top:15px;
+  padding:14px;
+  margin-top:18px;
   border:none;
-  border-radius:15px;
+  border-radius:20px;
   background:linear-gradient(45deg,#00bfff,#008cff);
   color:white;
   cursor:pointer;
-  font-size:14px;
+  font-size:15px;
+  box-shadow:0 0 20px rgba(0,191,255,0.5);
+  transition:0.3s;
 }
 
-/* Bottom Nav */
+button:hover{
+  transform:scale(1.05);
+}
+
+/* ===== Modern Glass Bottom Nav ===== */
 .bottom-nav{
   position:fixed;
-  bottom:0;
-  width:100%;
-  background:rgba(7,26,47,0.95);
+  bottom:25px;
+  left:50%;
+  transform:translateX(-50%);
+  width:92%;
+  max-width:420px;
+  height:70px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:25px;
   display:flex;
   justify-content:space-around;
-  padding:12px 0;
-  border-top:1px solid rgba(255,255,255,0.1);
+  align-items:center;
+  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.1);
+  z-index:999;
 }
 
 .nav-item{
+  font-size:22px;
+  width:50px;
+  height:50px;
   display:flex;
-  flex-direction:column;
   align-items:center;
-  font-size:12px;
-  color:#ccc;
+  justify-content:center;
+  border-radius:50%;
   cursor:pointer;
+  transition:all 0.3s ease;
+  color:white;
+}
+
+.nav-item:hover{
+  background:rgba(0,191,255,0.2);
+  transform:translateY(-5px);
 }
 
 .nav-item.active{
-  color:#00bfff;
+  background:#00bfff;
+  box-shadow:0 0 20px rgba(0,191,255,0.7);
 }
 </style>
 </head>
@@ -141,7 +169,6 @@ button{
 <div class="header">👤 حسابي</div>
 
 <div class="container">
-
   <div id="profilesSection"></div>
 
   <div class="card">
@@ -150,10 +177,11 @@ button{
   </div>
 </div>
 
+<!-- ===== Bottom Navigation ===== -->
 <div class="bottom-nav">
-  <div class="nav-item" onclick="window.location.href='index.html'">🏠<span>الرئيسية</span></div>
-  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item active">👤<span>الملف</span></div>
+  <div class="nav-item" id="navHome" onclick="window.location.href='index.html'">🏠</div>
+  <div class="nav-item" id="navSettings" onclick="window.location.href='settings.html'">⚙️</div>
+  <div class="nav-item" id="navProfile">👤</div>
 </div>
 
 <script>
@@ -174,7 +202,6 @@ function loadUser(){
     if(data.username){
       document.getElementById("userInfo").innerHTML =
         "<h3>مرحباً، "+data.username+" 👑</h3>";
-
       document.getElementById("actionButton").innerHTML =
         "<button onclick='logout()'>تسجيل خروج</button>";
     }else{
@@ -187,7 +214,6 @@ function loadUser(){
 function showLogin(){
   document.getElementById("userInfo").innerHTML =
     "<h3>أنت غير مسجل دخول</h3>";
-
   document.getElementById("actionButton").innerHTML =
     "<button onclick=\"window.location.href='login.html'\">تسجيل الدخول</button>";
 }
@@ -198,7 +224,13 @@ function logout(){
   window.location.reload();
 }
 
-/* Profiles */
+/* ===== Active Nav ===== */
+function setActiveNav(){
+  document.getElementById("navProfile").classList.add("active");
+}
+setActiveNav();
+
+/* ===== Profiles (بدون تغيير منطقك) ===== */
 
 function loadProfiles(){
   fetch(API + "/profiles",{ headers:{ Authorization: token }})
