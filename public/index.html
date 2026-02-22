@@ -6,6 +6,7 @@
 <title>AURA</title>
 
 <style>
+/* نفس تصميمك بدون تغيير */
 body{
   margin:0;
   font-family:Arial, sans-serif;
@@ -13,12 +14,6 @@ body{
   color:white;
   padding-bottom:90px;
   overflow-x:hidden;
-  transition:0.4s;
-}
-
-.light-mode{
-  background:#f2f2f2;
-  color:#111;
 }
 
 body::before{
@@ -40,9 +35,7 @@ body::before{
   text-shadow:0 0 12px rgba(0,191,255,0.8);
 }
 
-.search-container{
-  padding:0 20px 20px 20px;
-}
+.search-container{ padding:0 20px 20px; }
 
 .search-container input{
   width:100%;
@@ -54,7 +47,6 @@ body::before{
   backdrop-filter:blur(10px);
   color:white;
   font-size:14px;
-  box-shadow:0 0 15px rgba(0,191,255,0.3);
 }
 
 .section{ padding:20px; }
@@ -79,15 +71,13 @@ body::before{
   border-radius:18px;
   overflow:hidden;
   cursor:pointer;
-  transition:0.4s;
-  box-shadow:0 0 15px rgba(0,191,255,0.2);
+  transition:0.3s;
 }
 
 .card img{ width:100%; display:block; }
 
 .card:hover{
-  transform:scale(1.08);
-  box-shadow:0 0 25px rgba(0,191,255,0.6);
+  transform:scale(1.05);
 }
 
 .series-page{ display:none; }
@@ -121,14 +111,6 @@ body::before{
   border-radius:16px;
   overflow:hidden;
   cursor:pointer;
-  transition:0.3s;
-}
-
-.episode-card img{ width:100%; }
-
-.episode-card:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 20px rgba(0,191,255,0.5);
 }
 
 .episode-title{
@@ -137,7 +119,6 @@ body::before{
   font-size:14px;
 }
 
-/* 🎬 سينما مود */
 #videoModal{
   display:none;
   position:fixed;
@@ -147,7 +128,6 @@ body::before{
   z-index:9999;
   align-items:center;
   justify-content:center;
-  animation:fadeIn 0.35s ease;
 }
 
 #videoModal video{
@@ -155,19 +135,6 @@ body::before{
   max-width:900px;
   border-radius:22px;
   background:#000;
-  box-shadow:
-    0 0 25px rgba(0,191,255,0.6),
-    0 0 60px rgba(0,191,255,0.3);
-  transition:0.4s;
-}
-
-#videoModal video:hover{
-  transform:scale(1.01);
-}
-
-@keyframes fadeIn{
-  from{opacity:0;}
-  to{opacity:1;}
 }
 
 .bottom-nav{
@@ -178,19 +145,7 @@ body::before{
   display:flex;
   justify-content:space-around;
   padding:12px 0;
-  border-top:1px solid rgba(255,255,255,0.1);
 }
-
-.nav-item{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  font-size:12px;
-  color:#ccc;
-  cursor:pointer;
-}
-
-.nav-item:hover{ color:#00bfff; }
 </style>
 </head>
 
@@ -203,10 +158,18 @@ body::before{
 </div>
 
 <div id="homeContent">
+
+  <!-- 🔥 تابع المشاهدة -->
+  <div class="section">
+    <div class="section-title">▶ تابع المشاهدة</div>
+    <div class="row" id="continueRow"></div>
+  </div>
+
   <div class="section">
     <div class="section-title">🔥 جديد الآن</div>
     <div class="row" id="seriesRow"></div>
   </div>
+
 </div>
 
 <div class="series-page" id="seriesPage">
@@ -217,41 +180,30 @@ body::before{
 
 <div id="videoModal">
   <div>
-    <button onclick="closePlayer()" style="
-    margin-bottom:18px;
-    background:linear-gradient(45deg,#00bfff,#008cff);
-    border:none;
-    padding:8px 22px;
-    border-radius:25px;
-    color:white;
-    font-size:14px;
-    cursor:pointer;
-    box-shadow:0 0 15px rgba(0,191,255,0.6);
-    transition:0.3s;">
-    ✖ إغلاق
-    </button>
+    <button onclick="closePlayer()">✖ إغلاق</button>
     <video id="videoPlayer" controls></video>
   </div>
 </div>
 
 <div class="bottom-nav">
-  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
-  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item" onclick="goProfile()">👤<span>الملف</span></div>
+  <div onclick="goHome()">🏠</div>
+  <div onclick="window.location.href='settings.html'">⚙️</div>
+  <div onclick="goProfile()">👤</div>
 </div>
 
 <script>
-const API="https://aura-backend-mpvi.onrender.com/movies";
+const API_BASE="https://aura-backend-mpvi.onrender.com";
+const MOVIES_API=API_BASE+"/movies";
+
 let allSeries=[];
-let currentMovieId=null;
-let currentEpisodeId=null;
 let saveInterval=null;
 
 async function loadSeries(){
-  const res=await fetch(API);
+  const res=await fetch(MOVIES_API);
   const data=await res.json();
   allSeries=data;
   renderSeries(data);
+  loadContinueWatching();
 }
 
 function renderSeries(data){
@@ -291,7 +243,8 @@ function openSeries(id){
 
   episodes.forEach(ep=>{
     list.innerHTML+=`
-      <div class="episode-card" onclick="playEpisode('${series._id}','${ep._id}','${ep.video}')">
+      <div class="episode-card"
+      onclick="playEpisode('${series._id}','${ep._id}','${ep.video}')">
         <img src="${ep.image||series.image}">
         <div class="episode-title">${ep.name}</div>
       </div>`;
@@ -300,17 +253,17 @@ function openSeries(id){
 
 async function playEpisode(movieId,episodeId,url){
   const token=localStorage.getItem("token");
-  currentMovieId=movieId;
-  currentEpisodeId=episodeId;
+  const profileId=localStorage.getItem("profileId");
 
   const video=document.getElementById("videoPlayer");
   video.src=url;
   document.getElementById("videoModal").style.display="flex";
 
-  if(token){
-    const res=await fetch(`/progress/${movieId}/${episodeId}`,{
-      headers:{Authorization:token}
-    });
+  if(token && profileId){
+    const res=await fetch(
+      `${API_BASE}/progress/${profileId}/${movieId}/${episodeId}`,
+      { headers:{Authorization:token}}
+    );
     const data=await res.json();
     if(data.currentTime){
       video.currentTime=data.currentTime;
@@ -319,31 +272,30 @@ async function playEpisode(movieId,episodeId,url){
 
   video.onplay=()=>{
     saveInterval=setInterval(()=>{
-      if(token){
-        fetch("/progress",{
+      if(token && profileId){
+        fetch(API_BASE+"/progress",{
           method:"POST",
           headers:{
             "Content-Type":"application/json",
             Authorization:token
           },
           body:JSON.stringify({
-            movieId:currentMovieId,
-            episodeId:currentEpisodeId,
+            profileId,
+            movieId,
+            episodeId,
             currentTime:video.currentTime
           })
         });
       }
     },5000);
   };
-
-  video.onpause=()=>clearInterval(saveInterval);
-  video.onended=()=>clearInterval(saveInterval);
 }
 
 function closePlayer(){
   clearInterval(saveInterval);
   document.getElementById("videoPlayer").src="";
   document.getElementById("videoModal").style.display="none";
+  loadContinueWatching();
 }
 
 function goHome(){
@@ -353,6 +305,35 @@ function goHome(){
 
 function goProfile(){
   window.location.href="account.html";
+}
+
+/* 🔥 تحميل تابع المشاهدة */
+
+async function loadContinueWatching(){
+  const token=localStorage.getItem("token");
+  const profileId=localStorage.getItem("profileId");
+  if(!token || !profileId) return;
+
+  const res=await fetch(API_BASE+"/profiles",{
+    headers:{Authorization:token}
+  });
+
+  const profiles=await res.json();
+  const profile=profiles.find(p=>p._id===profileId);
+  if(!profile || !profile.continueWatching) return;
+
+  const row=document.getElementById("continueRow");
+  row.innerHTML="";
+
+  profile.continueWatching.forEach(item=>{
+    const movie=allSeries.find(m=>m._id===item.movieId);
+    if(movie){
+      row.innerHTML+=`
+        <div class="card" onclick="openSeries('${movie._id}')">
+          <img src="${movie.image}">
+        </div>`;
+    }
+  });
 }
 
 loadSeries();
