@@ -8,62 +8,95 @@
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:#071a2f;
-  color:white;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
+  color:white;
 }
 
-.card{
-  background:#0f2c50;
-  padding:30px;
-  border-radius:20px;
+.box{
   width:90%;
   max-width:400px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  padding:35px;
+  border-radius:25px;
+  box-shadow:0 0 40px rgba(0,191,255,0.4);
   text-align:center;
-  box-shadow:0 0 25px rgba(0,191,255,0.3);
 }
 
 h2{
-  margin-bottom:20px;
-}
-
-.info{
-  margin:15px 0;
-  padding:10px;
-  background:#0b3a63;
-  border-radius:10px;
+  margin-bottom:25px;
+  text-shadow:0 0 12px rgba(0,191,255,0.7);
 }
 
 button{
-  margin-top:20px;
-  padding:10px 20px;
+  width:100%;
+  padding:12px;
+  margin-top:15px;
   border:none;
-  border-radius:8px;
-  background:#00bfff;
-  color:white;
+  border-radius:20px;
+  font-size:14px;
   cursor:pointer;
+  background:linear-gradient(45deg,#00bfff,#008cff);
+  color:white;
+  box-shadow:0 0 15px rgba(0,191,255,0.6);
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="box">
   <h2>👤 حسابي</h2>
 
-  <div class="info">الاسم: مستخدم AURA</div>
-  <div class="info">الحالة: مفعل ✅</div>
+  <div id="userInfo"></div>
+  <div id="actionButton"></div>
 
-  <button onclick="goHome()">رجوع للرئيسية</button>
 </div>
 
 <script>
-function goHome(){
-  window.location.href="index.html";
+const token = localStorage.getItem("token");
+const API = "https://aura-backend-mpvi.onrender.com";
+
+if(token){
+
+  fetch(API + "/me",{
+    headers:{ Authorization: token }
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.username){
+      document.getElementById("userInfo").innerHTML =
+        "<p>اسم الحساب: <b>"+data.username+"</b></p>";
+
+      document.getElementById("actionButton").innerHTML =
+        "<button onclick='logout()'>تسجيل خروج</button>";
+    }else{
+      showLogin();
+    }
+  })
+  .catch(()=>showLogin());
+
+}else{
+  showLogin();
+}
+
+function showLogin(){
+  document.getElementById("userInfo").innerHTML =
+    "<p>أنت غير مسجل دخول</p>";
+
+  document.getElementById("actionButton").innerHTML =
+    "<button onclick=\"window.location.href='login.html'\">تسجيل الدخول</button>";
+}
+
+function logout(){
+  localStorage.removeItem("token");
+  alert("تم تسجيل الخروج");
+  window.location.reload();
 }
 </script>
 
