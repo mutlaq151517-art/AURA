@@ -12,6 +12,7 @@ body{
   background:#071a2f;
   color:white;
   transition:0.4s;
+  padding-bottom:120px;
 }
 
 .light-mode{
@@ -19,6 +20,7 @@ body{
   color:#111;
 }
 
+/* ===== Header ===== */
 .header{
   padding:20px;
   text-align:center;
@@ -26,6 +28,7 @@ body{
   font-weight:bold;
 }
 
+/* ===== Container ===== */
 .container{
   padding:20px;
 }
@@ -46,15 +49,14 @@ body{
   font-size:16px;
 }
 
+/* ===== Toggle Switch ===== */
 .switch{
   position:relative;
   width:50px;
   height:26px;
 }
 
-.switch input{
-  display:none;
-}
+.switch input{ display:none; }
 
 .slider{
   position:absolute;
@@ -85,14 +87,47 @@ input:checked + .slider:before{
   transform:translateX(24px);
 }
 
-.back-btn{
-  margin:20px;
-  background:#00bfff;
-  border:none;
-  padding:8px 15px;
-  border-radius:8px;
+/* ===== Modern Glass Bottom Nav ===== */
+.bottom-nav{
+  position:fixed;
+  bottom:25px;
+  left:50%;
+  transform:translateX(-50%);
+  width:92%;
+  max-width:420px;
+  height:70px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:25px;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.1);
+  z-index:999;
+}
+
+.nav-item{
+  font-size:22px;
+  width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
   cursor:pointer;
+  transition:all 0.3s ease;
   color:white;
+}
+
+.nav-item:hover{
+  background:rgba(0,191,255,0.2);
+  transform:translateY(-5px);
+}
+
+.nav-item.active{
+  background:#00bfff;
+  box-shadow:0 0 20px rgba(0,191,255,0.7);
 }
 </style>
 </head>
@@ -102,7 +137,6 @@ input:checked + .slider:before{
 <div class="header">⚙️ إعدادات AURA</div>
 
 <div class="container">
-
   <div class="card">
     <div class="toggle">
       <span>🌙 الوضع الداكن</span>
@@ -112,15 +146,19 @@ input:checked + .slider:before{
       </label>
     </div>
   </div>
-
 </div>
 
-<button class="back-btn" onclick="goBack()">⬅ رجوع</button>
+<!-- ===== Bottom Navigation ===== -->
+<div class="bottom-nav">
+  <div class="nav-item" id="navHome" onclick="window.location.href='index.html'">🏠</div>
+  <div class="nav-item" id="navSettings" onclick="window.location.href='settings.html'">⚙️</div>
+  <div class="nav-item" id="navProfile" onclick="window.location.href='account.html'">👤</div>
+</div>
 
 <script>
 const toggle = document.getElementById("themeToggle");
 
-// تحميل الثيم المحفوظ
+// تحميل الثيم
 if(localStorage.getItem("theme")==="light"){
   document.body.classList.add("light-mode");
   toggle.checked=false;
@@ -138,9 +176,22 @@ toggle.addEventListener("change", ()=>{
   }
 });
 
-function goBack(){
-  window.location.href="index.html";
+/* ===== Active Nav ===== */
+function setActiveNav(){
+  const path = window.location.pathname;
+
+  if(path.includes("account")){
+    document.getElementById("navProfile")?.classList.add("active");
+  }
+  else if(path.includes("settings")){
+    document.getElementById("navSettings")?.classList.add("active");
+  }
+  else{
+    document.getElementById("navHome")?.classList.add("active");
+  }
 }
+
+setActiveNav();
 </script>
 
 </body>
