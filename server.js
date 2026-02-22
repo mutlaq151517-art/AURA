@@ -91,7 +91,6 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
           else resolve(result);
         }
       );
-
       stream.end(file.buffer);
     });
 
@@ -134,7 +133,7 @@ app.post("/movies", async (req, res) => {
   }
 });
 
-/* ===== Episodes ===== */
+/* ===== Add Episode ===== */
 
 app.post("/movies/:id/episodes", async (req, res) => {
   try {
@@ -148,6 +147,33 @@ app.post("/movies/:id/episodes", async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: "Error adding episode" });
+  }
+});
+
+/* ===== DELETE EPISODE (🔥 هذا المهم) ===== */
+
+app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
+  try {
+
+    const { seriesId, episodeId } = req.params;
+
+    const movie = await Movie.findById(seriesId);
+
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+
+    movie.episodes = movie.episodes.filter(
+      ep => ep._id.toString() !== episodeId
+    );
+
+    await movie.save();
+
+    res.json({ message: "Episode deleted successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting episode" });
   }
 });
 
