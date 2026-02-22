@@ -6,11 +6,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
+const streamifier = require("streamifier");
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = "AURA_SECRET_KEY_2025";
@@ -26,18 +27,20 @@ cloudinary.config({
 });
 
 /* =========================
-   Multer Config
+   Multer (بحد أقصى 2GB)
 ========================= */
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2000 * 1024 * 1024 } // 2GB
+});
 
 /* =========================
    MongoDB
 ========================= */
 
 mongoose.connect(
-  "mongodb+srv://mutlaq151517_db_user:PHYxq5mF7VQ5SkxR@cluster0.wmswp4j.mongodb.net/auraDB?retryWrites=true&w=majority"
+  process.env.MONGO_URI
 )
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => {
@@ -72,32 +75,39 @@ const Movie = mongoose.model("Movie", movieSchema);
 const User = mongoose.model("User", userSchema);
 
 /* =========================
-   VIDEO UPLOAD ROUTE
+   VIDEO UPLOAD ROUTE (محسن)
 ========================= */
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
-    const file = req.file;
 
-    if (!file) {
+    if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { resource_type: "video" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      stream.end(file.buffer);
-    });
+    const streamUpload = () => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "video",
+            chunk_size: 6000000 // 6MB chunks
+          },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+    };
+
+    const result = await streamUpload();
 
     res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error(err);
+    console.error("Upload error:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
@@ -133,8 +143,6 @@ app.post("/movies", async (req, res) => {
   }
 });
 
-/* ===== Add Episode ===== */
-
 app.post("/movies/:id/episodes", async (req, res) => {
   try {
     const { name, video, image } = req.body;
@@ -150,13 +158,10 @@ app.post("/movies/:id/episodes", async (req, res) => {
   }
 });
 
-/* ===== DELETE EPISODE (🔥 هذا المهم) ===== */
-
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   try {
 
     const { seriesId, episodeId } = req.params;
-
     const movie = await Movie.findById(seriesId);
 
     if (!movie) {
@@ -172,66 +177,12 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
     res.json({ message: "Episode deleted successfully" });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error deleting episode" });
   }
 });
 
 /* =========================
-   Auth
-========================= */
-
-app.post("/register", async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    const existing = await User.findOne({ $or: [{ username }, { email }] });
-    if (existing)
-      return res.status(400).json({ message: "User already exists" });
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      username,
-      email,
-      password: hashed
-    });
-
-    await newUser.save();
-    res.json({ message: "User created ✅" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const user = await User.findOne({ username });
-    if (!user)
-      return res.status(400).json({ message: "User not found" });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid)
-      return res.status(400).json({ message: "Wrong password" });
-
-    const token = jwt.sign(
-      { id: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({ token });
-
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* =========================
-   Static Files
+   Static
 ========================= */
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -239,10 +190,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
-/* =========================
-   Start Server
-========================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
