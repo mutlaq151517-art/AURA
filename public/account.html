@@ -35,6 +35,43 @@ body{
   box-shadow:0 0 30px rgba(0,191,255,0.3);
 }
 
+/* Profiles */
+.profiles-container{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:25px;
+}
+
+.profile-circle{
+  width:75px;
+  height:75px;
+  border-radius:50%;
+  background:linear-gradient(45deg,#00bfff,#008cff);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.profile-circle:hover{
+  transform:scale(1.1);
+  box-shadow:0 0 20px rgba(0,191,255,0.8);
+}
+
+.profile-add{
+  background:rgba(255,255,255,0.1);
+}
+
+.active-profile{
+  border:3px solid white;
+}
+
+/* Buttons */
 button{
   width:100%;
   padding:12px;
@@ -79,6 +116,10 @@ button{
 <div class="header">👤 حسابي</div>
 
 <div class="container">
+
+  <!-- Profiles -->
+  <div id="profilesSection"></div>
+
   <div class="card">
     <div id="userInfo"></div>
     <div id="actionButton"></div>
@@ -96,6 +137,13 @@ const token = localStorage.getItem("token");
 const API = "https://aura-backend-mpvi.onrender.com";
 
 if(token){
+  loadUser();
+  loadProfiles();
+}else{
+  showLogin();
+}
+
+function loadUser(){
   fetch(API + "/me",{
     headers:{ Authorization: token }
   })
@@ -112,8 +160,6 @@ if(token){
     }
   })
   .catch(()=>showLogin());
-}else{
-  showLogin();
 }
 
 function showLogin(){
@@ -126,8 +172,66 @@ function showLogin(){
 
 function logout(){
   localStorage.removeItem("token");
+  localStorage.removeItem("profileId");
   alert("تم تسجيل الخروج");
   window.location.reload();
+}
+
+/* =========================
+   Profiles Logic
+========================= */
+
+function loadProfiles(){
+  fetch(API + "/profiles",{
+    headers:{ Authorization: token }
+  })
+  .then(res=>res.json())
+  .then(profiles=>{
+    const section = document.getElementById("profilesSection");
+    section.innerHTML = "<div class='profiles-container' id='profilesContainer'></div>";
+
+    const container = document.getElementById("profilesContainer");
+
+    const activeId = localStorage.getItem("profileId");
+
+    profiles.forEach(p=>{
+      container.innerHTML += `
+        <div class="profile-circle ${activeId===p._id?'active-profile':''}"
+             onclick="selectProfile('${p._id}')">
+          ${p.name.charAt(0).toUpperCase()}
+        </div>
+      `;
+    });
+
+    if(profiles.length < 5){
+      container.innerHTML += `
+        <div class="profile-circle profile-add"
+             onclick="createProfile()">
+          +
+        </div>
+      `;
+    }
+  });
+}
+
+function selectProfile(id){
+  localStorage.setItem("profileId",id);
+  loadProfiles();
+}
+
+function createProfile(){
+  const name = prompt("اكتب اسم الملف");
+  if(!name) return;
+
+  fetch(API + "/profiles",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization: token
+    },
+    body:JSON.stringify({name})
+  })
+  .then(()=>loadProfiles());
 }
 </script>
 
