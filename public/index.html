@@ -94,6 +94,63 @@ body{
   transform:translateY(20px);
 }
 
+/* ===== Overlay Page ===== */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter:blur(20px);
+  z-index:9999;
+  overflow-y:auto;
+  padding:40px;
+  animation:fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+.episodes-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:25px;
+  margin-top:30px;
+}
+
+.episode-card{
+  border-radius:20px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:0.4s;
+  box-shadow:0 0 25px rgba(0,191,255,0.3);
+}
+
+.episode-card img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+}
+
+.episode-card:hover{
+  transform:scale(1.05);
+  box-shadow:
+    0 0 30px rgba(0,191,255,0.9),
+    0 0 70px rgba(0,191,255,0.5);
+}
+
+.close-btn{
+  margin-top:40px;
+  background:linear-gradient(45deg,#00bfff,#008cff);
+  border:none;
+  padding:12px 30px;
+  border-radius:30px;
+  color:white;
+  font-size:14px;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(0,191,255,0.8);
+}
+
 /* Bottom Nav */
 .bottom-nav{
   position:fixed;
@@ -105,9 +162,7 @@ body{
   padding:15px 0;
   backdrop-filter:blur(10px);
 }
-.bottom-nav div{
-  cursor:pointer;
-}
+.bottom-nav div{ cursor:pointer; }
 </style>
 </head>
 
@@ -148,8 +203,64 @@ function renderSeries(data){
   });
 }
 
+/* 🔥 فتح صفحة المسلسل بدون alert */
 function openSeries(id){
-  alert("هنا تفتح صفحة المسلسل 🔥");
+  const series=allSeries.find(s=>s._id===id);
+  if(!series) return;
+
+  const overlay=document.createElement("div");
+  overlay.className="overlay";
+
+  overlay.innerHTML=`
+    <h2 style="text-align:center;text-shadow:0 0 20px #00bfff;">
+      ${series.title}
+    </h2>
+
+    <div class="episodes-grid">
+      ${series.episodes && series.episodes.length ? 
+        series.episodes.map(ep=>`
+          <div class="episode-card" onclick="playVideo('${ep.video}')">
+            <img src="${ep.image || series.image}">
+            <div style="padding:10px;text-align:center">${ep.name}</div>
+          </div>
+        `).join("")
+      :
+        `<div class="episode-card" onclick="playVideo('${series.video}')">
+            <img src="${series.image}">
+            <div style="padding:10px;text-align:center">الحلقة 1</div>
+         </div>`
+      }
+    </div>
+
+    <div style="text-align:center">
+      <button class="close-btn" onclick="this.closest('.overlay').remove()">
+        ✖ إغلاق
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function playVideo(url){
+  const player=document.createElement("div");
+  player.className="overlay";
+
+  player.innerHTML=`
+    <div style="text-align:center">
+      <video src="${url}" controls autoplay
+        style="width:95%;max-width:1000px;border-radius:25px;
+        box-shadow:0 0 40px rgba(0,191,255,0.9);">
+      </video>
+      <div style="margin-top:25px">
+        <button class="close-btn" onclick="this.closest('.overlay').remove()">
+          ✖ إغلاق
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(player);
 }
 
 loadSeries();
