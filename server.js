@@ -22,7 +22,7 @@ mongoose.connect(
 )
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => {
-  console.log("Mongo Error ❌", err);
+  console.error("Mongo Error ❌", err);
   process.exit(1);
 });
 
@@ -63,21 +63,23 @@ app.use(express.static(path.join(__dirname, "public")));
 ========================= */
 
 app.get("/movies", async (req, res) => {
-  try{
+  try {
     const movies = await Movie.find();
     res.json(movies);
-  }catch(err){
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error loading movies" });
   }
 });
 
 app.post("/register", async (req, res) => {
-  try{
+  try {
     const { username, email, password } = req.body;
 
     const existing = await User.findOne({ $or: [{ username }, { email }] });
-    if(existing)
+    if (existing) {
       return res.status(400).json({ message: "User already exists" });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -90,22 +92,25 @@ app.post("/register", async (req, res) => {
     await newUser.save();
     res.json({ message: "User created ✅" });
 
-  }catch(err){
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 app.post("/login", async (req, res) => {
-  try{
+  try {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-    if(!user)
+    if (!user) {
       return res.status(400).json({ message: "User not found" });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if(!valid)
+    if (!valid) {
       return res.status(400).json({ message: "Wrong password" });
+    }
 
     const token = jwt.sign(
       { id: user._id },
@@ -115,15 +120,22 @@ app.post("/login", async (req, res) => {
 
     res.json({ token });
 
-  }catch(err){
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* =========================
-   Catch-All Route (الحل 🔥)
+   Root + Catch All (المهم 🔥)
 ========================= */
 
+// يرجع الصفحة الرئيسية عند الدخول للرابط
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// أي مسار غير API يرجع index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
