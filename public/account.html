@@ -39,16 +39,19 @@ body{
 .profiles-container{
   display:flex;
   justify-content:center;
-  gap:15px;
+  gap:20px;
   flex-wrap:wrap;
   margin-bottom:25px;
+}
+
+.profile-wrapper{
+  position:relative;
 }
 
 .profile-circle{
   width:75px;
   height:75px;
   border-radius:50%;
-  background:linear-gradient(45deg,#00bfff,#008cff);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -56,11 +59,12 @@ body{
   font-weight:bold;
   cursor:pointer;
   transition:0.3s;
+  color:white;
 }
 
 .profile-circle:hover{
   transform:scale(1.1);
-  box-shadow:0 0 20px rgba(0,191,255,0.8);
+  box-shadow:0 0 20px rgba(255,255,255,0.5);
 }
 
 .profile-add{
@@ -69,6 +73,27 @@ body{
 
 .active-profile{
   border:3px solid white;
+}
+
+.profile-actions{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  display:flex;
+  gap:5px;
+}
+
+.action-btn{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:black;
+  color:white;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
 }
 
 /* Buttons */
@@ -117,7 +142,6 @@ button{
 
 <div class="container">
 
-  <!-- Profiles -->
   <div id="profilesSection"></div>
 
   <div class="card">
@@ -144,9 +168,7 @@ if(token){
 }
 
 function loadUser(){
-  fetch(API + "/me",{
-    headers:{ Authorization: token }
-  })
+  fetch(API + "/me",{ headers:{ Authorization: token } })
   .then(res=>res.json())
   .then(data=>{
     if(data.username){
@@ -173,42 +195,41 @@ function showLogin(){
 function logout(){
   localStorage.removeItem("token");
   localStorage.removeItem("profileId");
-  alert("تم تسجيل الخروج");
   window.location.reload();
 }
 
-/* =========================
-   Profiles Logic
-========================= */
+/* Profiles */
 
 function loadProfiles(){
-  fetch(API + "/profiles",{
-    headers:{ Authorization: token }
-  })
+  fetch(API + "/profiles",{ headers:{ Authorization: token }})
   .then(res=>res.json())
   .then(profiles=>{
-    const section = document.getElementById("profilesSection");
-    section.innerHTML = "<div class='profiles-container' id='profilesContainer'></div>";
+    const section=document.getElementById("profilesSection");
+    section.innerHTML="<div class='profiles-container' id='profilesContainer'></div>";
+    const container=document.getElementById("profilesContainer");
 
-    const container = document.getElementById("profilesContainer");
-
-    const activeId = localStorage.getItem("profileId");
+    const activeId=localStorage.getItem("profileId");
 
     profiles.forEach(p=>{
-      container.innerHTML += `
-        <div class="profile-circle ${activeId===p._id?'active-profile':''}"
-             onclick="selectProfile('${p._id}')">
-          ${p.name.charAt(0).toUpperCase()}
+      container.innerHTML+=`
+        <div class="profile-wrapper">
+          <div class="profile-actions">
+            <div class="action-btn" onclick="editProfile('${p._id}')">✏️</div>
+            <div class="action-btn" onclick="deleteProfile('${p._id}',${profiles.length})">🗑</div>
+          </div>
+          <div class="profile-circle ${activeId===p._id?'active-profile':''}"
+               style="background:${p.color || '#00bfff'}"
+               onclick="selectProfile('${p._id}')">
+            ${p.name.charAt(0).toUpperCase()}
+          </div>
         </div>
       `;
     });
 
-    if(profiles.length < 5){
-      container.innerHTML += `
+    if(profiles.length<5){
+      container.innerHTML+=`
         <div class="profile-circle profile-add"
-             onclick="createProfile()">
-          +
-        </div>
+             onclick="createProfile()">+</div>
       `;
     }
   });
@@ -220,16 +241,46 @@ function selectProfile(id){
 }
 
 function createProfile(){
-  const name = prompt("اكتب اسم الملف");
+  const name=prompt("اسم الملف:");
   if(!name) return;
 
-  fetch(API + "/profiles",{
+  fetch(API+"/profiles",{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
-      Authorization: token
+      Authorization:token
     },
     body:JSON.stringify({name})
+  })
+  .then(()=>loadProfiles());
+}
+
+function editProfile(id){
+  const newName=prompt("الاسم الجديد:");
+  if(!newName) return;
+
+  fetch(API+"/profiles/"+id,{
+    method:"PUT",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:token
+    },
+    body:JSON.stringify({name:newName})
+  })
+  .then(()=>loadProfiles());
+}
+
+function deleteProfile(id,count){
+  if(count<=1){
+    alert("لا يمكن حذف آخر ملف");
+    return;
+  }
+
+  if(!confirm("متأكد من الحذف؟")) return;
+
+  fetch(API+"/profiles/"+id,{
+    method:"DELETE",
+    headers:{ Authorization:token }
   })
   .then(()=>loadProfiles());
 }
