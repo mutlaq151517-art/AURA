@@ -11,7 +11,7 @@ body{
   font-family:Arial, sans-serif;
   background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
   color:white;
-  padding-bottom:90px;
+  padding-bottom:120px;
   overflow-x:hidden;
 }
 
@@ -71,7 +71,7 @@ body{
 
 .card img{
   width:100%;
-  height:300px;            /* أطول */
+  height:300px;
   object-fit:cover;
   transition:0.4s;
 }
@@ -84,6 +84,8 @@ body{
 }
 
 /* ===== Episodes ===== */
+.series-page{ display:none; }
+
 .episodes-grid{
   padding:20px;
   display:grid;
@@ -119,7 +121,7 @@ body{
   font-size:14px;
 }
 
-/* ===== Modern Video Modal ===== */
+/* ===== Video Modal ===== */
 #videoModal{
   display:none;
   position:fixed;
@@ -129,7 +131,6 @@ body{
   z-index:9999;
   align-items:center;
   justify-content:center;
-  animation:fadeIn 0.4s ease;
 }
 
 #videoModal video{
@@ -140,11 +141,6 @@ body{
   box-shadow:
     0 0 30px rgba(0,191,255,0.9),
     0 0 80px rgba(0,191,255,0.5);
-  transition:0.4s;
-}
-
-#videoModal video:hover{
-  transform:scale(1.02);
 }
 
 .close-btn{
@@ -160,24 +156,50 @@ body{
   transition:0.3s;
 }
 
-.close-btn:hover{
-  transform:scale(1.05);
-}
+.close-btn:hover{ transform:scale(1.05); }
 
-@keyframes fadeIn{
-  from{opacity:0;}
-  to{opacity:1;}
-}
+/* ===== Modern Glass Bottom Nav ===== */
 
-/* ===== Bottom Nav ===== */
 .bottom-nav{
   position:fixed;
-  bottom:0;
-  width:100%;
-  background:rgba(7,26,47,0.95);
+  bottom:25px;
+  left:50%;
+  transform:translateX(-50%);
+  width:92%;
+  max-width:420px;
+  height:70px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:25px;
   display:flex;
   justify-content:space-around;
-  padding:12px 0;
+  align-items:center;
+  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.1);
+  z-index:999;
+}
+
+.nav-item{
+  font-size:22px;
+  width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  color:white;
+}
+
+.nav-item:hover{
+  background:rgba(0,191,255,0.2);
+  transform:translateY(-5px);
+}
+
+.nav-item.active{
+  background:#00bfff;
+  box-shadow:0 0 20px rgba(0,191,255,0.7);
 }
 </style>
 </head>
@@ -191,11 +213,6 @@ body{
 </div>
 
 <div id="homeContent">
-
-  <div class="section">
-    <div class="section-title">▶ تابع المشاهدة</div>
-    <div class="row" id="continueRow"></div>
-  </div>
 
   <div class="section">
     <div class="section-title">🔥 جديد الآن</div>
@@ -218,9 +235,9 @@ body{
 </div>
 
 <div class="bottom-nav">
-  <div onclick="goHome()">🏠</div>
-  <div onclick="window.location.href='settings.html'">⚙️</div>
-  <div onclick="goProfile()">👤</div>
+  <div class="nav-item active" onclick="goHome()">🏠</div>
+  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️</div>
+  <div class="nav-item" onclick="goProfile()">👤</div>
 </div>
 
 <script>
@@ -228,7 +245,6 @@ const API_BASE="https://aura-backend-mpvi.onrender.com";
 const MOVIES_API=API_BASE+"/movies";
 
 let allSeries=[];
-let saveInterval=null;
 
 async function loadSeries(){
   const res=await fetch(MOVIES_API);
@@ -275,14 +291,14 @@ function openSeries(id){
   episodes.forEach(ep=>{
     list.innerHTML+=`
       <div class="episode-card"
-      onclick="playEpisode('${series._id}','${ep._id}','${ep.video}')">
+      onclick="playEpisode('${ep.video}')">
         <img src="${ep.image||series.image}">
         <div class="episode-title">${ep.name}</div>
       </div>`;
   });
 }
 
-function playEpisode(movieId,episodeId,url){
+function playEpisode(url){
   const video=document.getElementById("videoPlayer");
   video.src=url;
   document.getElementById("videoModal").style.display="flex";
