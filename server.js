@@ -4,6 +4,8 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const app = express();
 app.use(cors());
@@ -40,6 +42,7 @@ const movieSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
+  email: { type: String, unique: true },
   password: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
   watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
@@ -49,11 +52,25 @@ const userSchema = new mongoose.Schema({
       episodeId: String,
       currentTime: Number
     }
-  ]
+  ],
+  resetToken: String,
+  resetTokenExpiry: Date
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
 const User = mongoose.model("User", userSchema);
+
+/* =========================
+   Email Setup
+========================= */
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "ضع_ايميلك_هنا@gmail.com",
+    pass: "ضع_App_Password_هنا"
+  }
+});
 
 /* =========================
    Auth Middleware
@@ -78,15 +95,16 @@ function verifyToken(req, res, next){
 
 app.post("/register", async (req, res) => {
   try{
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
-    const existing = await User.findOne({ username });
-    if(existing) return res.status(400).json({ message: "User exists" });
+    const existing = await User.findOne({ $or: [{ username }, { email }] });
+    if(existing) return res.status(400).json({ message: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       username,
+      email,
       password: hashed
     });
 
@@ -121,25 +139,72 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ✅ NEW: Get Logged User Info */
-app.get("/me", verifyToken, async (req, res) => {
-  try{
-    const user = await User.findById(req.userId).select("username");
-    if(!user) return res.status(404).json({ message: "User not found" });
+/* =========================
+   Forgot Password
+========================= */
 
-    res.json({ username: user.username });
-  }catch(err){
-    res.status(500).json({ error: err.message });
-  }
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const token = crypto.randomBytes(32).toString("hex");
+
+  user.resetToken = token;
+  user.resetTokenExpiry = Date.now() + 1000 * 60 * 15;
+  await user.save();
+
+  const resetLink = `https://aura-backend-mpvi.onrender.com/reset-password/${token}`;
+
+  await transporter.sendMail({
+    to: email,
+    subject: "AURA Reset Password",
+    html: `
+      <h2>إعادة تعيين كلمة المرور</h2>
+      <p>اضغط الرابط التالي:</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>صالح لمدة 15 دقيقة</p>
+    `
+  });
+
+  res.json({ message: "Reset email sent ✅" });
+});
+
+app.post("/reset-password/:token", async (req, res) => {
+  const user = await User.findOne({
+    resetToken: req.params.token,
+    resetTokenExpiry: { $gt: Date.now() }
+  });
+
+  if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+  const hashed = await bcrypt.hash(req.body.password, 10);
+
+  user.password = hashed;
+  user.resetToken = undefined;
+  user.resetTokenExpiry = undefined;
+
+  await user.save();
+
+  res.json({ message: "Password updated ✅" });
 });
 
 /* =========================
-   Progress (Continue Watching)
+   Logged User Info
+========================= */
+
+app.get("/me", verifyToken, async (req, res) => {
+  const user = await User.findById(req.userId).select("username");
+  res.json({ username: user.username });
+});
+
+/* =========================
+   Continue Watching
 ========================= */
 
 app.post("/progress", verifyToken, async (req, res) => {
   const { movieId, episodeId, currentTime } = req.body;
-
   const user = await User.findById(req.userId);
 
   const existing = user.continueWatching.find(
@@ -151,11 +216,7 @@ app.post("/progress", verifyToken, async (req, res) => {
   if(existing){
     existing.currentTime = currentTime;
   } else {
-    user.continueWatching.push({
-      movieId,
-      episodeId,
-      currentTime
-    });
+    user.continueWatching.push({ movieId, episodeId, currentTime });
   }
 
   await user.save();
@@ -189,33 +250,7 @@ app.post("/movies", async (req, res) => {
   res.json(newMovie);
 });
 
-app.put("/movies/:id", async (req, res) => {
-  const updated = await Movie.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
-  res.json(updated);
-});
-
-app.delete("/movies/:id", async (req, res) => {
-  await Movie.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
-
-/* =========================
-   Static Files
-========================= */
-
 app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-/* =========================
-   Start Server
-========================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
