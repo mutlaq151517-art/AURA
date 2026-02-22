@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -57,13 +58,18 @@ const User = mongoose.model("User", userSchema);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 /* =========================
-   Auth
+   API Routes
 ========================= */
+
+app.get("/movies", async (req, res) => {
+  try{
+    const movies = await Movie.find();
+    res.json(movies);
+  }catch(err){
+    res.status(500).json({ message: "Error loading movies" });
+  }
+});
 
 app.post("/register", async (req, res) => {
   try{
@@ -115,12 +121,11 @@ app.post("/login", async (req, res) => {
 });
 
 /* =========================
-   Movies
+   Catch-All Route (الحل 🔥)
 ========================= */
 
-app.get("/movies", async (req, res) => {
-  const movies = await Movie.find();
-  res.json(movies);
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* =========================
