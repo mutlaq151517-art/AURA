@@ -4,6 +4,8 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const { v2: cloudinary } = require("cloudinary");
 
 const app = express();
 
@@ -12,6 +14,23 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = "AURA_SECRET_KEY_2025";
+
+/* =========================
+   Cloudinary Config
+========================= */
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET
+});
+
+/* =========================
+   Multer Config
+========================= */
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 /* =========================
    MongoDB
@@ -53,10 +72,40 @@ const Movie = mongoose.model("Movie", movieSchema);
 const User = mongoose.model("User", userSchema);
 
 /* =========================
-   API ROUTES
+   VIDEO UPLOAD ROUTE
 ========================= */
 
-/* ===== Movies ===== */
+app.post("/upload-video", upload.single("video"), async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: "video" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      stream.end(file.buffer);
+    });
+
+    res.json({ url: result.secure_url });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
+});
+
+/* =========================
+   Movies
+========================= */
 
 app.get("/movies", async (req, res) => {
   try {
@@ -85,31 +134,6 @@ app.post("/movies", async (req, res) => {
   }
 });
 
-app.put("/movies/:id", async (req, res) => {
-  try {
-    const { title, image } = req.body;
-
-    await Movie.findByIdAndUpdate(req.params.id, {
-      title,
-      image
-    });
-
-    res.json({ message: "Movie updated" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Error updating movie" });
-  }
-});
-
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted" });
-  } catch (err) {
-    res.status(500).json({ message: "Error deleting movie" });
-  }
-});
-
 /* ===== Episodes ===== */
 
 app.post("/movies/:id/episodes", async (req, res) => {
@@ -127,20 +151,9 @@ app.post("/movies/:id/episodes", async (req, res) => {
   }
 });
 
-app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
-  try {
-    await Movie.findByIdAndUpdate(req.params.seriesId, {
-      $pull: { episodes: { _id: req.params.episodeId } }
-    });
-
-    res.json({ message: "Episode deleted" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Error deleting episode" });
-  }
-});
-
-/* ===== Auth ===== */
+/* =========================
+   Auth
+========================= */
 
 app.post("/register", async (req, res) => {
   try {
@@ -192,7 +205,7 @@ app.post("/login", async (req, res) => {
 });
 
 /* =========================
-   Static Files (يكون آخر شيء)
+   Static Files
 ========================= */
 
 app.use(express.static(path.join(__dirname, "public")));
