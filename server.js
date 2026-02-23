@@ -113,7 +113,7 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
    Movies
 ========================= */
 
-// Get All
+// Get All Movies
 app.get("/movies", async (req, res) => {
   try {
     const movies = await Movie.find();
@@ -142,7 +142,7 @@ app.post("/movies", async (req, res) => {
   }
 });
 
-// 🔥 DELETE MOVIE (الجديد)
+// 🔥 Delete Movie
 app.delete("/movies/:id", async (req, res) => {
   try {
 
@@ -180,15 +180,16 @@ app.post("/movies/:id/episodes", async (req, res) => {
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   try {
 
-    const { seriesId, episodeId };
-    const movie = await Movie.findById(req.params.seriesId);
+    const { seriesId, episodeId } = req.params;
+
+    const movie = await Movie.findById(seriesId);
 
     if (!movie) {
       return res.status(404).json({ message: "Movie not found" });
     }
 
     movie.episodes = movie.episodes.filter(
-      ep => ep._id.toString() !== req.params.episodeId
+      ep => ep._id.toString() !== episodeId
     );
 
     await movie.save();
@@ -196,6 +197,7 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
     res.json({ message: "Episode deleted successfully" });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error deleting episode" });
   }
 });
