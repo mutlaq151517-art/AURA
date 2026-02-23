@@ -2,8 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
 const streamifier = require("streamifier");
@@ -14,11 +12,8 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT || 10000;
-const JWT_SECRET = "AURA_SECRET_KEY_2025";
 
-/* =========================
-   Cloudinary Config
-========================= */
+/* ================= Cloudinary ================= */
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -26,31 +21,23 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET
 });
 
-/* =========================
-   Multer (بحد أقصى 2GB)
-========================= */
+/* ================= Multer ================= */
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2000 * 1024 * 1024 } // 2GB
+  limits: { fileSize: 2000 * 1024 * 1024 }
 });
 
-/* =========================
-   MongoDB
-========================= */
+/* ================= MongoDB ================= */
 
-mongoose.connect(
-  process.env.MONGO_URI
-)
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => {
   console.error("Mongo Error ❌", err);
   process.exit(1);
 });
 
-/* =========================
-   Schemas
-========================= */
+/* ================= Schemas ================= */
 
 const episodeSchema = new mongoose.Schema({
   name: String,
@@ -65,18 +52,9 @@ const movieSchema = new mongoose.Schema({
   episodes: [episodeSchema]
 });
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  email: { type: String, unique: true },
-  password: String
-});
-
 const Movie = mongoose.model("Movie", movieSchema);
-const User = mongoose.model("User", userSchema);
 
-/* =========================
-   VIDEO UPLOAD ROUTE (محسن)
-========================= */
+/* ================= Upload Video ================= */
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
@@ -85,91 +63,97 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const streamUpload = () => {
-      return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: "video",
-            chunk_size: 6000000 // 6MB chunks
-          },
-          (error, result) => {
-            if (result) resolve(result);
-            else reject(error);
-          }
-        );
-
-        streamifier.createReadStream(req.file.buffer).pipe(stream);
-      });
-    };
-
-    const result = await streamUpload();
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: "video", chunk_size: 6000000 },
+        (error, result) => {
+          if (result) resolve(result);
+          else reject(error);
+        }
+      );
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
 
     res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error(err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
 
-/* =========================
-   Movies
-========================= */
+/* ================= Movies ================= */
 
+// Get All
 app.get("/movies", async (req, res) => {
-  try {
-    const movies = await Movie.find();
-    res.json(movies);
-  } catch (err) {
-    res.status(500).json({ message: "Error loading movies" });
-  }
+  const movies = await Movie.find();
+  res.json(movies);
 });
 
+// Add Movie
 app.post("/movies", async (req, res) => {
+  const { title, image } = req.body;
+  const newMovie = new Movie({ title, image, episodes: [] });
+  await newMovie.save();
+  res.json({ message: "Movie added" });
+});
+
+// ✅ Update Movie (هذا كان ناقص)
+app.put("/movies/:id", async (req, res) => {
   try {
+
     const { title, image } = req.body;
 
-    const newMovie = new Movie({
-      title,
-      image,
-      episodes: []
-    });
-
-    await newMovie.save();
-    res.json({ message: "Movie added" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Error adding movie" });
-  }
-});
-
-app.post("/movies/:id/episodes", async (req, res) => {
-  try {
-    const { name, video, image } = req.body;
-
     await Movie.findByIdAndUpdate(req.params.id, {
-      $push: { episodes: { name, video, image } }
+      title,
+      image
     });
 
-    res.json({ message: "Episode added" });
+    res.json({ message: "Movie updated successfully" });
 
   } catch (err) {
-    res.status(500).json({ message: "Error adding episode" });
+    res.status(500).json({ message: "Error updating movie" });
   }
 });
 
+// Delete Movie
+app.delete("/movies/:id", async (req, res) => {
+  try {
+
+    const movie = await Movie.findByIdAndDelete(req.params.id);
+
+    if (!movie)
+      return res.status(404).json({ message: "Movie not found" });
+
+    res.json({ message: "Movie deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting movie" });
+  }
+});
+
+// Add Episode
+app.post("/movies/:id/episodes", async (req, res) => {
+  const { name, video, image } = req.body;
+
+  await Movie.findByIdAndUpdate(req.params.id, {
+    $push: { episodes: { name, video, image } }
+  });
+
+  res.json({ message: "Episode added" });
+});
+
+// Delete Episode
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   try {
 
-    const { seriesId, episodeId } = req.params;
-    const movie = await Movie.findById(seriesId);
+    const movie = await Movie.findById(req.params.seriesId);
 
-    if (!movie) {
+    if (!movie)
       return res.status(404).json({ message: "Movie not found" });
-    }
 
     movie.episodes = movie.episodes.filter(
-      ep => ep._id.toString() !== episodeId
+      ep => ep._id.toString() !== req.params.episodeId
     );
 
     await movie.save();
@@ -181,9 +165,7 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   }
 });
 
-/* =========================
-   Static
-========================= */
+/* ================= Static ================= */
 
 app.use(express.static(path.join(__dirname, "public")));
 
