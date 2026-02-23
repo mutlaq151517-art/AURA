@@ -37,14 +37,23 @@ body{
   opacity:.8;
 }
 
-/* ===== HOME HERO ===== */
+/* ===== HOME HERO SLIDER ===== */
 .home-hero{
-  position:relative;
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
   height:70vh;
-  overflow:hidden;
+}
+.home-hero::-webkit-scrollbar{ display:none; }
+
+.hero-slide{
+  min-width:100%;
+  position:relative;
+  scroll-snap-align:start;
 }
 
-.home-hero img{
+.hero-slide img{
   width:100%;
   height:100%;
   object-fit:cover;
@@ -97,6 +106,10 @@ body{
 .dots{
   display:flex;
   gap:6px;
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
 }
 
 .dot{
@@ -104,6 +117,7 @@ body{
   height:6px;
   background:rgba(255,255,255,.4);
   border-radius:50%;
+  transition:.3s;
 }
 
 .dot.active{
@@ -287,25 +301,9 @@ body{
 
 <div id="homeContent">
 
-  <div class="home-hero" id="homeHero">
-    <img id="homeHeroImage">
-    <div class="home-overlay"></div>
+  <div class="home-hero" id="homeHero"></div>
 
-    <div class="home-content">
-      <div class="home-title" id="homeHeroTitle"></div>
-
-      <div class="hero-buttons">
-        <button class="btn-primary" id="watchNowBtn">▶ شاهد الآن</button>
-        <button class="btn-outline">+ أضف لقائمتي</button>
-      </div>
-
-      <div class="dots">
-        <div class="dot active"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    </div>
-  </div>
+  <div class="dots" id="heroDots"></div>
 
   <div class="section">
     <div class="section-title">متابعة المشاهدة</div>
@@ -314,7 +312,7 @@ body{
 
 </div>
 
-<!-- ===== SERIES PAGE (UNCHANGED) ===== -->
+<!-- SERIES PAGE (UNCHANGED) -->
 <div class="series-page" id="seriesPage">
   <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
 
@@ -347,15 +345,40 @@ async function loadSeries(){
   const data=await res.json();
   allSeries=data;
 
+  renderHeroSlider(data);
   renderSeries(data);
+}
 
-  if(data.length>0){
-    document.getElementById("homeHeroImage").src=data[0].image;
-    document.getElementById("homeHeroTitle").innerText=data[0].title;
-    document.getElementById("watchNowBtn").onclick=()=>{
-      openSeries(data[0]._id);
-    }
-  }
+function renderHeroSlider(data){
+  const hero=document.getElementById("homeHero");
+  const dots=document.getElementById("heroDots");
+  hero.innerHTML="";
+  dots.innerHTML="";
+
+  data.forEach((item,index)=>{
+    hero.innerHTML+=`
+      <div class="hero-slide">
+        <img src="${item.image}">
+        <div class="home-overlay"></div>
+        <div class="home-content">
+          <div class="home-title">${item.title}</div>
+          <div class="hero-buttons">
+            <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
+            <button class="btn-outline">+ أضف لقائمتي</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    dots.innerHTML+=`<div class="dot ${index===0?'active':''}"></div>`;
+  });
+
+  hero.addEventListener("scroll",()=>{
+    const index=Math.round(hero.scrollLeft / hero.clientWidth);
+    document.querySelectorAll(".dot").forEach((dot,i)=>{
+      dot.classList.toggle("active",i===index);
+    });
+  });
 }
 
 function renderSeries(data){
