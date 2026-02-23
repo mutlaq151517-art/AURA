@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
-const streamifier = require("streamifier");
 
 const app = express();
 
@@ -54,7 +53,7 @@ const movieSchema = new mongoose.Schema({
 
 const Movie = mongoose.model("Movie", movieSchema);
 
-/* ================= Upload Video ================= */
+/* ================= Upload Video (بدون streamifier) ================= */
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
@@ -63,21 +62,16 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { resource_type: "video", chunk_size: 6000000 },
-        (error, result) => {
-          if (result) resolve(result);
-          else reject(error);
-        }
-      );
-      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    const base64Video = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+    const result = await cloudinary.uploader.upload(base64Video, {
+      resource_type: "video"
     });
 
     res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error(err);
+    console.error("Upload error:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
@@ -98,10 +92,9 @@ app.post("/movies", async (req, res) => {
   res.json({ message: "Movie added" });
 });
 
-// ✅ Update Movie (هذا كان ناقص)
+// Update Movie
 app.put("/movies/:id", async (req, res) => {
   try {
-
     const { title, image } = req.body;
 
     await Movie.findByIdAndUpdate(req.params.id, {
@@ -172,6 +165,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+/* ================= Start ================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
