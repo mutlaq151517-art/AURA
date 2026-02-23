@@ -14,6 +14,7 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT || 10000;
+const JWT_SECRET = "AURA_SECRET_KEY_2025";
 
 /* =========================
    Cloudinary Config
@@ -26,24 +27,26 @@ cloudinary.config({
 });
 
 /* =========================
-   Multer (حد 2GB)
+   Multer (بحد أقصى 2GB)
 ========================= */
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2000 * 1024 * 1024 }
+  limits: { fileSize: 2000 * 1024 * 1024 } // 2GB
 });
 
 /* =========================
    MongoDB
 ========================= */
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch(err => {
-    console.error("Mongo Error ❌", err);
-    process.exit(1);
-  });
+mongoose.connect(
+  process.env.MONGO_URI
+)
+.then(() => console.log("MongoDB Connected ✅"))
+.catch(err => {
+  console.error("Mongo Error ❌", err);
+  process.exit(1);
+});
 
 /* =========================
    Schemas
@@ -62,53 +65,66 @@ const movieSchema = new mongoose.Schema({
   episodes: [episodeSchema]
 });
 
+const userSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  email: { type: String, unique: true },
+  password: String
+});
+
 const Movie = mongoose.model("Movie", movieSchema);
+const User = mongoose.model("User", userSchema);
 
 /* =========================
-   Upload Video
+   VIDEO UPLOAD ROUTE (محسن)
 ========================= */
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
+
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { resource_type: "video", chunk_size: 6000000 },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
+    const streamUpload = () => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "video",
+            chunk_size: 6000000 // 6MB chunks
+          },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
 
-      streamifier.createReadStream(req.file.buffer).pipe(stream);
-    });
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+    };
+
+    const result = await streamUpload();
 
     res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error(err);
+    console.error("Upload error:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
 
 /* =========================
-   Movies Routes
+   Movies
 ========================= */
 
-// Get all movies
 app.get("/movies", async (req, res) => {
   try {
     const movies = await Movie.find();
     res.json(movies);
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "Error loading movies" });
   }
 });
 
-// Add movie
 app.post("/movies", async (req, res) => {
   try {
     const { title, image } = req.body;
@@ -122,28 +138,11 @@ app.post("/movies", async (req, res) => {
     await newMovie.save();
     res.json({ message: "Movie added" });
 
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "Error adding movie" });
   }
 });
 
-// Delete movie
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    const movie = await Movie.findByIdAndDelete(req.params.id);
-
-    if (!movie) {
-      return res.status(404).json({ message: "Movie not found" });
-    }
-
-    res.json({ message: "Movie deleted successfully" });
-
-  } catch {
-    res.status(500).json({ message: "Error deleting movie" });
-  }
-});
-
-// Add episode
 app.post("/movies/:id/episodes", async (req, res) => {
   try {
     const { name, video, image } = req.body;
@@ -154,17 +153,17 @@ app.post("/movies/:id/episodes", async (req, res) => {
 
     res.json({ message: "Episode added" });
 
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "Error adding episode" });
   }
 });
 
-// Delete episode
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   try {
-    const { seriesId, episodeId } = req.params;
 
+    const { seriesId, episodeId } = req.params;
     const movie = await Movie.findById(seriesId);
+
     if (!movie) {
       return res.status(404).json({ message: "Movie not found" });
     }
@@ -177,7 +176,7 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
 
     res.json({ message: "Episode deleted successfully" });
 
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "Error deleting episode" });
   }
 });
@@ -191,10 +190,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
-/* =========================
-   Start Server
-========================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
