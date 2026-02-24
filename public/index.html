@@ -6,6 +6,7 @@
 <title>AURA</title>
 
 <style>
+/* ===== نفس تصميمك بدون تغيير ===== */
 body{
   margin:0;
   font-family:Arial, sans-serif;
@@ -15,7 +16,7 @@ body{
   overflow-x:hidden;
 }
 
-/* شاشة الترحيب */
+/* البقية مثل ما هي */
 #welcomeModal{
   position:fixed;
   inset:0;
@@ -36,7 +37,6 @@ body{
   cursor:pointer;
 }
 
-/* الهيدر */
 .header{
   padding:15px 20px;
   display:flex;
@@ -46,7 +46,6 @@ body{
 .logo{font-weight:bold;font-size:20px;}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8}
 
-/* الهيرو */
 .home-hero{position:relative;height:75vh;}
 .hero-slide img{width:100%;height:100%;object-fit:cover;}
 .home-overlay{
@@ -68,7 +67,6 @@ body{
   cursor:pointer;
 }
 
-/* الكروت */
 .section{padding:25px;}
 .row{display:flex;gap:15px;overflow-x:auto;}
 .card{
@@ -79,7 +77,6 @@ body{
 }
 .card img{width:100%;height:220px;object-fit:cover;}
 
-/* صفحة المسلسل */
 .series-page{display:none}
 .series-hero{position:relative;height:70vh}
 .series-hero img{width:100%;height:100%;object-fit:cover}
@@ -98,7 +95,6 @@ body{
   cursor:pointer;
 }
 
-/* الحلقات */
 .episodes-grid{
   padding:25px;
   display:grid;
@@ -136,7 +132,6 @@ body{
   border-radius:20px;
   font-size:12px;
 }
-
 .episode-duration{
   position:absolute;
   bottom:10px;
@@ -147,7 +142,6 @@ body{
   font-size:12px;
 }
 
-/* المشغل */
 #playerModal{
   display:none;
   position:fixed;
@@ -176,7 +170,6 @@ body{
   border:none;
 }
 
-/* البار السفلي */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -254,7 +247,9 @@ body{
 </div>
 
 <script>
-const API="https://aura-backend-mpvi.onrender.com/movies";
+const BASE="https://aura-backend-mpvi.onrender.com";
+const API=BASE+"/movies";
+
 let allSeries=[],currentEpisodes=[];
 let isSubscribed=false;
 
@@ -266,11 +261,15 @@ if(localStorage.getItem("aura_welcome")){
   document.getElementById("welcomeModal").style.display="none";
 }
 
+/* ✅ فحص الاشتراك بالـ JWT */
 async function checkSubscription(){
-  const userId=localStorage.getItem("userId");
-  if(!userId) return;
+  const token=localStorage.getItem("token");
+  if(!token) return;
+
   try{
-    const res=await fetch(API.replace("/movies","")+"/check-subscription/"+userId);
+    const res=await fetch(BASE+"/check-subscription",{
+      headers:{ "Authorization":"Bearer "+token }
+    });
     const data=await res.json();
     if(data.active) isSubscribed=true;
   }catch(e){}
@@ -323,7 +322,6 @@ function openSeries(id){
   episodesList.innerHTML="";
 
   currentEpisodes.forEach((ep,i)=>{
-
     const locked=ep.isLocked && !isSubscribed;
 
     let badge="";
@@ -340,7 +338,7 @@ function openSeries(id){
         <img src="${ep.image||s.image}" style="${locked?'filter:blur(4px);opacity:.6;':''}">
         ${badge}
         <div class="episode-number">الحلقة ${i+1}</div>
-        <div class="episode-duration">${ep.duration || ''}</div>
+        <div class="episode-duration">${ep.duration||''}</div>
       </div>`;
   });
 }
