@@ -33,7 +33,7 @@ body{
   height:70vh;
 }
 .home-hero::-webkit-scrollbar{display:none}
-.hero-slide{min-width:100%;position:relative}
+.hero-slide{min-width:100%;position:relative;scroll-snap-align:start}
 .hero-slide img{width:100%;height:100%;object-fit:cover}
 .home-overlay{
   position:absolute;bottom:0;width:100%;height:60%;
@@ -195,8 +195,26 @@ async function loadSeries(){
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
+  renderHeroSlider(data);
   renderSeries(data);
 }
+
+function renderHeroSlider(data){
+  const hero=document.getElementById("homeHero");
+  hero.innerHTML="";
+  data.forEach(item=>{
+    hero.innerHTML+=`
+    <div class="hero-slide">
+      <img src="${item.image}">
+      <div class="home-overlay"></div>
+      <div class="home-content">
+        <div class="home-title">${item.title}</div>
+        <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
+      </div>
+    </div>`;
+  });
+}
+
 function renderSeries(data){
   const row=document.getElementById("seriesRow");
   row.innerHTML="";
@@ -208,6 +226,7 @@ function renderSeries(data){
     </div>`;
   });
 }
+
 function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
   if(!s)return;
@@ -227,23 +246,12 @@ function openSeries(id){
       <img src="${ep.image||s.image}">
       <div class="episode-overlay"></div>
       <div class="episode-number">الحلقة ${i+1}</div>
-      <div class="episode-duration" id="dur-${i}">...</div>
+      <div class="episode-duration" id="dur-${i}">--:--</div>
     </div>`;
-
-    const temp=document.createElement("video");
-    temp.preload="metadata";
-    temp.src=ep.video;
-    temp.onloadedmetadata=function(){
-      const m=Math.floor(temp.duration/60);
-      const s2=Math.floor(temp.duration%60);
-      document.getElementById("dur-"+i).innerText=
-        m+":"+(s2<10?"0"+s2:s2);
-    };
   });
 }
 
 function playEpisode(i){
-  currentEpisodeIndex=i;
   const url=currentEpisodes[i].video;
   const v=document.getElementById("auraVideo");
   const f=document.getElementById("auraFrame");
@@ -251,7 +259,7 @@ function playEpisode(i){
   document.getElementById("playerModal").style.display="flex";
 
   if(url.includes("mediadelivery")||url.includes("iframe")){
-    v.style.display="none";v.src="";v.pause();
+    v.style.display="none";v.src="";
     f.style.display="block";f.src=url;
   }else{
     f.style.display="none";f.src="";
