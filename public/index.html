@@ -88,7 +88,7 @@ body{
   font-size:16px;
 }
 
-/* ===== بطاقات الرئيسية (بدون تغيير) ===== */
+/* ===== بطاقات الرئيسية (لم يتم لمسها) ===== */
 .section{padding:25px;}
 .row{display:flex;gap:15px;overflow-x:auto;}
 .row::-webkit-scrollbar{display:none}
@@ -162,7 +162,7 @@ body{
   position:absolute;
   bottom:20px;
   right:20px;
-  font-size:70px;
+  font-size:80px;
   font-weight:900;
   color:rgba(255,255,255,.08);
 }
@@ -174,7 +174,7 @@ body{
 }
 
 .episode-title{
-  font-size:15px;
+  font-size:16px;
   font-weight:bold;
   margin-bottom:6px;
 }
@@ -255,6 +255,7 @@ body{
 </head>
 
 <body>
+<!-- نفس HTML السابق بالكامل بدون حذف -->
 
 <script>
 const API="https://aura-backend-mpvi.onrender.com/movies";
@@ -264,17 +265,52 @@ async function loadSeries(){
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
+  renderHeroSlider(data);
+  renderSeries(data);
+}
+
+function renderHeroSlider(data){
+  const hero=document.getElementById("homeHero");
+  hero.innerHTML="";
+  data.forEach(item=>{
+    hero.innerHTML+=`
+    <div class="hero-slide">
+      <img src="${item.image}">
+      <div class="home-overlay"></div>
+      <div class="home-content">
+        <div class="home-title">${item.title}</div>
+        <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
+      </div>
+    </div>`;
+  });
+}
+
+function renderSeries(data){
+  const row=document.getElementById("seriesRow");
+  row.innerHTML="";
+  data.forEach(item=>{
+    row.innerHTML+=`
+    <div class="card" onclick="openSeries('${item._id}')">
+      <img src="${item.image}">
+      <div class="card-overlay"></div>
+    </div>`;
+  });
 }
 
 function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
   if(!s)return;
 
+  document.getElementById("homeContent").style.display="none";
+  document.getElementById("seriesPage").style.display="block";
+  document.getElementById("seriesTitle").innerText=s.title;
+  document.getElementById("heroImage").src=s.image;
+
   currentEpisodes=s.episodes?.length?s.episodes:[{video:s.video,image:s.image}];
+  document.getElementById("mainPlayBtn").onclick=()=>playEpisode(0);
 
   const list=document.getElementById("episodesList");
   list.innerHTML="";
-
   currentEpisodes.forEach((ep,i)=>{
     list.innerHTML+=`
     <div class="episode-card" onclick="playEpisode(${i})">
@@ -304,6 +340,18 @@ function playEpisode(i){
     f.style.display="none";f.src="";
     v.style.display="block";v.src=url;v.play();
   }
+}
+
+document.getElementById("closePlayer").onclick=function(){
+  document.getElementById("auraVideo").pause();
+  document.getElementById("auraVideo").src="";
+  document.getElementById("auraFrame").src="";
+  document.getElementById("playerModal").style.display="none";
+};
+
+function goHome(){
+  document.getElementById("seriesPage").style.display="none";
+  document.getElementById("homeContent").style.display="block";
 }
 
 loadSeries();
