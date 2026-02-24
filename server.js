@@ -4,7 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt"); // ✅ تم التعديل هنا
 const jwt = require("jsonwebtoken");
 
 const app = express();
@@ -68,6 +68,9 @@ app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    if (!username || !password)
+      return res.status(400).json({ message: "Missing fields" });
+
     const existingUser = await User.findOne({ username });
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
@@ -84,6 +87,7 @@ app.post("/register", async (req, res) => {
     res.json({ message: "User registered successfully" });
 
   } catch (err) {
+    console.error("Register error:", err);
     res.status(500).json({ message: "Registration error" });
   }
 });
@@ -92,6 +96,9 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
+
+    if (!username || !password)
+      return res.status(400).json({ message: "Missing fields" });
 
     const user = await User.findOne({ username });
     if (!user)
@@ -113,6 +120,7 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Login error" });
   }
 });
@@ -151,6 +159,10 @@ app.get("/movies", async (req, res) => {
 // Add Movie
 app.post("/movies", async (req, res) => {
   const { title, image } = req.body;
+
+  if (!title || !image)
+    return res.status(400).json({ message: "Missing fields" });
+
   const newMovie = new Movie({ title, image, episodes: [] });
   await newMovie.save();
   res.json({ message: "Movie added" });
@@ -169,6 +181,7 @@ app.put("/movies/:id", async (req, res) => {
     res.json({ message: "Movie updated successfully" });
 
   } catch (err) {
+    console.error("Update movie error:", err);
     res.status(500).json({ message: "Error updating movie" });
   }
 });
@@ -185,6 +198,7 @@ app.delete("/movies/:id", async (req, res) => {
     res.json({ message: "Movie deleted successfully" });
 
   } catch (err) {
+    console.error("Delete movie error:", err);
     res.status(500).json({ message: "Error deleting movie" });
   }
 });
@@ -218,6 +232,7 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
     res.json({ message: "Episode deleted successfully" });
 
   } catch (err) {
+    console.error("Delete episode error:", err);
     res.status(500).json({ message: "Error deleting episode" });
   }
 });
