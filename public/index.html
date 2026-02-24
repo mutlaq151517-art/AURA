@@ -52,24 +52,6 @@ body{
   background:transparent;border:2px solid #00d2a5;
   padding:10px 22px;border-radius:30px;color:white;cursor:pointer;
 }
-.dots{
-  display:flex;gap:6px;position:absolute;
-  bottom:20px;left:50%;transform:translateX(-50%);
-}
-.dot{width:6px;height:6px;background:rgba(255,255,255,.4);border-radius:50%;transition:.3s;}
-.dot.active{width:18px;border-radius:10px;background:#00d2a5;}
-
-/* ===== CONTINUE ROW ===== */
-.section{padding:20px;}
-.section-title{font-size:16px;margin-bottom:15px;}
-.row{display:flex;gap:15px;overflow-x:auto;}
-.row::-webkit-scrollbar{ display:none; }
-.card{min-width:170px;border-radius:18px;overflow:hidden;cursor:pointer;position:relative;}
-.card img{width:100%;height:230px;object-fit:cover;}
-.card-overlay{
-  position:absolute;bottom:0;width:100%;height:60%;
-  background:linear-gradient(to top,#071a2f 30%,transparent);
-}
 
 /* ===== SERIES PAGE ===== */
 .series-page{ display:none; }
@@ -115,55 +97,56 @@ body{
 }
 .nav-item.active{background:#00bfff;}
 
-/* ===== AURA PLAYER ===== */
+/* ===== MODERN AURA PLAYER ===== */
 #playerModal{
   display:none;
   position:fixed;
   inset:0;
-  background:#000;
+  background:radial-gradient(circle at center,#0b1f38,#000);
   z-index:99999;
   flex-direction:column;
+  animation:fadeIn .3s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
 }
 
 #playerHeader{
-  padding:15px 20px;
+  padding:18px 25px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  background:#0b1f38;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(15px);
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+#playerHeader span{
+  font-size:18px;
+  letter-spacing:1px;
+  font-weight:bold;
 }
 
 #closePlayer{
   background:#ff3b3b;
   border:none;
-  padding:8px 15px;
-  border-radius:8px;
+  padding:10px 18px;
+  border-radius:12px;
   color:white;
   cursor:pointer;
+  font-weight:bold;
+  transition:.3s;
+}
+#closePlayer:hover{
+  background:#ff0000;
 }
 
-#auraVideo{
+#auraFrame{
+  flex:1;
   width:100%;
-  height:100%;
-  background:black;
-}
-
-.player-controls{
-  position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:15px;
-}
-
-.control-btn{
-  background:rgba(0,0,0,.6);
-  border:1px solid #00bfff;
-  color:white;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
+  border:none;
 }
 </style>
 </head>
@@ -181,7 +164,6 @@ body{
 
 <div id="homeContent">
   <div class="home-hero" id="homeHero"></div>
-  <div class="dots" id="heroDots"></div>
   <div class="section">
     <div class="section-title">متابعة المشاهدة</div>
     <div class="row" id="seriesRow"></div>
@@ -204,17 +186,10 @@ body{
 <!-- PLAYER -->
 <div id="playerModal">
   <div id="playerHeader">
-    <div>🎬 AURA PLAYER</div>
-    <button id="closePlayer">إغلاق ✖</button>
+    <span>🎬 AURA PLAYER</span>
+    <button id="closePlayer">إغلاق</button>
   </div>
-
-  <video id="auraVideo" controls></video>
-
-  <div class="player-controls">
-    <button class="control-btn" onclick="rewind()">⏪ 10</button>
-    <button class="control-btn" onclick="forward()">10 ⏩</button>
-    <button class="control-btn" onclick="toggleFullscreen()">⛶</button>
-  </div>
+  <iframe id="auraFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
 </div>
 
 <div class="bottom-nav">
@@ -228,37 +203,14 @@ const API_BASE="https://aura-backend-mpvi.onrender.com";
 const MOVIES_API=API_BASE+"/movies";
 
 let allSeries=[];
-let currentEpisodeIndex=0;
 let currentEpisodes=[];
-const video=document.getElementById("auraVideo");
+const frame=document.getElementById("auraFrame");
 
 async function loadSeries(){
   const res=await fetch(MOVIES_API);
   const data=await res.json();
   allSeries=data;
-  renderHeroSlider(data);
   renderSeries(data);
-}
-
-function renderHeroSlider(data){
-  const hero=document.getElementById("homeHero");
-  const dots=document.getElementById("heroDots");
-  hero.innerHTML=""; dots.innerHTML="";
-  data.forEach((item,index)=>{
-    hero.innerHTML+=`
-      <div class="hero-slide">
-        <img src="${item.image}">
-        <div class="home-overlay"></div>
-        <div class="home-content">
-          <div class="home-title">${item.title}</div>
-          <div class="hero-buttons">
-            <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
-            <button class="btn-outline">+ أضف لقائمتي</button>
-          </div>
-        </div>
-      </div>`;
-    dots.innerHTML+=`<div class="dot ${index===0?'active':''}"></div>`;
-  });
 }
 
 function renderSeries(data){
@@ -268,7 +220,6 @@ function renderSeries(data){
     row.innerHTML+=`
       <div class="card" onclick="openSeries('${item._id}')">
         <img src="${item.image}">
-        <div class="card-overlay"></div>
       </div>`;
   });
 }
@@ -276,6 +227,7 @@ function renderSeries(data){
 function openSeries(id){
   const series=allSeries.find(s=>s._id===id);
   if(!series) return;
+
   document.getElementById("homeContent").style.display="none";
   document.getElementById("seriesPage").style.display="block";
   document.getElementById("seriesTitle").innerText=series.title;
@@ -293,43 +245,18 @@ function openSeries(id){
         <img src="${ep.image||series.image}">
         <div class="episode-overlay"></div>
         <div class="episode-number">الحلقة ${index+1}</div>
-        <div class="episode-duration">48:00</div>
       </div>`;
   });
 }
 
 function playEpisode(index){
-  currentEpisodeIndex=index;
   const ep=currentEpisodes[index];
-  video.src=ep.video;
+  frame.src=ep.video;
   document.getElementById("playerModal").style.display="flex";
-
-  const savedTime=localStorage.getItem(ep.video);
-  if(savedTime) video.currentTime=parseFloat(savedTime);
-
-  video.play();
-}
-
-video.addEventListener("timeupdate",()=>{
-  if(video.src){
-    localStorage.setItem(video.src,video.currentTime);
-  }
-});
-
-video.addEventListener("ended",()=>{
-  if(currentEpisodeIndex+1<currentEpisodes.length){
-    playEpisode(currentEpisodeIndex+1);
-  }
-});
-
-function rewind(){ video.currentTime-=10; }
-function forward(){ video.currentTime+=10; }
-function toggleFullscreen(){
-  if(video.requestFullscreen) video.requestFullscreen();
 }
 
 document.getElementById("closePlayer").onclick=function(){
-  video.pause();
+  frame.src="";
   document.getElementById("playerModal").style.display="none";
 };
 
