@@ -44,7 +44,11 @@ mongoose.connect(process.env.MONGO_URI)
 const episodeSchema = new mongoose.Schema({
   name: String,
   video: String,
-  image: String
+  image: String,
+
+  /* 🔒 جديد */
+  isLocked: { type: Boolean, default: false }
+
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
@@ -58,7 +62,6 @@ const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
 
-  /* ===== الاشتراك الجديد ===== */
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
   subscriptionLifetime: { type: Boolean, default: false }
@@ -137,21 +140,17 @@ app.post("/admin/give-subscription", async (req, res) => {
       expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + 1);
     }
-
     else if (type === "1y") {
       expiresAt = new Date();
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     }
-
     else if (type === "lifetime") {
       lifetime = true;
     }
-
     else if (type === "customDays" && customDays) {
       expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + Number(customDays));
     }
-
     else if (type === "customDate" && customDate) {
       expiresAt = new Date(customDate);
     }
@@ -166,6 +165,24 @@ app.post("/admin/give-subscription", async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: "Subscription error" });
+  }
+});
+
+/* ================= تغيير حالة قفل حلقة ================= */
+
+app.post("/admin/toggle-episode-lock", async (req, res) => {
+  try {
+    const { movieId, episodeId, isLocked } = req.body;
+
+    await Movie.updateOne(
+      { _id: movieId, "episodes._id": episodeId },
+      { $set: { "episodes.$.isLocked": isLocked } }
+    );
+
+    res.json({ message: "Episode lock status updated" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Lock update failed" });
   }
 });
 
@@ -190,26 +207,6 @@ app.post("/check-subscription", async (req, res) => {
   return res.json({ active: false });
 });
 
-/* ================= Upload Video ================= */
-
-app.post("/upload-video", upload.single("video"), async (req, res) => {
-  try {
-    if (!req.file)
-      return res.status(400).json({ message: "No file uploaded" });
-
-    const base64Video = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-
-    const result = await cloudinary.uploader.upload(base64Video, {
-      resource_type: "video"
-    });
-
-    res.json({ url: result.secure_url });
-
-  } catch (err) {
-    res.status(500).json({ message: "Upload failed" });
-  }
-});
-
 /* ================= Movies ================= */
 
 app.get("/movies", async (req, res) => {
@@ -224,15 +221,19 @@ app.post("/movies", async (req, res) => {
   res.json({ message: "Movie added" });
 });
 
+/* ===== إضافة حلقة مع دعم القفل ===== */
+
 app.post("/movies/:id/episodes", async (req, res) => {
-  const { name, video, image } = req.body;
+  const { name, video, image, isLocked } = req.body;
 
   await Movie.findByIdAndUpdate(req.params.id, {
-    $push: { episodes: { name, video, image } }
+    $push: { episodes: { name, video, image, isLocked: !!isLocked } }
   });
 
   res.json({ message: "Episode added" });
 });
+
+/* ================= Delete Episode ================= */
 
 app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
   try {
