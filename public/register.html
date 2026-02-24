@@ -102,6 +102,8 @@ button:hover{
 </div>
 
 <script>
+const API = "https://aura-backend-mpvi.onrender.com";
+
 async function register(){
   const username=document.getElementById("username").value.trim();
   const email=document.getElementById("email").value.trim();
@@ -112,19 +114,29 @@ async function register(){
     return;
   }
 
-  const res=await fetch("/register",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({username,email,password})
-  });
+  if(password.length < 6){
+    alert("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    return;
+  }
 
-  const data=await res.json();
+  try{
+    const res=await fetch(API + "/register",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,email,password})
+    });
 
-  if(res.ok){
-    alert("تم إنشاء الحساب بنجاح ✅");
-    window.location.href="login.html";
-  }else{
-    alert(data.message || "خطأ في إنشاء الحساب");
+    const data=await res.json();
+
+    if(res.ok){
+      alert("تم إنشاء الحساب بنجاح ✅");
+      window.location.href="login.html";
+    }else{
+      alert(data.message || "خطأ في إنشاء الحساب");
+    }
+
+  }catch(err){
+    alert("تعذر الاتصال بالسيرفر");
   }
 }
 </script>
