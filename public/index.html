@@ -11,7 +11,7 @@ body{
   font-family:Arial, sans-serif;
   background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
   color:white;
-  padding-bottom:120px;
+  padding-bottom:100px;
   overflow-x:hidden;
 }
 
@@ -24,21 +24,6 @@ body{
 }
 .logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8;}
-
-/* SEARCH */
-.search-container{
-  padding:0 20px 15px 20px;
-}
-.search-box{
-  width:100%;
-  padding:12px 18px;
-  border-radius:30px;
-  border:none;
-  outline:none;
-  font-size:14px;
-  background:white;
-  color:#111;
-}
 
 /* HERO */
 .home-hero{
@@ -111,7 +96,7 @@ body{
   padding:5px 10px;border-radius:15px;font-size:12px;
 }
 
-/* PLAYER (لم يتم تغييره نهائياً) */
+/* PLAYER (لم يتم تغييره) */
 #playerModal{
   display:none;
   position:fixed;
@@ -141,20 +126,46 @@ body{
   border:none;
 }
 
-/* NAV */
+/* ===== NEW MODERN BOTTOM BAR ===== */
 .bottom-nav{
-  position:fixed;bottom:25px;left:50%;
-  transform:translateX(-50%);
-  width:92%;max-width:420px;height:70px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(20px);
-  border-radius:25px;
-  display:flex;justify-content:space-around;align-items:center;
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:75px;
+  background:#081b30;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,0.08);
+  z-index:999;
 }
-.nav-item{font-size:22px;width:50px;height:50px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;cursor:pointer;}
-.nav-item.active{background:#00bfff;}
+
+.nav-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  cursor:pointer;
+  color:#00d2a5;
+  transition:.3s;
+  text-shadow:0 0 10px rgba(0,210,165,0.6);
+}
+
+.nav-item span{
+  font-size:12px;
+  margin-top:4px;
+}
+
+.nav-item:hover{
+  transform:translateY(-3px);
+}
+
+.nav-item.active{
+  color:#1e90ff;
+  text-shadow:0 0 12px rgba(30,144,255,0.9);
+}
 </style>
 </head>
 
@@ -167,10 +178,6 @@ body{
     <span>أفلام</span>
     <span>رياضة</span>
   </div>
-</div>
-
-<div class="search-container">
-  <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن مسلسل...">
 </div>
 
 <div id="homeContent">
@@ -202,8 +209,20 @@ body{
   <iframe id="auraFrame" allow="autoplay; fullscreen" allowfullscreen style="display:none"></iframe>
 </div>
 
+<!-- NEW BOTTOM BAR -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="goHome()">🏠</div>
+  <div class="nav-item active" onclick="goHome()">
+    🏠
+    <span>الرئيسية</span>
+  </div>
+  <div class="nav-item" onclick="window.location.href='settings.html'">
+    ⚙️
+    <span>الإعدادات</span>
+  </div>
+  <div class="nav-item" onclick="window.location.href='account.html'">
+    👤
+    <span>الحساب</span>
+  </div>
 </div>
 
 <script>
@@ -245,12 +264,6 @@ function renderSeries(data){
     </div>`;
   });
 }
-
-document.getElementById("searchInput").addEventListener("input",function(){
-  const value=this.value.toLowerCase();
-  const filtered=allSeries.filter(s=>s.title.toLowerCase().includes(value));
-  renderSeries(filtered);
-});
 
 function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
