@@ -12,7 +12,7 @@ body{
   background:linear-gradient(135deg,#0d223d,#071a2f);
   color:white;
   overflow-x:hidden;
-  padding-bottom:80px;
+  padding-bottom:90px;
 }
 
 /* ===== Header ===== */
@@ -24,7 +24,7 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  background:rgba(7,26,47,.85);
+  background:rgba(7,26,47,.9);
   backdrop-filter:blur(10px);
   z-index:1000;
 }
@@ -52,10 +52,7 @@ body{
   bottom:30px;
   right:20px;
 }
-.hero-title{
-  font-size:24px;
-  margin-bottom:10px;
-}
+.hero-title{font-size:24px;margin-bottom:10px}
 .btn{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
   padding:8px 20px;
@@ -66,7 +63,7 @@ body{
   cursor:pointer;
 }
 
-/* ===== Series Cards ===== */
+/* ===== Cards ===== */
 .section-title{
   padding:15px 20px 5px;
   font-size:16px;
@@ -116,6 +113,7 @@ body{
   position:relative;
   border-radius:15px;
   overflow:hidden;
+  cursor:pointer;
 }
 .episode-card img{
   width:100%;
@@ -148,6 +146,57 @@ body{
   border-radius:15px;
   font-size:11px;
 }
+
+/* ===== Player ===== */
+#playerModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:black;
+  z-index:9999;
+}
+#playerHeader{
+  padding:10px;
+  background:#0d223d;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#closePlayer{
+  background:red;
+  border:none;
+  color:white;
+  padding:5px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+#auraVideo{
+  width:100%;
+  height:90%;
+}
+
+/* ===== Bottom Nav ===== */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:70px;
+  background:rgba(7,26,47,.95);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.nav-item{
+  text-align:center;
+  font-size:20px;
+  color:#00d2a5;
+  cursor:pointer;
+}
+.nav-item span{
+  display:block;
+  font-size:11px;
+}
 </style>
 </head>
 
@@ -169,11 +218,27 @@ body{
   <div class="row" id="seriesRow"></div>
 </div>
 
-<!-- Series Page -->
+<!-- Series -->
 <div class="series-page" id="seriesPage">
   <button class="back-btn" onclick="goHome()">⬅ رجوع</button>
   <h2 id="seriesTitle" style="padding:0 15px;"></h2>
   <div class="episodes-grid" id="episodesList"></div>
+</div>
+
+<!-- Player -->
+<div id="playerModal">
+  <div id="playerHeader">
+    <div>🎬 AURA Player</div>
+    <button id="closePlayer">إغلاق</button>
+  </div>
+  <video id="auraVideo" controls></video>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
+  <div class="nav-item">⚙️<span>الإعدادات</span></div>
+  <div class="nav-item">👤<span>الحساب</span></div>
 </div>
 
 <script>
@@ -224,13 +289,26 @@ function openSeries(id){
 
   currentEpisodes.forEach((ep,i)=>{
     list.innerHTML+=`
-      <div class="episode-card">
+      <div class="episode-card" onclick="playEpisode(${i})">
         <img src="${ep.image || s.image}">
         <div class="episode-number">الحلقة ${i+1}</div>
         <div class="episode-duration">${ep.duration || "--:--"}</div>
       </div>`;
   });
 }
+
+function playEpisode(i){
+  const video=document.getElementById("auraVideo");
+  video.src=currentEpisodes[i].video;
+  document.getElementById("playerModal").style.display="block";
+}
+
+document.getElementById("closePlayer").onclick=function(){
+  const video=document.getElementById("auraVideo");
+  video.pause();
+  video.src="";
+  document.getElementById("playerModal").style.display="none";
+};
 
 function goHome(){
   document.getElementById("seriesPage").style.display="none";
