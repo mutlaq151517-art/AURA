@@ -15,7 +15,7 @@ body{
   overflow-x:hidden;
 }
 
-/* ===== Header (Glass) ===== */
+/* ===== Header ===== */
 .header{
   position:fixed;
   top:0;
@@ -29,17 +29,8 @@ body{
   background:rgba(7,26,47,.55);
   z-index:1000;
 }
-.logo{
-  font-weight:bold;
-  font-size:20px;
-  letter-spacing:2px;
-}
-.top-menu{
-  display:flex;
-  gap:20px;
-  font-size:14px;
-  opacity:.85;
-}
+.logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
+.top-menu{display:flex;gap:20px;font-size:14px;opacity:.85;}
 
 /* ===== Hero ===== */
 .home-hero{
@@ -50,17 +41,8 @@ body{
   height:85vh;
 }
 .home-hero::-webkit-scrollbar{display:none}
-.hero-slide{
-  min-width:100%;
-  position:relative;
-  scroll-snap-align:start;
-}
-.hero-slide img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:brightness(.85);
-}
+.hero-slide{min-width:100%;position:relative;scroll-snap-align:start}
+.hero-slide img{width:100%;height:100%;object-fit:cover;filter:brightness(.85);}
 .home-overlay{
   position:absolute;
   inset:0;
@@ -72,11 +54,7 @@ body{
   right:40px;
   max-width:60%;
 }
-.home-title{
-  font-size:38px;
-  margin-bottom:15px;
-  font-weight:bold;
-}
+.home-title{font-size:38px;margin-bottom:15px;font-weight:bold;}
 .btn-primary{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
   border:none;
@@ -88,22 +66,10 @@ body{
   box-shadow:0 10px 30px rgba(0,210,165,.25);
 }
 
-/* ===== Section Title ===== */
-.section-title{
-  font-size:20px;
-  margin:30px 25px 10px;
-  font-weight:bold;
-  opacity:.9;
-}
-
-/* ===== Cards ===== */
+/* ===== Section ===== */
+.section-title{font-size:20px;margin:30px 25px 10px;font-weight:bold;opacity:.9;}
 .section{padding:10px 20px 30px;}
-.row{
-  display:flex;
-  gap:18px;
-  overflow-x:auto;
-  padding-bottom:10px;
-}
+.row{display:flex;gap:18px;overflow-x:auto;padding-bottom:10px;}
 .row::-webkit-scrollbar{display:none}
 
 .card{
@@ -120,9 +86,7 @@ body{
   object-fit:cover;
   transition:.35s;
 }
-.card:hover img{
-  transform:scale(1.08);
-}
+.card:hover img{transform:scale(1.08);}
 .card::after{
   content:"";
   position:absolute;
@@ -130,8 +94,28 @@ body{
   background:linear-gradient(to top,rgba(7,26,47,.7),transparent);
 }
 
-/* ===== باقي الصفحات بدون تغيير ===== */
-.series-page{display:none}
+/* ===== صفحة المسلسل ===== */
+.series-page{display:none;padding-top:90px;}
+.series-hero{position:relative;height:60vh}
+.series-hero img{width:100%;height:100%;object-fit:cover}
+.series-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(7,26,47,.9),transparent);
+}
+.series-content{
+  position:absolute;
+  bottom:40px;
+  right:30px;
+}
+.back-btn{
+  margin:20px;
+  background:#00d2a5;
+  border:none;
+  padding:10px 20px;
+  border-radius:20px;
+  cursor:pointer;
+}
 
 /* ===== Bottom Nav ===== */
 .bottom-nav{
@@ -155,10 +139,7 @@ body{
   cursor:pointer;
   color:#00d2a5;
 }
-.nav-item span{
-  font-size:12px;
-  margin-top:4px;
-}
+.nav-item span{font-size:12px;margin-top:4px;}
 </style>
 </head>
 
@@ -175,18 +156,25 @@ body{
 
 <div id="homeContent">
   <div class="home-hero" id="homeHero"></div>
-
   <div class="section-title">🔥 الأكثر مشاهدة</div>
   <div class="section">
     <div class="row" id="seriesRow"></div>
   </div>
 </div>
 
-<!-- ⚠️ صفحة المسلسل الداخلية كما هي عندك بدون أي تغيير -->
-<div class="series-page" id="seriesPage"></div>
+<div class="series-page" id="seriesPage">
+  <button class="back-btn" onclick="goHome()">⬅ رجوع</button>
+  <div class="series-hero">
+    <img id="seriesImage">
+    <div class="series-overlay"></div>
+    <div class="series-content">
+      <h2 id="seriesTitle"></h2>
+    </div>
+  </div>
+</div>
 
 <div class="bottom-nav">
-  <div class="nav-item">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
   <div class="nav-item">⚙️<span>الإعدادات</span></div>
   <div class="nav-item">👤<span>الحساب</span></div>
 </div>
@@ -213,7 +201,7 @@ function renderHeroSlider(data){
       <div class="home-overlay"></div>
       <div class="home-content">
         <div class="home-title">${item.title}</div>
-        <button class="btn-primary">▶ شاهد الآن</button>
+        <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
       </div>
     </div>`;
   });
@@ -224,10 +212,25 @@ function renderSeries(data){
   row.innerHTML="";
   data.forEach(item=>{
     row.innerHTML+=`
-    <div class="card">
+    <div class="card" onclick="openSeries('${item._id}')">
       <img src="${item.image}">
     </div>`;
   });
+}
+
+function openSeries(id){
+  const s=allSeries.find(x=>x._id===id);
+  if(!s)return;
+
+  document.getElementById("homeContent").style.display="none";
+  document.getElementById("seriesPage").style.display="block";
+  document.getElementById("seriesTitle").innerText=s.title;
+  document.getElementById("seriesImage").src=s.image;
+}
+
+function goHome(){
+  document.getElementById("seriesPage").style.display="none";
+  document.getElementById("homeContent").style.display="block";
 }
 
 loadSeries();
