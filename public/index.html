@@ -116,7 +116,7 @@ body{
   height:180px;
   object-fit:cover;
 }
-.episode-badge{
+.badge{
   position:absolute;
   top:10px;
   left:10px;
@@ -126,6 +126,26 @@ body{
 }
 .badge-free{ background:#00d2a5; }
 .badge-locked{ background:#ff3b3b; }
+
+.episode-number{
+  position:absolute;
+  bottom:10px;
+  right:10px;
+  background:#00d2a5;
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.episode-duration{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  background:rgba(0,0,0,.7);
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:12px;
+}
 
 /* المشغل */
 #playerModal{
@@ -249,11 +269,8 @@ if(localStorage.getItem("aura_welcome")){
 async function checkSubscription(){
   const userId=localStorage.getItem("userId");
   if(!userId) return;
-
   try{
-    const res=await fetch(
-      "https://aura-backend-mpvi.onrender.com/check-subscription/"+userId
-    );
+    const res=await fetch(API.replace("/movies","")+"/check-subscription/"+userId);
     const data=await res.json();
     if(data.active) isSubscribed=true;
   }catch(e){}
@@ -285,9 +302,9 @@ function renderSeries(data){
   seriesRow.innerHTML="";
   data.forEach(item=>{
     seriesRow.innerHTML+=`
-    <div class="card" onclick="openSeries('${item._id}')">
-      <img src="${item.image}">
-    </div>`;
+      <div class="card" onclick="openSeries('${item._id}')">
+        <img src="${item.image}">
+      </div>`;
   });
 }
 
@@ -306,14 +323,15 @@ function openSeries(id){
   episodesList.innerHTML="";
 
   currentEpisodes.forEach((ep,i)=>{
+
     const locked=ep.isLocked && !isSubscribed;
 
     let badge="";
     if(!isSubscribed){
       if(ep.isLocked){
-        badge=`<div class="episode-badge badge-locked">🔒 للمشتركين</div>`;
+        badge=`<div class="badge badge-locked">🔒 للمشتركين</div>`;
       }else{
-        badge=`<div class="episode-badge badge-free">مجانية</div>`;
+        badge=`<div class="badge badge-free">مجانية</div>`;
       }
     }
 
@@ -321,6 +339,8 @@ function openSeries(id){
       <div class="episode-card" onclick="${locked?'alert(\'هذه الحلقة للمشتركين فقط 🔒\')':'playEpisode('+i+')'}">
         <img src="${ep.image||s.image}" style="${locked?'filter:blur(4px);opacity:.6;':''}">
         ${badge}
+        <div class="episode-number">الحلقة ${i+1}</div>
+        <div class="episode-duration">${ep.duration || ''}</div>
       </div>`;
   });
 }
