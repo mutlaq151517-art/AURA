@@ -4,7 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
-const bcrypt = require("bcrypt"); // ✅ تم التعديل هنا
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const app = express();
@@ -63,7 +63,6 @@ const User = mongoose.model("User", userSchema);
 
 /* ================= Auth ================= */
 
-// Register
 app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -77,11 +76,7 @@ app.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
-      username,
-      password: hashedPassword
-    });
-
+    const newUser = new User({ username, password: hashedPassword });
     await newUser.save();
 
     res.json({ message: "User registered successfully" });
@@ -92,7 +87,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Login
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -114,10 +108,7 @@ app.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({
-      message: "Login successful",
-      token
-    });
+    res.json({ message: "Login successful", token });
 
   } catch (err) {
     console.error("Login error:", err);
@@ -130,9 +121,8 @@ app.post("/login", async (req, res) => {
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
 
-    if (!req.file) {
+    if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
-    }
 
     const base64Video = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
@@ -150,13 +140,11 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
 
 /* ================= Movies ================= */
 
-// Get All
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
 });
 
-// Add Movie
 app.post("/movies", async (req, res) => {
   const { title, image } = req.body;
 
@@ -165,18 +153,15 @@ app.post("/movies", async (req, res) => {
 
   const newMovie = new Movie({ title, image, episodes: [] });
   await newMovie.save();
+
   res.json({ message: "Movie added" });
 });
 
-// Update Movie
 app.put("/movies/:id", async (req, res) => {
   try {
     const { title, image } = req.body;
 
-    await Movie.findByIdAndUpdate(req.params.id, {
-      title,
-      image
-    });
+    await Movie.findByIdAndUpdate(req.params.id, { title, image });
 
     res.json({ message: "Movie updated successfully" });
 
@@ -186,10 +171,8 @@ app.put("/movies/:id", async (req, res) => {
   }
 });
 
-// Delete Movie
 app.delete("/movies/:id", async (req, res) => {
   try {
-
     const movie = await Movie.findByIdAndDelete(req.params.id);
 
     if (!movie)
@@ -203,7 +186,6 @@ app.delete("/movies/:id", async (req, res) => {
   }
 });
 
-// Add Episode
 app.post("/movies/:id/episodes", async (req, res) => {
   const { name, video, image } = req.body;
 
@@ -214,10 +196,8 @@ app.post("/movies/:id/episodes", async (req, res) => {
   res.json({ message: "Episode added" });
 });
 
-// Delete Episode
 app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
   try {
-
     const movie = await Movie.findById(req.params.seriesId);
 
     if (!movie)
@@ -239,8 +219,10 @@ app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
 
 /* ================= Static ================= */
 
+// يخدم ملفات public أولاً
 app.use(express.static(path.join(__dirname, "public")));
 
+// فقط إذا لم يتم العثور على ملف
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
