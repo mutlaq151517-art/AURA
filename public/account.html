@@ -53,14 +53,24 @@ if(!token){
 }
 
 fetch(API + "/me",{
-  headers:{ Authorization: token }
+  headers:{
+    "Authorization": token,
+    "Content-Type": "application/json"
+  }
 })
-.then(res=>res.json())
+.then(res=>{
+  if(!res.ok){
+    throw new Error("Unauthorized");
+  }
+  return res.json();
+})
 .then(data=>{
-  document.getElementById("username").innerText = data.username;
+  document.getElementById("username").innerText =
+    "اسم المستخدم: " + data.username;
 })
 .catch(()=>{
-  document.getElementById("username").innerText = "حدث خطأ";
+  document.getElementById("username").innerText =
+    "غير مسجل دخول";
 });
 
 function logout(){
