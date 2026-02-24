@@ -15,6 +15,34 @@ body{
   overflow-x:hidden;
 }
 
+/* ===== ترحيب ===== */
+#welcomeModal{
+  position:fixed;
+  inset:0;
+  background:linear-gradient(135deg,#06121f,#0b1f38);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:999999;
+}
+.welcome-box{text-align:center}
+.welcome-box h1{
+  font-size:32px;
+  margin-bottom:15px;
+  background:linear-gradient(90deg,#00d2a5,#1e90ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.welcome-box button{
+  margin-top:20px;
+  padding:12px 30px;
+  border:none;
+  border-radius:30px;
+  background:linear-gradient(90deg,#00d2a5,#1e90ff);
+  color:white;
+  cursor:pointer;
+}
+
 /* ===== الهيدر ===== */
 .header{
   padding:15px 20px;
@@ -22,10 +50,10 @@ body{
   justify-content:space-between;
   align-items:center;
 }
-.logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
+.logo{font-weight:bold;font-size:20px;letter-spacing:2px}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8}
 
-/* ===== HERO نتفلكس ===== */
+/* ===== HERO احترافي ===== */
 .home-hero{
   position:relative;
   height:85vh;
@@ -42,7 +70,7 @@ body{
 .home-overlay{
   position:absolute;
   inset:0;
-  background:linear-gradient(to top,#071a2f 20%,rgba(7,26,47,.5) 60%,transparent);
+  background:linear-gradient(to top,#071a2f 15%,rgba(7,26,47,.5) 60%,transparent);
 }
 .home-content{
   position:absolute;
@@ -51,7 +79,7 @@ body{
   max-width:60%;
 }
 .home-title{
-  font-size:44px;
+  font-size:46px;
   font-weight:bold;
   margin-bottom:20px;
 }
@@ -65,14 +93,12 @@ body{
   cursor:pointer;
 }
 
-/* ===== قسم ===== */
+/* ===== قسم المسلسلات ===== */
 .section-title{
-  font-size:20px;
+  font-size:22px;
   font-weight:bold;
   margin:30px 25px 10px;
 }
-
-/* ===== صف المسلسلات ===== */
 .section{padding:0 20px 20px}
 .row{
   display:flex;
@@ -84,7 +110,7 @@ body{
 /* ===== كروت نتفلكس ===== */
 .card{
   min-width:160px;
-  border-radius:10px;
+  border-radius:8px;
   overflow:hidden;
   cursor:pointer;
   transition:.3s;
@@ -98,13 +124,17 @@ body{
 .card:hover img{
   transform:scale(1.08);
 }
+.card-overlay{display:none}
 
-/* ===== صفحة المسلسل (بدون لمس المنطق) ===== */
+/* ===== صفحة المسلسل ===== */
 .series-page{display:none}
 .series-hero{position:relative;height:75vh}
 .series-hero img{width:100%;height:100%;object-fit:cover}
 .hero-overlay{
-  position:absolute;bottom:0;width:100%;height:70%;
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:70%;
   background:linear-gradient(to top,#071a2f 40%,transparent);
 }
 .hero-content{position:absolute;bottom:50px;right:30px}
@@ -117,7 +147,7 @@ body{
   cursor:pointer;
 }
 
-/* ===== الحلقات كما هي ===== */
+/* ===== الحلقات (كما هي) ===== */
 .episodes-grid{
   padding:25px;
   display:grid;
@@ -161,7 +191,7 @@ body{
   font-size:13px;
 }
 
-/* ===== المشغل (لم يتم لمسه) ===== */
+/* ===== المشغل (بدون لمس) ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -218,6 +248,14 @@ body{
 
 <body>
 
+<div id="welcomeModal">
+  <div class="welcome-box">
+    <h1>مرحباً بك في AURA ✨</h1>
+    <div>استمتع بأفضل المسلسلات والأفلام</div>
+    <button onclick="closeWelcome()">دخول</button>
+  </div>
+</div>
+
 <div class="header">
   <div class="logo">AURA</div>
   <div class="top-menu">
@@ -236,4 +274,4 @@ body{
   </div>
 </div>
 
-<!-- صفحة المسلسل والمشغل كما هم -->
+<!-- باقي الصفحة (المسلسل + المشغل + السكربت) كما هو عندك بدون أي تعديل -->
