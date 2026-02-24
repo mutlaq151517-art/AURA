@@ -6,6 +6,7 @@ const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
 
 const app = express();
 
@@ -82,7 +83,6 @@ app.post("/register", async (req, res) => {
     res.json({ message: "User registered successfully" });
 
   } catch (err) {
-    console.error("Register error:", err);
     res.status(500).json({ message: "Registration error" });
   }
 });
@@ -90,9 +90,6 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    if (!username || !password)
-      return res.status(400).json({ message: "Missing fields" });
 
     const user = await User.findOne({ username });
     if (!user)
@@ -111,7 +108,6 @@ app.post("/login", async (req, res) => {
     res.json({ message: "Login successful", token });
 
   } catch (err) {
-    console.error("Login error:", err);
     res.status(500).json({ message: "Login error" });
   }
 });
@@ -120,7 +116,6 @@ app.post("/login", async (req, res) => {
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
-
     if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
 
@@ -133,7 +128,6 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
     res.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error("Upload error:", err);
     res.status(500).json({ message: "Upload failed" });
   }
 });
@@ -147,84 +141,34 @@ app.get("/movies", async (req, res) => {
 
 app.post("/movies", async (req, res) => {
   const { title, image } = req.body;
-
-  if (!title || !image)
-    return res.status(400).json({ message: "Missing fields" });
-
   const newMovie = new Movie({ title, image, episodes: [] });
   await newMovie.save();
-
   res.json({ message: "Movie added" });
-});
-
-app.put("/movies/:id", async (req, res) => {
-  try {
-    const { title, image } = req.body;
-
-    await Movie.findByIdAndUpdate(req.params.id, { title, image });
-
-    res.json({ message: "Movie updated successfully" });
-
-  } catch (err) {
-    console.error("Update movie error:", err);
-    res.status(500).json({ message: "Error updating movie" });
-  }
-});
-
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    const movie = await Movie.findByIdAndDelete(req.params.id);
-
-    if (!movie)
-      return res.status(404).json({ message: "Movie not found" });
-
-    res.json({ message: "Movie deleted successfully" });
-
-  } catch (err) {
-    console.error("Delete movie error:", err);
-    res.status(500).json({ message: "Error deleting movie" });
-  }
 });
 
 app.post("/movies/:id/episodes", async (req, res) => {
   const { name, video, image } = req.body;
-
   await Movie.findByIdAndUpdate(req.params.id, {
     $push: { episodes: { name, video, image } }
   });
-
   res.json({ message: "Episode added" });
-});
-
-app.delete("/movies/:seriesId/episodes/:episodeId", async (req, res) => {
-  try {
-    const movie = await Movie.findById(req.params.seriesId);
-
-    if (!movie)
-      return res.status(404).json({ message: "Movie not found" });
-
-    movie.episodes = movie.episodes.filter(
-      ep => ep._id.toString() !== req.params.episodeId
-    );
-
-    await movie.save();
-
-    res.json({ message: "Episode deleted successfully" });
-
-  } catch (err) {
-    console.error("Delete episode error:", err);
-    res.status(500).json({ message: "Error deleting episode" });
-  }
 });
 
 /* ================= Static ================= */
 
-// يخدم ملفات public أولاً
-app.use(express.static(path.join(__dirname, "public")));
+const publicPath = path.join(__dirname, "public");
+app.use(express.static(publicPath));
 
-// فقط إذا لم يتم العثور على ملف
+/* ================= Smart Fallback ================= */
+
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  const filePath = path.join(publicPath, req.path);
+
+  if (fs.existsSync(filePath) && fs.lstatSync(filePath).isFile()) {
+    return res.sendFile(filePath);
+  }
+
+  return res.sendFile(path.join(publicPath, "index.html"));
 });
 
 /* ================= Start ================= */
