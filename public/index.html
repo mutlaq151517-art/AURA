@@ -300,19 +300,15 @@ body{
 </div>
 
 <div id="homeContent">
-
   <div class="home-hero" id="homeHero"></div>
-
   <div class="dots" id="heroDots"></div>
 
   <div class="section">
     <div class="section-title">متابعة المشاهدة</div>
     <div class="row" id="seriesRow"></div>
   </div>
-
 </div>
 
-<!-- SERIES PAGE (UNCHANGED) -->
 <div class="series-page" id="seriesPage">
   <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
 
@@ -328,10 +324,11 @@ body{
   <div class="episodes-grid" id="episodesList"></div>
 </div>
 
+<!-- ===== FIXED WORKING NAV ===== -->
 <div class="bottom-nav">
   <div class="nav-item active" onclick="goHome()">🏠</div>
-  <div class="nav-item">⚙️</div>
-  <div class="nav-item">👤</div>
+  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️</div>
+  <div class="nav-item" onclick="window.location.href='account.html'">👤</div>
 </div>
 
 <script>
