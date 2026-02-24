@@ -15,92 +15,87 @@ body{
   overflow-x:hidden;
 }
 
-/* ===== صفحة المسلسل ===== */
-.series-page{display:none}
-.series-hero{position:relative;height:75vh}
-.series-hero img{width:100%;height:100%;object-fit:cover}
+/* ===== الحلقات - تصميم مثل MBC ===== */
 
-/* ===== الحلقات (تصميم فاخر) ===== */
 .episodes-grid{
-  padding:30px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
-  gap:30px;
+  padding:25px;
+  display:flex;
+  flex-direction:column;
+  gap:25px;
 }
 
 .episode-card{
-  position:relative;
-  border-radius:25px;
+  background:#16293f;
+  border-radius:18px;
   overflow:hidden;
-  cursor:pointer;
-  transition:.4s;
 }
 
-.episode-card:hover{
-  transform:translateY(-8px) scale(1.02);
+.episode-image{
+  position:relative;
 }
 
-.episode-card img{
+.episode-image img{
   width:100%;
-  height:230px;
+  height:220px;
   object-fit:cover;
 }
 
-.episode-overlay{
+.episode-duration{
   position:absolute;
-  inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.9) 15%,rgba(0,0,0,.4) 60%,transparent);
+  bottom:15px;
+  left:15px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(0,0,0,.6);
+  padding:6px 12px;
+  border-radius:30px;
+  font-size:14px;
 }
 
-/* زر التشغيل */
-.episode-play{
-  position:absolute;
-  top:18px;
-  left:18px;
-  background:rgba(0,0,0,.6);
-  backdrop-filter:blur(6px);
+.play-circle{
+  width:28px;
+  height:28px;
   border-radius:50%;
-  width:50px;
-  height:50px;
+  border:2px solid #00d2a5;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:20px;
-  transition:.3s;
+  font-size:12px;
 }
 
-.episode-card:hover .episode-play{
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-}
-
-/* صندوق المعلومات */
-.episode-info-box{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  padding:20px;
-  backdrop-filter:blur(15px);
-  background:rgba(255,255,255,.06);
-  border-top:1px solid rgba(255,255,255,.1);
-}
-
-/* رقم الحلقة */
 .episode-number{
-  display:inline-block;
-  padding:8px 22px;
-  border-radius:40px;
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  font-size:14px;
+  position:absolute;
+  bottom:15px;
+  right:15px;
+  font-size:20px;
   font-weight:bold;
-  box-shadow:0 0 15px rgba(0,210,165,.6);
-  margin-bottom:8px;
 }
 
-/* مدة الحلقة */
-.episode-duration{
-  font-size:13px;
+.episode-content{
+  padding:18px;
+}
+
+.episode-description{
+  font-size:14px;
   opacity:.85;
-  letter-spacing:1px;
+  line-height:1.6;
+  margin-bottom:15px;
+}
+
+.episode-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:25px;
+  font-size:14px;
+  opacity:.8;
+}
+
+.action-btn{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
 }
 
 /* ===== المشغل ===== */
@@ -121,12 +116,7 @@ body{
 
 <body>
 
-<div class="series-page" id="seriesPage">
-  <div class="series-hero">
-    <img id="heroImage">
-  </div>
-  <div class="episodes-grid" id="episodesList"></div>
-</div>
+<div class="episodes-grid" id="episodesList"></div>
 
 <div id="playerModal">
   <video id="auraVideo" controls></video>
@@ -140,32 +130,48 @@ async function loadSeries(){
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
+
+  if(data.length){
+    openSeries(data[0]._id);
+  }
 }
 
 function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
   if(!s)return;
 
-  document.getElementById("seriesPage").style.display="block";
-  document.getElementById("heroImage").src=s.image;
-
-  currentEpisodes=s.episodes?.length?s.episodes:[{video:s.video,image:s.image}];
+  currentEpisodes=s.episodes?.length?s.episodes:[{video:s.video,image:s.image,description:""}];
 
   const list=document.getElementById("episodesList");
   list.innerHTML="";
 
   currentEpisodes.forEach((ep,i)=>{
     list.innerHTML+=`
-    <div class="episode-card" onclick="playEpisode(${i})">
-      <img src="${ep.image||s.image}">
-      <div class="episode-overlay"></div>
-      <div class="episode-play">▶</div>
-      <div class="episode-info-box">
+    <div class="episode-card">
+
+      <div class="episode-image" onclick="playEpisode(${i})">
+        <img src="${ep.image||s.image}">
+        <div class="episode-duration">
+          <div class="play-circle">▶</div>
+          <span id="duration-${i}">--:--</span>
+        </div>
         <div class="episode-number">الحلقة ${i+1}</div>
-        <div class="episode-duration" id="duration-${i}">--:--</div>
       </div>
-    </div>`;
-    
+
+      <div class="episode-content">
+        <div class="episode-description">
+          ${ep.description || "لا يوجد وصف للحلقة حالياً"}
+        </div>
+
+        <div class="episode-actions">
+          <div class="action-btn">⬇ تنزيل</div>
+          <div class="action-btn">↗ شارك</div>
+        </div>
+      </div>
+
+    </div>
+    `;
+
     if(ep.video && ep.video.endsWith(".mp4")){
       const video = document.createElement("video");
       video.src = ep.video;
