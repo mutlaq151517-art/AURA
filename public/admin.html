@@ -21,6 +21,25 @@ body{
   background:#081f3a;
 }
 
+.tabs{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  padding:15px;
+  background:#0b223d;
+}
+
+.tab-btn{
+  background:#0c3a63;
+  padding:8px 15px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.tab-btn.active{
+  background:#00bfff;
+}
+
 .container{
   max-width:1100px;
   margin:30px auto;
@@ -34,9 +53,9 @@ body{
   margin-bottom:30px;
 }
 
-input{
+input,select{
   width:100%;
-  padding:12px;
+  padding:10px;
   margin-bottom:10px;
   border-radius:10px;
   border:none;
@@ -55,7 +74,10 @@ button{
 
 .add-btn{ background:#00bfff; color:white; }
 .delete-btn{ background:#ff3b3b; color:white; }
-.edit-btn{ background:#ff9800; color:white; }
+.green-btn{ background:#00c853; color:white; }
+.orange-btn{ background:#ff9800; color:white; }
+
+.hidden{ display:none; }
 
 .series-box{
   background:#0b2a4a;
@@ -64,15 +86,9 @@ button{
   margin-top:20px;
 }
 
-.series-title{
-  font-size:18px;
-  margin-bottom:10px;
-  font-weight:bold;
-}
-
 .episodes-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:12px;
   margin-top:15px;
 }
@@ -80,30 +96,35 @@ button{
 .episode-card{
   background:#0d3a63;
   border-radius:12px;
-  overflow:hidden;
+  padding:10px;
 }
 
-.episode-card img{
+.table{
   width:100%;
-  height:110px;
-  object-fit:cover;
+  border-collapse:collapse;
 }
 
-.episode-info{
-  padding:8px;
-  font-size:13px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+.table th,.table td{
+  border-bottom:1px solid rgba(255,255,255,.1);
+  padding:10px;
+  text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🎬 لوحة تحكم AURA</div>
+<div class="header">👑 لوحة تحكم AURA</div>
+
+<div class="tabs">
+  <div class="tab-btn active" onclick="showTab('seriesTab',this)">🎬 المسلسلات</div>
+  <div class="tab-btn" onclick="showTab('usersTab',this)">👤 الحسابات</div>
+</div>
 
 <div class="container">
+
+<!-- ================= المسلسلات ================= -->
+<div id="seriesTab">
 
 <div class="card">
 <h3>➕ إضافة مسلسل جديد</h3>
@@ -119,155 +140,186 @@ button{
 
 </div>
 
+<!-- ================= الحسابات ================= -->
+<div id="usersTab" class="hidden">
+
+<div class="card">
+<h3>👤 إدارة الحسابات</h3>
+<table class="table">
+<thead>
+<tr>
+<th>المستخدم</th>
+<th>الحالة</th>
+<th>تاريخ الانتهاء</th>
+<th>اشتراك</th>
+</tr>
+</thead>
+<tbody id="usersTable"></tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
 <script>
 
 const API_BASE = "https://aura-backend-mpvi.onrender.com";
 const API = API_BASE + "/movies";
 
-async function loadSeries(){
-  try{
-    const res = await fetch(API);
-    const data = await res.json();
-    const list = document.getElementById("seriesList");
-    list.innerHTML="";
+/* ============ Tabs ============ */
+function showTab(id,btn){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
 
-    data.forEach(series=>{
+  document.getElementById("seriesTab").classList.add("hidden");
+  document.getElementById("usersTab").classList.add("hidden");
 
-      let episodesHTML="";
-
-      if(series.episodes && series.episodes.length){
-        episodesHTML += `<div class="episodes-grid">`;
-        series.episodes.forEach(ep=>{
-          episodesHTML+=`
-          <div class="episode-card">
-            <img src="${ep.image || series.image}">
-            <div class="episode-info">
-              ${ep.name || "بدون اسم"}
-              <button class="delete-btn"
-                onclick="deleteEpisode('${series._id}','${ep._id}')">
-                حذف
-              </button>
-            </div>
-          </div>`;
-        });
-        episodesHTML += `</div>`;
-      }
-
-      list.innerHTML+=`
-      <div class="series-box">
-
-        <div class="series-title">${series.title}</div>
-
-        <button class="delete-btn"
-          onclick="deleteSeries('${series._id}')">
-          حذف المسلسل
-        </button>
-
-        <hr style="opacity:0.2;margin:20px 0;">
-
-        <h4>➕ إضافة حلقة</h4>
-        <input type="text" placeholder="اسم الحلقة"
-          id="epName-${series._id}">
-        <input type="text" placeholder="رابط الحلقة"
-          id="epVideo-${series._id}">
-        <input type="text" placeholder="رابط صورة الحلقة"
-          id="epImage-${series._id}">
-        <button class="add-btn"
-          onclick="addEpisode('${series._id}')">
-          إضافة حلقة
-        </button>
-
-        ${episodesHTML}
-
-      </div>`;
-    });
-
-  }catch(err){
-    alert("خطأ في تحميل البيانات");
-  }
+  document.getElementById(id).classList.remove("hidden");
 }
 
-async function addEpisode(id){
+/* ============ تحميل المسلسلات ============ */
 
-  const name = document.getElementById("epName-"+id).value;
-  const videoLink = document.getElementById("epVideo-"+id).value;
-  const image = document.getElementById("epImage-"+id).value;
+async function loadSeries(){
+  const res = await fetch(API);
+  const data = await res.json();
+  const list = document.getElementById("seriesList");
+  list.innerHTML="";
 
-  if(!videoLink){
-    alert("حط رابط الفيديو أولاً");
-    return;
-  }
+  data.forEach(series=>{
 
-  let finalVideo = videoLink;
+    let episodesHTML="";
 
-  if(videoLink.includes("drive.google.com")){
-    const match = videoLink.match(/\/d\/(.*?)\//);
-    if(match && match[1]){
-      finalVideo =
-        "https://drive.google.com/uc?export=download&id=" + match[1];
+    if(series.episodes){
+      episodesHTML += `<div class="episodes-grid">`;
+      series.episodes.forEach(ep=>{
+        episodesHTML+=`
+        <div class="episode-card">
+          <div>${ep.name}</div>
+          <button class="${ep.isLocked?'delete-btn':'green-btn'}"
+          onclick="toggleLock('${series._id}','${ep._id}',${!ep.isLocked})">
+          ${ep.isLocked?'🔒 مقفلة':'🔓 مفتوحة'}
+          </button>
+          <button class="delete-btn"
+          onclick="deleteEpisode('${series._id}','${ep._id}')">
+          حذف
+          </button>
+        </div>`;
+      });
+      episodesHTML += `</div>`;
     }
-  }
 
-  await fetch(API+"/"+id+"/episodes",{
+    list.innerHTML+=`
+    <div class="series-box">
+      <h4>${series.title}</h4>
+      <button class="delete-btn"
+      onclick="deleteSeries('${series._id}')">
+      حذف المسلسل
+      </button>
+
+      <hr>
+
+      <input type="text" id="epName-${series._id}" placeholder="اسم الحلقة">
+      <input type="text" id="epVideo-${series._id}" placeholder="رابط الحلقة">
+      <input type="text" id="epImage-${series._id}" placeholder="رابط صورة الحلقة">
+      <button class="add-btn"
+      onclick="addEpisode('${series._id}')">
+      إضافة حلقة
+      </button>
+
+      ${episodesHTML}
+    </div>`;
+  });
+}
+
+/* ============ إدارة الاشتراك ============ */
+
+async function loadUsers(){
+  const res = await fetch(API_BASE+"/admin/users");
+  const users = await res.json();
+
+  const table = document.getElementById("usersTable");
+  table.innerHTML="";
+
+  users.forEach(u=>{
+    let status="غير مشترك ❌";
+    if(u.subscriptionLifetime) status="مدى الحياة 👑";
+    else if(u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt)>new Date())
+      status="مشترك ✅";
+
+    table.innerHTML+=`
+    <tr>
+      <td>${u.username}</td>
+      <td>${status}</td>
+      <td>${u.subscriptionLifetime?"∞":
+      (u.subscriptionExpiresAt?
+      new Date(u.subscriptionExpiresAt).toLocaleDateString():"-")}</td>
+      <td>
+        <button class="green-btn" onclick="giveSub('${u.username}','1m')">شهر</button>
+        <button class="orange-btn" onclick="giveSub('${u.username}','1y')">سنة</button>
+        <button class="add-btn" onclick="giveSub('${u.username}','lifetime')">مدى الحياة</button>
+      </td>
+    </tr>`;
+  });
+}
+
+async function giveSub(username,type){
+  await fetch(API_BASE+"/admin/give-subscription",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      name,
-      video: finalVideo,
-      image
-    })
+    body:JSON.stringify({ username,type })
   });
+  loadUsers();
+}
 
-  alert("تمت إضافة الحلقة 🔥");
+async function toggleLock(movieId,episodeId,isLocked){
+  await fetch(API_BASE+"/admin/toggle-episode-lock",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ movieId,episodeId,isLocked })
+  });
   loadSeries();
 }
+
+/* ============ المسلسلات CRUD ============ */
 
 async function addSeries(){
   const title=document.getElementById("title").value;
   const image=document.getElementById("image").value;
+  await fetch(API,{ method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ title,image }) });
+  loadSeries();
+}
 
-  if(!title){
-    alert("اكتب اسم المسلسل");
-    return;
-  }
+async function deleteSeries(id){
+  await fetch(API+"/"+id,{ method:"DELETE" });
+  loadSeries();
+}
 
-  await fetch(API,{
+async function addEpisode(id){
+  const name=document.getElementById("epName-"+id).value;
+  const video=document.getElementById("epVideo-"+id).value;
+  const image=document.getElementById("epImage-"+id).value;
+
+  await fetch(API+"/"+id+"/episodes",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ title,image })
+    body:JSON.stringify({ name,video,image })
   });
 
   loadSeries();
 }
 
-async function deleteSeries(id){
-  if(!confirm("متأكد من حذف المسلسل بالكامل؟")) return;
-
-  await fetch(API+"/"+id,{ method:"DELETE" });
-
-  alert("تم حذف المسلسل");
+async function deleteEpisode(seriesId,episodeId){
+  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
+    method:"DELETE"
+  });
   loadSeries();
 }
 
-async function deleteEpisode(seriesId,episodeId){
-  if(!confirm("متأكد من حذف الحلقة؟")) return;
-
-  const res = await fetch(
-    API+"/"+seriesId+"/episodes/"+episodeId,
-    { method:"DELETE" }
-  );
-
-  const data = await res.json();
-
-  if(res.ok){
-    alert("تم حذف الحلقة ✅");
-    loadSeries();
-  }else{
-    alert("فشل الحذف ❌");
-  }
-}
-
 loadSeries();
+loadUsers();
 
 </script>
 
