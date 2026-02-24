@@ -25,7 +25,10 @@ body{
   align-items:center;
   z-index:999999;
 }
-.welcome-box{text-align:center;animation:fadeIn .8s ease;}
+.welcome-box{
+  text-align:center;
+  animation:fadeIn .8s ease;
+}
 .welcome-box h1{
   font-size:32px;
   margin-bottom:15px;
@@ -77,7 +80,11 @@ body{
   right:30px;
   max-width:60%;
 }
-.home-title{font-size:34px;margin-bottom:15px;font-weight:bold;}
+.home-title{
+  font-size:34px;
+  margin-bottom:15px;
+  font-weight:bold;
+}
 .btn-primary{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
   border:none;
@@ -126,74 +133,50 @@ body{
   font-size:16px;
 }
 
-/* ===== الحلقات (معدلة فقط هنا) ===== */
+/* ===== الحلقات (تصميم احترافي) ===== */
 .episodes-grid{
   padding:25px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
   gap:25px;
 }
-
 .episode-card{
   position:relative;
-  border-radius:22px;
+  border-radius:20px;
   overflow:hidden;
   cursor:pointer;
   transition:.3s;
 }
-
-.episode-card:hover{
-  transform:translateY(-6px);
-}
-
+.episode-card:hover{transform:translateY(-5px)}
 .episode-card img{
   width:100%;
-  height:220px;
+  height:210px;
   object-fit:cover;
 }
-
 .episode-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.85) 20%,rgba(0,0,0,.3) 60%,transparent);
-}
-
-.episode-info-box{
   position:absolute;
   bottom:0;
   width:100%;
-  padding:18px;
-  backdrop-filter:blur(12px);
-  background:rgba(255,255,255,.05);
+  height:80%;
+  background:linear-gradient(to top,#071a2f 40%,transparent);
 }
-
 .episode-number{
-  display:inline-block;
-  padding:6px 18px;
-  border-radius:30px;
+  position:absolute;
+  top:12px;
+  right:12px;
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
+  padding:6px 14px;
+  border-radius:20px;
   font-size:13px;
-  margin-bottom:8px;
-  font-weight:bold;
 }
-
-.episode-duration{
-  font-size:12px;
-  opacity:.8;
-}
-
 .episode-play{
   position:absolute;
-  top:15px;
-  left:15px;
+  bottom:20px;
+  right:20px;
   background:rgba(0,0,0,.7);
-  border-radius:50%;
-  width:45px;
-  height:45px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
+  padding:8px 15px;
+  border-radius:20px;
+  font-size:13px;
 }
 
 /* ===== مشغل ===== */
@@ -252,12 +235,65 @@ body{
 </head>
 
 <body>
-<!-- نفس HTML السابق بدون تغيير -->
+
+<!-- ترحيب -->
+<div id="welcomeModal">
+  <div class="welcome-box">
+    <h1>مرحباً بك في AURA ✨</h1>
+    <div>استمتع بأفضل المسلسلات والأفلام</div>
+    <button onclick="closeWelcome()">دخول</button>
+  </div>
+</div>
+
+<div class="header">
+  <div class="logo">AURA</div>
+  <div class="top-menu">
+    <span>مسلسلات</span>
+    <span>أفلام</span>
+    <span>رياضة</span>
+  </div>
+</div>
+
+<div id="homeContent">
+  <div class="home-hero" id="homeHero"></div>
+  <div class="section">
+    <div class="row" id="seriesRow"></div>
+  </div>
+</div>
+
+<div class="series-page" id="seriesPage">
+  <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
+  <div class="series-hero">
+    <img id="heroImage">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div id="seriesTitle"></div>
+      <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
+    </div>
+  </div>
+  <div class="episodes-grid" id="episodesList"></div>
+</div>
+
+<div id="playerModal">
+  <div id="playerHeader">
+    <div>🎬 AURA PLAYER</div>
+    <button id="closePlayer">إغلاق ✖</button>
+  </div>
+  <video id="auraVideo" controls style="display:none"></video>
+  <iframe id="auraFrame" allow="autoplay; fullscreen" allowfullscreen style="display:none"></iframe>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
+  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>الحساب</span></div>
+</div>
 
 <script>
 const API="https://aura-backend-mpvi.onrender.com/movies";
 let allSeries=[],currentEpisodes=[];
 
+/* ترحيب مرة واحدة */
 if(localStorage.getItem("aura_welcome")){
   document.getElementById("welcomeModal").style.display="none";
 }
@@ -321,11 +357,8 @@ function openSeries(id){
     <div class="episode-card" onclick="playEpisode(${i})">
       <img src="${ep.image||s.image}">
       <div class="episode-overlay"></div>
-      <div class="episode-play">▶</div>
-      <div class="episode-info-box">
-        <div class="episode-number">الحلقة ${i+1}</div>
-        <div class="episode-duration">${ep.duration||"--:--"}</div>
-      </div>
+      <div class="episode-number">الحلقة ${i+1}</div>
+      <div class="episode-play">▶ تشغيل</div>
     </div>`;
   });
 }
