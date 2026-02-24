@@ -25,6 +25,21 @@ body{
 .logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8;}
 
+/* SEARCH */
+.search-container{
+  padding:0 20px 15px 20px;
+}
+.search-box{
+  width:100%;
+  padding:12px 18px;
+  border-radius:30px;
+  border:none;
+  outline:none;
+  font-size:14px;
+  background:white;
+  color:#111;
+}
+
 /* HERO */
 .home-hero{
   display:flex;
@@ -96,7 +111,7 @@ body{
   padding:5px 10px;border-radius:15px;font-size:12px;
 }
 
-/* PLAYER */
+/* PLAYER (لم يتم تغييره نهائياً) */
 #playerModal{
   display:none;
   position:fixed;
@@ -154,6 +169,10 @@ body{
   </div>
 </div>
 
+<div class="search-container">
+  <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن مسلسل...">
+</div>
+
 <div id="homeContent">
   <div class="home-hero" id="homeHero"></div>
   <div class="section">
@@ -189,7 +208,7 @@ body{
 
 <script>
 const API="https://aura-backend-mpvi.onrender.com/movies";
-let allSeries=[],currentEpisodes=[],currentEpisodeIndex=0;
+let allSeries=[],currentEpisodes=[];
 
 async function loadSeries(){
   const res=await fetch(API);
@@ -227,9 +246,16 @@ function renderSeries(data){
   });
 }
 
+document.getElementById("searchInput").addEventListener("input",function(){
+  const value=this.value.toLowerCase();
+  const filtered=allSeries.filter(s=>s.title.toLowerCase().includes(value));
+  renderSeries(filtered);
+});
+
 function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
   if(!s)return;
+
   document.getElementById("homeContent").style.display="none";
   document.getElementById("seriesPage").style.display="block";
   document.getElementById("seriesTitle").innerText=s.title;
@@ -246,7 +272,7 @@ function openSeries(id){
       <img src="${ep.image||s.image}">
       <div class="episode-overlay"></div>
       <div class="episode-number">الحلقة ${i+1}</div>
-      <div class="episode-duration" id="dur-${i}">--:--</div>
+      <div class="episode-duration">--:--</div>
     </div>`;
   });
 }
