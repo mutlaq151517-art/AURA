@@ -45,10 +45,7 @@ const episodeSchema = new mongoose.Schema({
   name: String,
   video: String,
   image: String,
-
-  /* 🔒 جديد */
   isLocked: { type: Boolean, default: false }
-
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
@@ -116,10 +113,32 @@ app.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({ message: "Login successful", token });
+    res.json({
+      message: "Login successful",
+      token,
+      userId: user._id
+    });
 
   } catch (err) {
     res.status(500).json({ message: "Login error" });
+  }
+});
+
+/* ================= 👑 عرض كل المستخدمين (جديد) ================= */
+
+app.get("/admin/users", async (req, res) => {
+  try {
+    const users = await User.find({}, {
+      username: 1,
+      subscriptionActive: 1,
+      subscriptionExpiresAt: 1,
+      subscriptionLifetime: 1
+    });
+
+    res.json(users);
+
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch users" });
   }
 });
 
@@ -168,7 +187,7 @@ app.post("/admin/give-subscription", async (req, res) => {
   }
 });
 
-/* ================= تغيير حالة قفل حلقة ================= */
+/* ================= قفل / فتح حلقة ================= */
 
 app.post("/admin/toggle-episode-lock", async (req, res) => {
   try {
@@ -186,27 +205,6 @@ app.post("/admin/toggle-episode-lock", async (req, res) => {
   }
 });
 
-/* ================= التحقق من الاشتراك ================= */
-
-app.post("/check-subscription", async (req, res) => {
-  const { userId } = req.body;
-
-  const user = await User.findById(userId);
-  if (!user)
-    return res.status(404).json({ active: false });
-
-  if (user.subscriptionLifetime)
-    return res.json({ active: true, lifetime: true });
-
-  if (user.subscriptionExpiresAt && user.subscriptionExpiresAt > new Date())
-    return res.json({ active: true, expiresAt: user.subscriptionExpiresAt });
-
-  user.subscriptionActive = false;
-  await user.save();
-
-  return res.json({ active: false });
-});
-
 /* ================= Movies ================= */
 
 app.get("/movies", async (req, res) => {
@@ -221,8 +219,6 @@ app.post("/movies", async (req, res) => {
   res.json({ message: "Movie added" });
 });
 
-/* ===== إضافة حلقة مع دعم القفل ===== */
-
 app.post("/movies/:id/episodes", async (req, res) => {
   const { name, video, image, isLocked } = req.body;
 
@@ -231,32 +227,6 @@ app.post("/movies/:id/episodes", async (req, res) => {
   });
 
   res.json({ message: "Episode added" });
-});
-
-/* ================= Delete Episode ================= */
-
-app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
-  try {
-    const { movieId, episodeId } = req.params;
-
-    await Movie.findByIdAndUpdate(movieId, {
-      $pull: { episodes: { _id: episodeId } }
-    });
-
-    res.json({ message: "Episode deleted successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Delete episode failed" });
-  }
-});
-
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Delete movie failed" });
-  }
 });
 
 /* ================= Static ================= */
