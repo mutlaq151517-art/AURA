@@ -125,52 +125,66 @@ const API_BASE = "https://aura-backend-mpvi.onrender.com";
 const API = API_BASE + "/movies";
 
 async function loadSeries(){
-  const res = await fetch(API);
-  const data = await res.json();
-  const list = document.getElementById("seriesList");
-  list.innerHTML="";
+  try{
+    const res = await fetch(API);
+    const data = await res.json();
+    const list = document.getElementById("seriesList");
+    list.innerHTML="";
 
-  data.forEach(series=>{
+    data.forEach(series=>{
 
-    let episodesHTML="";
+      let episodesHTML="";
 
-    if(series.episodes && series.episodes.length){
-      episodesHTML += `<div class="episodes-grid">`;
-      series.episodes.forEach(ep=>{
-        episodesHTML+=`
-        <div class="episode-card">
-          <img src="${ep.image || series.image}">
-          <div class="episode-info">
-            ${ep.name}
-            <button class="delete-btn" onclick="deleteEpisode('${series._id}','${ep._id}')">حذف</button>
-          </div>
-        </div>`;
-      });
-      episodesHTML += `</div>`;
-    }
+      if(series.episodes && series.episodes.length){
+        episodesHTML += `<div class="episodes-grid">`;
+        series.episodes.forEach(ep=>{
+          episodesHTML+=`
+          <div class="episode-card">
+            <img src="${ep.image || series.image}">
+            <div class="episode-info">
+              ${ep.name || "بدون اسم"}
+              <button class="delete-btn"
+                onclick="deleteEpisode('${series._id}','${ep._id}')">
+                حذف
+              </button>
+            </div>
+          </div>`;
+        });
+        episodesHTML += `</div>`;
+      }
 
-    list.innerHTML+=`
-    <div class="series-box">
+      list.innerHTML+=`
+      <div class="series-box">
 
-      <div class="series-title">${series.title}</div>
+        <div class="series-title">${series.title}</div>
 
-      <input type="text" placeholder="اسم جديد" id="editTitle-${series._id}">
-      <input type="text" placeholder="صورة جديدة" id="editImage-${series._id}">
-      <button class="edit-btn" onclick="updateSeries('${series._id}')">تعديل</button>
-      <button class="delete-btn" onclick="deleteSeries('${series._id}')">حذف المسلسل</button>
+        <button class="delete-btn"
+          onclick="deleteSeries('${series._id}')">
+          حذف المسلسل
+        </button>
 
-      <hr style="opacity:0.2;margin:20px 0;">
+        <hr style="opacity:0.2;margin:20px 0;">
 
-      <h4>➕ إضافة حلقة</h4>
-      <input type="text" placeholder="اسم الحلقة" id="epName-${series._id}">
-      <input type="text" placeholder="رابط الحلقة mp4 أو Google Drive" id="epVideo-${series._id}">
-      <input type="text" placeholder="رابط صورة الحلقة (مشهد)" id="epImage-${series._id}">
-      <button class="add-btn" onclick="addEpisode('${series._id}')">إضافة حلقة</button>
+        <h4>➕ إضافة حلقة</h4>
+        <input type="text" placeholder="اسم الحلقة"
+          id="epName-${series._id}">
+        <input type="text" placeholder="رابط الحلقة"
+          id="epVideo-${series._id}">
+        <input type="text" placeholder="رابط صورة الحلقة"
+          id="epImage-${series._id}">
+        <button class="add-btn"
+          onclick="addEpisode('${series._id}')">
+          إضافة حلقة
+        </button>
 
-      ${episodesHTML}
+        ${episodesHTML}
 
-    </div>`;
-  });
+      </div>`;
+    });
+
+  }catch(err){
+    alert("خطأ في تحميل البيانات");
+  }
 }
 
 async function addEpisode(id){
@@ -189,7 +203,8 @@ async function addEpisode(id){
   if(videoLink.includes("drive.google.com")){
     const match = videoLink.match(/\/d\/(.*?)\//);
     if(match && match[1]){
-      finalVideo = "https://drive.google.com/uc?export=download&id=" + match[1];
+      finalVideo =
+        "https://drive.google.com/uc?export=download&id=" + match[1];
     }
   }
 
@@ -211,6 +226,11 @@ async function addSeries(){
   const title=document.getElementById("title").value;
   const image=document.getElementById("image").value;
 
+  if(!title){
+    alert("اكتب اسم المسلسل");
+    return;
+  }
+
   await fetch(API,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -220,32 +240,31 @@ async function addSeries(){
   loadSeries();
 }
 
-async function updateSeries(id){
-  const title=document.getElementById("editTitle-"+id).value;
-  const image=document.getElementById("editImage-"+id).value;
-
-  await fetch(API+"/"+id,{
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ title,image })
-  });
-
-  loadSeries();
-}
-
 async function deleteSeries(id){
+  if(!confirm("متأكد من حذف المسلسل بالكامل؟")) return;
+
   await fetch(API+"/"+id,{ method:"DELETE" });
+
+  alert("تم حذف المسلسل");
   loadSeries();
 }
 
 async function deleteEpisode(seriesId,episodeId){
   if(!confirm("متأكد من حذف الحلقة؟")) return;
 
-  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
-    method:"DELETE"
-  });
+  const res = await fetch(
+    API+"/"+seriesId+"/episodes/"+episodeId,
+    { method:"DELETE" }
+  );
 
-  loadSeries();
+  const data = await res.json();
+
+  if(res.ok){
+    alert("تم حذف الحلقة ✅");
+    loadSeries();
+  }else{
+    alert("فشل الحذف ❌");
+  }
 }
 
 loadSeries();
