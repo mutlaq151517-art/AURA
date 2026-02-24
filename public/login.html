@@ -156,23 +156,35 @@ button:hover{
 </div>
 
 <script>
+const API = "https://aura-backend-mpvi.onrender.com";
+
 async function login(){
-  const username=document.getElementById("username").value;
-  const password=document.getElementById("password").value;
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value.trim();
 
-  const res=await fetch("/login",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({username,password})
-  });
+  if(!username || !password){
+    alert("يرجى إدخال جميع البيانات");
+    return;
+  }
 
-  const data=await res.json();
+  try{
+    const res=await fetch(API + "/login",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,password})
+    });
 
-  if(data.token){
-    localStorage.setItem("token",data.token);
-    window.location.href="index.html";
-  }else{
-    alert(data.message || "خطأ في تسجيل الدخول");
+    const data=await res.json();
+
+    if(res.ok && data.token){
+      localStorage.setItem("token",data.token);
+      window.location.href="index.html";
+    }else{
+      alert(data.message || "خطأ في تسجيل الدخول");
+    }
+
+  }catch(err){
+    alert("تعذر الاتصال بالسيرفر");
   }
 }
 
@@ -184,27 +196,8 @@ function closeModal(){
   document.getElementById("forgotModal").style.display="none";
 }
 
-async function sendReset(){
-  const email=document.getElementById("forgotEmail").value.trim();
-  if(!email){
-    alert("أدخل بريدك الإلكتروني");
-    return;
-  }
-
-  const res=await fetch("/forgot-password",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({email})
-  });
-
-  const data=await res.json();
-
-  if(res.ok){
-    alert("تم إرسال رابط إعادة التعيين إلى بريدك ✅");
-    closeModal();
-  }else{
-    alert(data.message || "حدث خطأ");
-  }
+function sendReset(){
+  alert("ميزة استرجاع كلمة المرور غير مفعلة حالياً");
 }
 </script>
 
