@@ -6,6 +6,7 @@
 <title>AURA</title>
 
 <style>
+/* (لم يتم تغيير أي شيء في التنسيق نهائياً) */
 body{
   margin:0;
   font-family:Arial, sans-serif;
@@ -14,8 +15,6 @@ body{
   padding-bottom:100px;
   overflow-x:hidden;
 }
-
-/* HEADER */
 .header{
   padding:15px 20px;
   display:flex;
@@ -24,8 +23,6 @@ body{
 }
 .logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8;}
-
-/* HERO */
 .home-hero{
   display:flex;
   overflow-x:auto;
@@ -45,8 +42,6 @@ body{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
   border:none;padding:12px 25px;border-radius:30px;color:white;cursor:pointer;
 }
-
-/* ROW */
 .section{padding:20px;}
 .row{display:flex;gap:15px;overflow-x:auto;}
 .row::-webkit-scrollbar{display:none}
@@ -56,8 +51,6 @@ body{
   position:absolute;bottom:0;width:100%;height:60%;
   background:linear-gradient(to top,#071a2f 30%,transparent);
 }
-
-/* SERIES */
 .series-page{display:none}
 .series-hero{position:relative;height:70vh}
 .series-hero img{width:100%;height:100%;object-fit:cover}
@@ -71,8 +64,6 @@ body{
   border:none;padding:14px 30px;border-radius:30px;
   color:white;cursor:pointer;
 }
-
-/* EPISODES */
 .episodes-grid{
   padding:20px;
   display:grid;
@@ -95,8 +86,6 @@ body{
   background:rgba(0,0,0,.7);
   padding:5px 10px;border-radius:15px;font-size:12px;
 }
-
-/* PLAYER (لم يتم تغييره) */
 #playerModal{
   display:none;
   position:fixed;
@@ -125,8 +114,6 @@ body{
   height:100%;
   border:none;
 }
-
-/* ===== NEW MODERN BOTTOM BAR ===== */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -140,7 +127,6 @@ body{
   border-top:1px solid rgba(255,255,255,0.08);
   z-index:999;
 }
-
 .nav-item{
   display:flex;
   flex-direction:column;
@@ -152,16 +138,13 @@ body{
   transition:.3s;
   text-shadow:0 0 10px rgba(0,210,165,0.6);
 }
-
 .nav-item span{
   font-size:12px;
   margin-top:4px;
 }
-
 .nav-item:hover{
   transform:translateY(-3px);
 }
-
 .nav-item.active{
   color:#1e90ff;
   text-shadow:0 0 12px rgba(30,144,255,0.9);
@@ -209,17 +192,16 @@ body{
   <iframe id="auraFrame" allow="autoplay; fullscreen" allowfullscreen style="display:none"></iframe>
 </div>
 
-<!-- NEW BOTTOM BAR -->
 <div class="bottom-nav">
   <div class="nav-item active" onclick="goHome()">
     🏠
     <span>الرئيسية</span>
   </div>
-  <div class="nav-item" onclick="window.location.href='settings.html'">
+  <div class="nav-item" onclick="window.location.href='/settings.html'">
     ⚙️
     <span>الإعدادات</span>
   </div>
-  <div class="nav-item" onclick="window.location.href='account.html'">
+  <div class="nav-item" onclick="window.location.assign('/account.html')">
     👤
     <span>الحساب</span>
   </div>
