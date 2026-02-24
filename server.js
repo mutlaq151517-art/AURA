@@ -61,11 +61,32 @@ const userSchema = new mongoose.Schema({
 
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
-  subscriptionLifetime: { type: Boolean, default: false }
+  subscriptionLifetime: { type: Boolean, default: false },
+  subscriptionType: { type: String, default: null }
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
 const User = mongoose.model("User", userSchema);
+
+/* ================= JWT Middleware ================= */
+
+function authMiddleware(req,res,next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader) return res.status(401).json({ message:"No token" });
+
+  const token = authHeader.split(" ")[1];
+
+  try{
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "aura_secret_key"
+    );
+    req.userId = decoded.id;
+    next();
+  }catch(err){
+    res.status(401).json({ message:"Invalid token" });
+  }
+}
 
 /* ================= Auth ================= */
 
@@ -115,8 +136,7 @@ app.post("/login", async (req, res) => {
 
     res.json({
       message: "Login successful",
-      token,
-      userId: user._id
+      token
     });
 
   } catch (err) {
@@ -124,85 +144,131 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ================= 👑 عرض كل المستخدمين (جديد) ================= */
+/* ================= 🔥 Check Subscription (JWT) ================= */
 
-app.get("/admin/users", async (req, res) => {
-  try {
-    const users = await User.find({}, {
-      username: 1,
-      subscriptionActive: 1,
-      subscriptionExpiresAt: 1,
-      subscriptionLifetime: 1
+app.get("/check-subscription", authMiddleware, async (req,res)=>{
+
+  const user = await User.findById(req.userId);
+  if(!user) return res.json({ active:false });
+
+  const now = new Date();
+
+  if(user.subscriptionLifetime){
+    return res.json({
+      active:true,
+      lifetime:true
     });
-
-    res.json(users);
-
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch users" });
   }
+
+  if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
+    return res.json({
+      active:true,
+      expiresAt:user.subscriptionExpiresAt
+    });
+  }
+
+  return res.json({ active:false });
 });
 
-/* ================= إعطاء اشتراك ================= */
+/* ================= 👑 عرض كل المستخدمين ================= */
+
+app.get("/admin/users", async (req, res) => {
+
+  const users = await User.find();
+
+  const now = new Date();
+
+  const formatted = users.map(user=>{
+
+    let active = false;
+    let daysLeft = 0;
+
+    if(user.subscriptionLifetime){
+      active = true;
+      daysLeft = "∞";
+    }
+    else if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
+      active = true;
+      daysLeft = Math.ceil(
+        (user.subscriptionExpiresAt - now) / (1000*60*60*24)
+      );
+    }
+
+    return {
+      username:user.username,
+      active,
+      subscriptionType:user.subscriptionType,
+      subscriptionExpiresAt:user.subscriptionExpiresAt,
+      daysLeft
+    };
+  });
+
+  res.json(formatted);
+});
+
+/* ================= 🔥 إعطاء اشتراك (منطقي وذكي) ================= */
 
 app.post("/admin/give-subscription", async (req, res) => {
-  try {
-    const { username, type, customDays, customDate } = req.body;
 
-    const user = await User.findOne({ username });
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
+  const { username, type, customDays, customDate } = req.body;
 
-    let expiresAt = null;
-    let lifetime = false;
+  const user = await User.findOne({ username });
+  if (!user)
+    return res.status(404).json({ message: "User not found" });
 
-    if (type === "1m") {
-      expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
-    }
-    else if (type === "1y") {
-      expiresAt = new Date();
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    }
-    else if (type === "lifetime") {
-      lifetime = true;
-    }
-    else if (type === "customDays" && customDays) {
-      expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + Number(customDays));
-    }
-    else if (type === "customDate" && customDate) {
-      expiresAt = new Date(customDate);
-    }
+  const now = new Date();
 
-    user.subscriptionActive = true;
-    user.subscriptionExpiresAt = expiresAt;
-    user.subscriptionLifetime = lifetime;
+  let baseDate =
+    user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
+      ? new Date(user.subscriptionExpiresAt)
+      : now;
 
-    await user.save();
-
-    res.json({ message: "Subscription granted successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Subscription error" });
+  if(type === "1m"){
+    baseDate.setMonth(baseDate.getMonth() + 1);
+    user.subscriptionType = "شهر";
   }
+  else if(type === "1y"){
+    baseDate.setFullYear(baseDate.getFullYear() + 1);
+    user.subscriptionType = "سنة";
+  }
+  else if(type === "lifetime"){
+    user.subscriptionLifetime = true;
+    user.subscriptionExpiresAt = null;
+    user.subscriptionType = "مدى الحياة";
+  }
+  else if(type === "customDays" && customDays){
+    baseDate.setDate(baseDate.getDate() + Number(customDays));
+    user.subscriptionType = `${customDays} يوم`;
+  }
+  else if(type === "customDate" && customDate){
+    user.subscriptionExpiresAt = new Date(customDate);
+    user.subscriptionType = "مخصص";
+  }
+
+  if(type !== "lifetime"){
+    user.subscriptionLifetime = false;
+    user.subscriptionExpiresAt = baseDate;
+  }
+
+  user.subscriptionActive = true;
+
+  await user.save();
+
+  res.json({ message: "Subscription granted successfully" });
 });
 
 /* ================= قفل / فتح حلقة ================= */
 
 app.post("/admin/toggle-episode-lock", async (req, res) => {
-  try {
-    const { movieId, episodeId, isLocked } = req.body;
 
-    await Movie.updateOne(
-      { _id: movieId, "episodes._id": episodeId },
-      { $set: { "episodes.$.isLocked": isLocked } }
-    );
+  const { movieId, episodeId, isLocked } = req.body;
 
-    res.json({ message: "Episode lock status updated" });
+  await Movie.updateOne(
+    { _id: movieId, "episodes._id": episodeId },
+    { $set: { "episodes.$.isLocked": isLocked } }
+  );
 
-  } catch (err) {
-    res.status(500).json({ message: "Lock update failed" });
-  }
+  res.json({ message: "Episode lock status updated" });
 });
 
 /* ================= Movies ================= */
