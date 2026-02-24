@@ -23,19 +23,8 @@ body{
   align-items:center;
   font-size:18px;
 }
-
-.logo{
-  font-weight:bold;
-  font-size:20px;
-  letter-spacing:2px;
-}
-
-.top-menu{
-  display:flex;
-  gap:20px;
-  font-size:14px;
-  opacity:.8;
-}
+.logo{font-weight:bold;font-size:20px;letter-spacing:2px;}
+.top-menu{display:flex;gap:20px;font-size:14px;opacity:.8;}
 
 /* ===== HOME HERO SLIDER ===== */
 .home-hero{
@@ -46,244 +35,135 @@ body{
   height:70vh;
 }
 .home-hero::-webkit-scrollbar{ display:none; }
-
-.hero-slide{
-  min-width:100%;
-  position:relative;
-  scroll-snap-align:start;
-}
-
-.hero-slide img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
+.hero-slide{min-width:100%;position:relative;scroll-snap-align:start;}
+.hero-slide img{width:100%;height:100%;object-fit:cover;}
 .home-overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:60%;
+  position:absolute;bottom:0;width:100%;height:60%;
+  background:linear-gradient(to top,#071a2f 30%,transparent);
+}
+.home-content{position:absolute;bottom:40px;right:25px;max-width:500px;}
+.home-title{font-size:28px;margin-bottom:15px;}
+.hero-buttons{display:flex;gap:15px;margin-bottom:15px;}
+.btn-primary{
+  background:linear-gradient(90deg,#00d2a5,#1e90ff);
+  border:none;padding:12px 25px;border-radius:30px;color:white;cursor:pointer;
+}
+.btn-outline{
+  background:transparent;border:2px solid #00d2a5;
+  padding:10px 22px;border-radius:30px;color:white;cursor:pointer;
+}
+.dots{
+  display:flex;gap:6px;position:absolute;
+  bottom:20px;left:50%;transform:translateX(-50%);
+}
+.dot{width:6px;height:6px;background:rgba(255,255,255,.4);border-radius:50%;transition:.3s;}
+.dot.active{width:18px;border-radius:10px;background:#00d2a5;}
+
+/* ===== CONTINUE ROW ===== */
+.section{padding:20px;}
+.section-title{font-size:16px;margin-bottom:15px;}
+.row{display:flex;gap:15px;overflow-x:auto;}
+.row::-webkit-scrollbar{ display:none; }
+.card{min-width:170px;border-radius:18px;overflow:hidden;cursor:pointer;position:relative;}
+.card img{width:100%;height:230px;object-fit:cover;}
+.card-overlay{
+  position:absolute;bottom:0;width:100%;height:60%;
   background:linear-gradient(to top,#071a2f 30%,transparent);
 }
 
-.home-content{
-  position:absolute;
-  bottom:40px;
-  right:25px;
-  max-width:500px;
+/* ===== SERIES PAGE ===== */
+.series-page{ display:none; }
+.series-hero{position:relative;height:70vh;overflow:hidden;}
+.series-hero img{width:100%;height:100%;object-fit:cover;}
+.hero-overlay{
+  position:absolute;bottom:0;width:100%;height:60%;
+  background:linear-gradient(to top,#071a2f 30%,transparent);
 }
-
-.home-title{
-  font-size:28px;
-  margin-bottom:15px;
-}
-
-.hero-buttons{
-  display:flex;
-  gap:15px;
-  margin-bottom:15px;
-}
-
-.btn-primary{
+.hero-content{position:absolute;bottom:40px;right:30px;max-width:500px;}
+.hero-title{font-size:32px;margin-bottom:15px;}
+.play-main{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  border:none;
-  padding:12px 25px;
-  border-radius:30px;
-  color:white;
-  cursor:pointer;
+  border:none;padding:14px 30px;border-radius:30px;
+  font-size:16px;color:white;cursor:pointer;margin-bottom:15px;
+}
+.episodes-grid{
+  padding:20px;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:20px;
+}
+.episode-card{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;}
+.episode-card img{width:100%;height:200px;object-fit:cover;}
+.episode-overlay{
+  position:absolute;bottom:0;width:100%;height:70%;
+  background:linear-gradient(to top,#071a2f 30%,transparent);
+}
+.episode-number{position:absolute;bottom:15px;right:15px;font-weight:bold;}
+.episode-duration{position:absolute;bottom:15px;left:15px;opacity:.9;}
+
+/* ===== NAV ===== */
+.bottom-nav{
+  position:fixed;bottom:25px;left:50%;transform:translateX(-50%);
+  width:92%;max-width:420px;height:70px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);border-radius:25px;
+  display:flex;justify-content:space-around;align-items:center;
+}
+.nav-item{
+  font-size:22px;width:50px;height:50px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;cursor:pointer;color:white;
+}
+.nav-item.active{background:#00bfff;}
+
+/* ===== AURA PLAYER ===== */
+#playerModal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:99999;
+  flex-direction:column;
 }
 
-.btn-outline{
-  background:transparent;
-  border:2px solid #00d2a5;
-  padding:10px 22px;
-  border-radius:30px;
-  color:white;
-  cursor:pointer;
-}
-
-.dots{
+#playerHeader{
+  padding:15px 20px;
   display:flex;
-  gap:6px;
+  justify-content:space-between;
+  align-items:center;
+  background:#0b1f38;
+}
+
+#closePlayer{
+  background:#ff3b3b;
+  border:none;
+  padding:8px 15px;
+  border-radius:8px;
+  color:white;
+  cursor:pointer;
+}
+
+#auraVideo{
+  width:100%;
+  height:100%;
+  background:black;
+}
+
+.player-controls{
   position:absolute;
   bottom:20px;
   left:50%;
   transform:translateX(-50%);
-}
-
-.dot{
-  width:6px;
-  height:6px;
-  background:rgba(255,255,255,.4);
-  border-radius:50%;
-  transition:.3s;
-}
-
-.dot.active{
-  width:18px;
-  border-radius:10px;
-  background:#00d2a5;
-}
-
-/* ===== CONTINUE ROW ===== */
-.section{
-  padding:20px;
-}
-
-.section-title{
-  font-size:16px;
-  margin-bottom:15px;
-}
-
-.row{
   display:flex;
   gap:15px;
-  overflow-x:auto;
-}
-.row::-webkit-scrollbar{ display:none; }
-
-.card{
-  min-width:170px;
-  border-radius:18px;
-  overflow:hidden;
-  cursor:pointer;
-  position:relative;
 }
 
-.card img{
-  width:100%;
-  height:230px;
-  object-fit:cover;
-}
-
-.card-overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:60%;
-  background:linear-gradient(to top,#071a2f 30%,transparent);
-}
-
-/* ===== SERIES PAGE (UNCHANGED) ===== */
-.series-page{ display:none; }
-
-.series-hero{
-  position:relative;
-  height:70vh;
-  overflow:hidden;
-}
-
-.series-hero img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.hero-overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:60%;
-  background:linear-gradient(to top,#071a2f 30%,transparent);
-}
-
-.hero-content{
-  position:absolute;
-  bottom:40px;
-  right:30px;
-  max-width:500px;
-}
-
-.hero-title{
-  font-size:32px;
-  margin-bottom:15px;
-}
-
-.play-main{
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  border:none;
-  padding:14px 30px;
-  border-radius:30px;
-  font-size:16px;
+.control-btn{
+  background:rgba(0,0,0,.6);
+  border:1px solid #00bfff;
   color:white;
+  padding:10px 14px;
+  border-radius:10px;
   cursor:pointer;
-  margin-bottom:15px;
-}
-
-/* ===== EPISODES GRID ===== */
-.episodes-grid{
-  padding:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-  gap:20px;
-}
-
-.episode-card{
-  position:relative;
-  border-radius:18px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.3s;
-}
-
-.episode-card img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-}
-
-.episode-overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:70%;
-  background:linear-gradient(to top,#071a2f 30%,transparent);
-}
-
-.episode-number{
-  position:absolute;
-  bottom:15px;
-  right:15px;
-  font-weight:bold;
-}
-
-.episode-duration{
-  position:absolute;
-  bottom:15px;
-  left:15px;
-  opacity:.9;
-}
-
-/* ===== NAV ===== */
-.bottom-nav{
-  position:fixed;
-  bottom:25px;
-  left:50%;
-  transform:translateX(-50%);
-  width:92%;
-  max-width:420px;
-  height:70px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(20px);
-  border-radius:25px;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-}
-.nav-item{
-  font-size:22px;
-  width:50px;
-  height:50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  cursor:pointer;
-  color:white;
-}
-.nav-item.active{
-  background:#00bfff;
 }
 </style>
 </head>
@@ -302,7 +182,6 @@ body{
 <div id="homeContent">
   <div class="home-hero" id="homeHero"></div>
   <div class="dots" id="heroDots"></div>
-
   <div class="section">
     <div class="section-title">متابعة المشاهدة</div>
     <div class="row" id="seriesRow"></div>
@@ -311,7 +190,6 @@ body{
 
 <div class="series-page" id="seriesPage">
   <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
-
   <div class="series-hero">
     <img id="heroImage">
     <div class="hero-overlay"></div>
@@ -320,11 +198,25 @@ body{
       <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
     </div>
   </div>
-
   <div class="episodes-grid" id="episodesList"></div>
 </div>
 
-<!-- ===== FIXED WORKING NAV ===== -->
+<!-- PLAYER -->
+<div id="playerModal">
+  <div id="playerHeader">
+    <div>🎬 AURA PLAYER</div>
+    <button id="closePlayer">إغلاق ✖</button>
+  </div>
+
+  <video id="auraVideo" controls></video>
+
+  <div class="player-controls">
+    <button class="control-btn" onclick="rewind()">⏪ 10</button>
+    <button class="control-btn" onclick="forward()">10 ⏩</button>
+    <button class="control-btn" onclick="toggleFullscreen()">⛶</button>
+  </div>
+</div>
+
 <div class="bottom-nav">
   <div class="nav-item active" onclick="goHome()">🏠</div>
   <div class="nav-item" onclick="window.location.href='settings.html'">⚙️</div>
@@ -336,12 +228,14 @@ const API_BASE="https://aura-backend-mpvi.onrender.com";
 const MOVIES_API=API_BASE+"/movies";
 
 let allSeries=[];
+let currentEpisodeIndex=0;
+let currentEpisodes=[];
+const video=document.getElementById("auraVideo");
 
 async function loadSeries(){
   const res=await fetch(MOVIES_API);
   const data=await res.json();
   allSeries=data;
-
   renderHeroSlider(data);
   renderSeries(data);
 }
@@ -349,9 +243,7 @@ async function loadSeries(){
 function renderHeroSlider(data){
   const hero=document.getElementById("homeHero");
   const dots=document.getElementById("heroDots");
-  hero.innerHTML="";
-  dots.innerHTML="";
-
+  hero.innerHTML=""; dots.innerHTML="";
   data.forEach((item,index)=>{
     hero.innerHTML+=`
       <div class="hero-slide">
@@ -364,17 +256,8 @@ function renderHeroSlider(data){
             <button class="btn-outline">+ أضف لقائمتي</button>
           </div>
         </div>
-      </div>
-    `;
-
+      </div>`;
     dots.innerHTML+=`<div class="dot ${index===0?'active':''}"></div>`;
-  });
-
-  hero.addEventListener("scroll",()=>{
-    const index=Math.round(hero.scrollLeft / hero.clientWidth);
-    document.querySelectorAll(".dot").forEach((dot,i)=>{
-      dot.classList.toggle("active",i===index);
-    });
   });
 }
 
@@ -393,29 +276,20 @@ function renderSeries(data){
 function openSeries(id){
   const series=allSeries.find(s=>s._id===id);
   if(!series) return;
-
   document.getElementById("homeContent").style.display="none";
   document.getElementById("seriesPage").style.display="block";
-
   document.getElementById("seriesTitle").innerText=series.title;
   document.getElementById("heroImage").src=series.image;
 
-  let episodes=series.episodes;
-  if((!episodes||episodes.length===0)&&series.video){
-    episodes=[{video:series.video,image:series.image}];
-  }
+  currentEpisodes=series.episodes?.length?series.episodes:[{video:series.video,image:series.image}];
 
-  document.getElementById("mainPlayBtn").onclick=function(){
-    playEpisode(episodes[0].video);
-  }
+  document.getElementById("mainPlayBtn").onclick=()=>playEpisode(0);
 
   const list=document.getElementById("episodesList");
   list.innerHTML="";
-
-  episodes.forEach((ep,index)=>{
+  currentEpisodes.forEach((ep,index)=>{
     list.innerHTML+=`
-      <div class="episode-card"
-      onclick="playEpisode('${ep.video}')">
+      <div class="episode-card" onclick="playEpisode(${index})">
         <img src="${ep.image||series.image}">
         <div class="episode-overlay"></div>
         <div class="episode-number">الحلقة ${index+1}</div>
@@ -424,9 +298,40 @@ function openSeries(id){
   });
 }
 
-function playEpisode(url){
-  window.open(url,'_blank');
+function playEpisode(index){
+  currentEpisodeIndex=index;
+  const ep=currentEpisodes[index];
+  video.src=ep.video;
+  document.getElementById("playerModal").style.display="flex";
+
+  const savedTime=localStorage.getItem(ep.video);
+  if(savedTime) video.currentTime=parseFloat(savedTime);
+
+  video.play();
 }
+
+video.addEventListener("timeupdate",()=>{
+  if(video.src){
+    localStorage.setItem(video.src,video.currentTime);
+  }
+});
+
+video.addEventListener("ended",()=>{
+  if(currentEpisodeIndex+1<currentEpisodes.length){
+    playEpisode(currentEpisodeIndex+1);
+  }
+});
+
+function rewind(){ video.currentTime-=10; }
+function forward(){ video.currentTime+=10; }
+function toggleFullscreen(){
+  if(video.requestFullscreen) video.requestFullscreen();
+}
+
+document.getElementById("closePlayer").onclick=function(){
+  video.pause();
+  document.getElementById("playerModal").style.display="none";
+};
 
 function goHome(){
   document.getElementById("seriesPage").style.display="none";
