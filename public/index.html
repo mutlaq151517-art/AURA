@@ -86,22 +86,12 @@ body{
   border:none;padding:14px 30px;border-radius:30px;
   font-size:16px;color:white;cursor:pointer;margin-bottom:15px;
 }
-
 .episodes-grid{
   padding:20px;display:grid;
   grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
   gap:20px;
 }
-.episode-card{
-  position:relative;
-  border-radius:18px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.3s;
-}
-.episode-card:hover{
-  transform:scale(1.03);
-}
+.episode-card{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;}
 .episode-card img{width:100%;height:200px;object-fit:cover;}
 .episode-overlay{
   position:absolute;bottom:0;width:100%;height:70%;
@@ -147,11 +137,13 @@ body{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.95);
+  background:rgba(0,0,0,.96);
   backdrop-filter:blur(20px);
   z-index:99999;
   flex-direction:column;
+  animation:fadeIn .3s ease;
 }
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
 #playerHeader{
   padding:20px 30px;
@@ -160,7 +152,6 @@ body{
   align-items:center;
   background:linear-gradient(to bottom,rgba(0,0,0,.9),transparent);
 }
-
 #closePlayer{
   background:#ff3b3b;
   border:none;
@@ -172,9 +163,7 @@ body{
   cursor:pointer;
   transition:.3s;
 }
-#closePlayer:hover{
-  transform:scale(1.1);
-}
+#closePlayer:hover{transform:scale(1.1)}
 
 #auraVideo{
   width:100%;
@@ -185,33 +174,173 @@ body{
 </head>
 
 <body>
-<!-- نفس الـ HTML بدون تغيير -->
+
+<div class="header">
+  <div class="logo">AURA</div>
+  <div class="top-menu">
+    <span>مسلسلات</span>
+    <span>أفلام</span>
+    <span>رياضة</span>
+  </div>
+</div>
+
+<div id="homeContent">
+  <div class="home-hero" id="homeHero"></div>
+  <div class="dots" id="heroDots"></div>
+  <div class="section">
+    <div class="section-title">متابعة المشاهدة</div>
+    <div class="row" id="seriesRow"></div>
+  </div>
+</div>
+
+<div class="series-page" id="seriesPage">
+  <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
+  <div class="series-hero">
+    <img id="heroImage">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-title" id="seriesTitle"></div>
+      <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
+    </div>
+  </div>
+  <div class="episodes-grid" id="episodesList"></div>
+</div>
+
+<div id="playerModal">
+  <div id="playerHeader">
+    <div>🎬 AURA PLAYER</div>
+    <button id="closePlayer">✖</button>
+  </div>
+  <video id="auraVideo" controls></video>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="goHome()">🏠</div>
+  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️</div>
+  <div class="nav-item" onclick="window.location.href='account.html'">👤</div>
+</div>
 
 <script>
-/* نفس كودك السابق */
+const API_BASE="https://aura-backend-mpvi.onrender.com";
+const MOVIES_API=API_BASE+"/movies";
 
-function formatTime(seconds){
-  const m=Math.floor(seconds/60);
-  const s=Math.floor(seconds%60);
-  return m+":"+(s<10?"0"+s:s);
+let allSeries=[];
+let currentEpisodeIndex=0;
+let currentEpisodes=[];
+const video=document.getElementById("auraVideo");
+
+async function loadSeries(){
+  const res=await fetch(MOVIES_API);
+  const data=await res.json();
+  allSeries=data;
+  renderHeroSlider(data);
+  renderSeries(data);
 }
 
-/* عدلنا فقط render الحلقات */
-currentEpisodes.forEach((ep,index)=>{
-  const tempVideo=document.createElement("video");
-  tempVideo.src=ep.video;
-  tempVideo.addEventListener("loadedmetadata",()=>{
-    document.getElementById("dur-"+index).innerText=formatTime(tempVideo.duration);
+function renderHeroSlider(data){
+  const hero=document.getElementById("homeHero");
+  const dots=document.getElementById("heroDots");
+  hero.innerHTML=""; dots.innerHTML="";
+  data.forEach((item,index)=>{
+    hero.innerHTML+=`
+      <div class="hero-slide">
+        <img src="${item.image}">
+        <div class="home-overlay"></div>
+        <div class="home-content">
+          <div class="home-title">${item.title}</div>
+          <div class="hero-buttons">
+            <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
+            <button class="btn-outline">+ أضف لقائمتي</button>
+          </div>
+        </div>
+      </div>`;
+    dots.innerHTML+=`<div class="dot ${index===0?'active':''}"></div>`;
   });
+}
 
-  list.innerHTML+=`
-    <div class="episode-card" onclick="playEpisode(${index})">
-      <img src="${ep.image||series.image}">
-      <div class="episode-overlay"></div>
-      <div class="episode-number">الحلقة ${index+1}</div>
-      <div class="episode-duration" id="dur-${index}">--:--</div>
-    </div>`;
+function renderSeries(data){
+  const row=document.getElementById("seriesRow");
+  row.innerHTML="";
+  data.forEach(item=>{
+    row.innerHTML+=`
+      <div class="card" onclick="openSeries('${item._id}')">
+        <img src="${item.image}">
+        <div class="card-overlay"></div>
+      </div>`;
+  });
+}
+
+function openSeries(id){
+  const series=allSeries.find(s=>s._id===id);
+  if(!series) return;
+
+  document.getElementById("homeContent").style.display="none";
+  document.getElementById("seriesPage").style.display="block";
+  document.getElementById("seriesTitle").innerText=series.title;
+  document.getElementById("heroImage").src=series.image;
+
+  currentEpisodes=series.episodes?.length?series.episodes:[{video:series.video,image:series.image}];
+
+  document.getElementById("mainPlayBtn").onclick=()=>playEpisode(0);
+
+  const list=document.getElementById("episodesList");
+  list.innerHTML="";
+
+  currentEpisodes.forEach((ep,index)=>{
+    list.innerHTML+=`
+      <div class="episode-card" onclick="playEpisode(${index})">
+        <img src="${ep.image||series.image}">
+        <div class="episode-overlay"></div>
+        <div class="episode-number">الحلقة ${index+1}</div>
+        <div class="episode-duration" id="dur-${index}">--:--</div>
+      </div>`;
+
+    const temp=document.createElement("video");
+    temp.src=ep.video;
+    temp.addEventListener("loadedmetadata",()=>{
+      const m=Math.floor(temp.duration/60);
+      const s=Math.floor(temp.duration%60);
+      document.getElementById("dur-"+index).innerText=
+        m+":"+(s<10?"0"+s:s);
+    });
+  });
+}
+
+function playEpisode(index){
+  currentEpisodeIndex=index;
+  const ep=currentEpisodes[index];
+  video.src=ep.video;
+  document.getElementById("playerModal").style.display="flex";
+
+  const savedTime=localStorage.getItem(ep.video);
+  if(savedTime) video.currentTime=parseFloat(savedTime);
+
+  video.play();
+}
+
+video.addEventListener("timeupdate",()=>{
+  if(video.src){
+    localStorage.setItem(video.src,video.currentTime);
+  }
 });
+
+video.addEventListener("ended",()=>{
+  if(currentEpisodeIndex+1<currentEpisodes.length){
+    playEpisode(currentEpisodeIndex+1);
+  }
+});
+
+document.getElementById("closePlayer").onclick=function(){
+  video.pause();
+  document.getElementById("playerModal").style.display="none";
+};
+
+function goHome(){
+  document.getElementById("seriesPage").style.display="none";
+  document.getElementById("homeContent").style.display="block";
+}
+
+loadSeries();
 </script>
 
 </body>
