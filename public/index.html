@@ -15,7 +15,7 @@ body{
   overflow-x:hidden;
 }
 
-/* ===== ترحيب ===== */
+/* ===== شاشة الترحيب ===== */
 #welcomeModal{
   position:fixed;
   inset:0;
@@ -27,11 +27,8 @@ body{
 }
 .welcome-box{text-align:center}
 .welcome-box h1{
-  font-size:32px;
+  font-size:30px;
   margin-bottom:15px;
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
 }
 .welcome-box button{
   margin-top:20px;
@@ -50,148 +47,111 @@ body{
   justify-content:space-between;
   align-items:center;
 }
-.logo{font-weight:bold;font-size:20px;letter-spacing:2px}
+.logo{font-weight:bold;font-size:20px;}
 .top-menu{display:flex;gap:20px;font-size:14px;opacity:.8}
 
-/* ===== HERO احترافي ===== */
-.home-hero{
-  position:relative;
-  height:85vh;
-}
-.hero-slide{
-  position:relative;
-  height:100%;
-}
-.hero-slide img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+/* ===== Hero ===== */
+.home-hero{position:relative;height:75vh;}
+.hero-slide{position:relative;height:100%;}
+.hero-slide img{width:100%;height:100%;object-fit:cover;}
 .home-overlay{
   position:absolute;
   inset:0;
-  background:linear-gradient(to top,#071a2f 15%,rgba(7,26,47,.5) 60%,transparent);
+  background:linear-gradient(to top,#071a2f 40%,transparent);
 }
 .home-content{
   position:absolute;
-  bottom:90px;
-  right:50px;
-  max-width:60%;
+  bottom:60px;
+  right:30px;
 }
 .home-title{
-  font-size:46px;
+  font-size:36px;
+  margin-bottom:15px;
   font-weight:bold;
-  margin-bottom:20px;
 }
 .btn-primary{
-  background:white;
-  color:black;
-  border:none;
-  padding:12px 30px;
-  border-radius:6px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* ===== قسم المسلسلات ===== */
-.section-title{
-  font-size:22px;
-  font-weight:bold;
-  margin:30px 25px 10px;
-}
-.section{padding:0 20px 20px}
-.row{
-  display:flex;
-  gap:15px;
-  overflow-x:auto;
-}
-.row::-webkit-scrollbar{display:none}
-
-/* ===== كروت نتفلكس ===== */
-.card{
-  min-width:160px;
-  border-radius:8px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.3s;
-}
-.card img{
-  width:100%;
-  height:240px;
-  object-fit:cover;
-  transition:.3s;
-}
-.card:hover img{
-  transform:scale(1.08);
-}
-.card-overlay{display:none}
-
-/* ===== صفحة المسلسل ===== */
-.series-page{display:none}
-.series-hero{position:relative;height:75vh}
-.series-hero img{width:100%;height:100%;object-fit:cover}
-.hero-overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:70%;
-  background:linear-gradient(to top,#071a2f 40%,transparent);
-}
-.hero-content{position:absolute;bottom:50px;right:30px}
-.play-main{
   background:linear-gradient(90deg,#00d2a5,#1e90ff);
   border:none;
-  padding:16px 40px;
+  padding:12px 30px;
   border-radius:30px;
   color:white;
   cursor:pointer;
 }
 
-/* ===== الحلقات (كما هي) ===== */
+/* ===== كروت ===== */
+.section{padding:25px;}
+.row{display:flex;gap:15px;overflow-x:auto;}
+.row::-webkit-scrollbar{display:none}
+.card{
+  min-width:160px;
+  border-radius:15px;
+  overflow:hidden;
+  cursor:pointer;
+}
+.card img{width:100%;height:220px;object-fit:cover;}
+
+/* ===== صفحة المسلسل ===== */
+.series-page{display:none}
+.series-hero{position:relative;height:70vh}
+.series-hero img{width:100%;height:100%;object-fit:cover}
+.hero-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,#071a2f 50%,transparent);
+}
+.hero-content{position:absolute;bottom:50px;right:30px}
+.play-main{
+  background:linear-gradient(90deg,#00d2a5,#1e90ff);
+  border:none;
+  padding:14px 35px;
+  border-radius:30px;
+  color:white;
+  cursor:pointer;
+}
+
+/* ===== الحلقات ===== */
 .episodes-grid{
   padding:25px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-  gap:25px;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:20px;
 }
 .episode-card{
   position:relative;
-  border-radius:20px;
+  border-radius:15px;
   overflow:hidden;
   cursor:pointer;
 }
 .episode-card img{
   width:100%;
-  height:210px;
+  height:180px;
   object-fit:cover;
 }
 .episode-overlay{
   position:absolute;
-  bottom:0;
-  width:100%;
-  height:80%;
-  background:linear-gradient(to top,#071a2f 40%,transparent);
+  inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
 }
 .episode-number{
   position:absolute;
-  top:12px;
-  right:12px;
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  padding:6px 14px;
+  bottom:10px;
+  right:10px;
+  background:#00d2a5;
+  padding:5px 12px;
   border-radius:20px;
-  font-size:13px;
+  font-size:12px;
 }
 .episode-play{
   position:absolute;
-  bottom:20px;
-  right:20px;
-  background:rgba(0,0,0,.7);
-  padding:8px 15px;
+  bottom:10px;
+  left:10px;
+  background:rgba(0,0,0,.6);
+  padding:5px 12px;
   border-radius:20px;
-  font-size:13px;
+  font-size:12px;
 }
 
-/* ===== المشغل (بدون لمس) ===== */
+/* ===== المشغل ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -201,17 +161,16 @@ body{
   flex-direction:column;
 }
 #playerHeader{
-  padding:15px 20px;
+  padding:15px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
   background:#0b1f38;
 }
 #closePlayer{
   background:#ff3b3b;
   border:none;
-  padding:8px 15px;
-  border-radius:8px;
+  padding:6px 12px;
+  border-radius:6px;
   color:white;
   cursor:pointer;
 }
@@ -227,20 +186,19 @@ body{
   bottom:0;
   left:0;
   width:100%;
-  height:75px;
+  height:70px;
   background:#081b30;
   display:flex;
   justify-content:space-around;
   align-items:center;
-  border-top:1px solid rgba(255,255,255,0.08);
 }
 .nav-item{
   display:flex;
   flex-direction:column;
   align-items:center;
-  font-size:22px;
-  cursor:pointer;
+  font-size:20px;
   color:#00d2a5;
+  cursor:pointer;
 }
 .nav-item span{font-size:12px;margin-top:4px;}
 </style>
@@ -250,9 +208,8 @@ body{
 
 <div id="welcomeModal">
   <div class="welcome-box">
-    <h1>مرحباً بك في AURA ✨</h1>
-    <div>استمتع بأفضل المسلسلات والأفلام</div>
-    <button onclick="closeWelcome()">دخول</button>
+    <h1>مرحباً بك في AURA</h1>
+    <button onclick="enterSite()">دخول</button>
   </div>
 </div>
 
@@ -267,11 +224,139 @@ body{
 
 <div id="homeContent">
   <div class="home-hero" id="homeHero"></div>
-
-  <div class="section-title">🔥 الأكثر مشاهدة</div>
   <div class="section">
     <div class="row" id="seriesRow"></div>
   </div>
 </div>
 
-<!-- باقي الصفحة (المسلسل + المشغل + السكربت) كما هو عندك بدون أي تعديل -->
+<div class="series-page" id="seriesPage">
+  <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
+  <div class="series-hero">
+    <img id="heroImage">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div id="seriesTitle"></div>
+      <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
+    </div>
+  </div>
+  <div class="episodes-grid" id="episodesList"></div>
+</div>
+
+<div id="playerModal">
+  <div id="playerHeader">
+    <div>AURA PLAYER</div>
+    <button id="closePlayer">إغلاق</button>
+  </div>
+  <video id="auraVideo" controls style="display:none"></video>
+  <iframe id="auraFrame" allowfullscreen style="display:none"></iframe>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
+  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>الحساب</span></div>
+</div>
+
+<script>
+const API="https://aura-backend-mpvi.onrender.com/movies";
+let allSeries=[],currentEpisodes=[];
+
+function enterSite(){
+  localStorage.setItem("aura_welcome","1");
+  document.getElementById("welcomeModal").style.display="none";
+}
+if(localStorage.getItem("aura_welcome")){
+  document.getElementById("welcomeModal").style.display="none";
+}
+
+async function loadSeries(){
+  const res=await fetch(API);
+  const data=await res.json();
+  allSeries=data;
+  renderHeroSlider(data);
+  renderSeries(data);
+}
+
+function renderHeroSlider(data){
+  const hero=document.getElementById("homeHero");
+  if(!data.length)return;
+  const item=data[0];
+  hero.innerHTML=`
+    <div class="hero-slide">
+      <img src="${item.image}">
+      <div class="home-overlay"></div>
+      <div class="home-content">
+        <div class="home-title">${item.title}</div>
+        <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
+      </div>
+    </div>`;
+}
+
+function renderSeries(data){
+  const row=document.getElementById("seriesRow");
+  row.innerHTML="";
+  data.forEach(item=>{
+    row.innerHTML+=`
+    <div class="card" onclick="openSeries('${item._id}')">
+      <img src="${item.image}">
+    </div>`;
+  });
+}
+
+function openSeries(id){
+  const s=allSeries.find(x=>x._id===id);
+  if(!s)return;
+
+  homeContent.style.display="none";
+  seriesPage.style.display="block";
+  seriesTitle.innerText=s.title;
+  heroImage.src=s.image;
+
+  currentEpisodes=s.episodes?.length?s.episodes:[{video:s.video,image:s.image}];
+  mainPlayBtn.onclick=()=>playEpisode(0);
+
+  const list=document.getElementById("episodesList");
+  list.innerHTML="";
+  currentEpisodes.forEach((ep,i)=>{
+    list.innerHTML+=`
+    <div class="episode-card" onclick="playEpisode(${i})">
+      <img src="${ep.image||s.image}">
+      <div class="episode-overlay"></div>
+      <div class="episode-number">الحلقة ${i+1}</div>
+      <div class="episode-play">▶ تشغيل</div>
+    </div>`;
+  });
+}
+
+function playEpisode(i){
+  const url=currentEpisodes[i].video;
+  playerModal.style.display="flex";
+  if(url.includes("mediadelivery")||url.includes("iframe")){
+    auraVideo.style.display="none";
+    auraFrame.style.display="block";
+    auraFrame.src=url;
+  }else{
+    auraFrame.style.display="none";
+    auraVideo.style.display="block";
+    auraVideo.src=url;
+    auraVideo.play();
+  }
+}
+
+closePlayer.onclick=function(){
+  auraVideo.pause();
+  auraVideo.src="";
+  auraFrame.src="";
+  playerModal.style.display="none";
+};
+
+function goHome(){
+  seriesPage.style.display="none";
+  homeContent.style.display="block";
+}
+
+loadSeries();
+</script>
+
+</body>
+</html>
