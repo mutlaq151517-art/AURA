@@ -76,10 +76,9 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
 
+    await newUser.save();
     res.json({ message: "User registered successfully" });
 
   } catch (err) {
@@ -146,12 +145,44 @@ app.post("/movies", async (req, res) => {
   res.json({ message: "Movie added" });
 });
 
+/* ===== إضافة حلقة ===== */
+
 app.post("/movies/:id/episodes", async (req, res) => {
   const { name, video, image } = req.body;
+
   await Movie.findByIdAndUpdate(req.params.id, {
     $push: { episodes: { name, video, image } }
   });
+
   res.json({ message: "Episode added" });
+});
+
+/* ===== حذف حلقة (🔥 الجديد) ===== */
+
+app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
+  try {
+    const { movieId, episodeId } = req.params;
+
+    await Movie.findByIdAndUpdate(movieId, {
+      $pull: { episodes: { _id: episodeId } }
+    });
+
+    res.json({ message: "Episode deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Delete episode failed" });
+  }
+});
+
+/* ===== حذف مسلسل كامل ===== */
+
+app.delete("/movies/:id", async (req, res) => {
+  try {
+    await Movie.findByIdAndDelete(req.params.id);
+    res.json({ message: "Movie deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete movie failed" });
+  }
 });
 
 /* ================= Static ================= */
