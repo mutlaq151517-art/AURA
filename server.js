@@ -4,6 +4,8 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -51,9 +53,71 @@ const movieSchema = new mongoose.Schema({
   episodes: [episodeSchema]
 });
 
-const Movie = mongoose.model("Movie", movieSchema);
+const userSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  password: String
+});
 
-/* ================= Upload Video (بدون streamifier) ================= */
+const Movie = mongoose.model("Movie", movieSchema);
+const User = mongoose.model("User", userSchema);
+
+/* ================= Auth ================= */
+
+// Register
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      username,
+      password: hashedPassword
+    });
+
+    await newUser.save();
+
+    res.json({ message: "User registered successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Registration error" });
+  }
+});
+
+// Login
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if (!user)
+      return res.status(400).json({ message: "User not found" });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword)
+      return res.status(400).json({ message: "Wrong password" });
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "aura_secret_key",
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Login successful",
+      token
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Login error" });
+  }
+});
+
+/* ================= Upload Video ================= */
 
 app.post("/upload-video", upload.single("video"), async (req, res) => {
   try {
