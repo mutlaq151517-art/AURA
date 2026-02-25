@@ -11,7 +11,7 @@ body{
   font-family:Arial, sans-serif;
   background:#061a2f;
   color:white;
-  padding-bottom:120px;
+  padding-bottom:100px;
 }
 
 /* ===== Header ثابت ===== */
@@ -21,10 +21,9 @@ body{
   left:0;
   width:100%;
   padding:15px 20px;
-  background:rgba(10,25,45,.85);
-  backdrop-filter:blur(15px);
-  z-index:1000;
-  box-shadow:0 5px 20px rgba(0,0,0,.4);
+  background:rgba(8,25,45,.95);
+  backdrop-filter:blur(12px);
+  z-index:2000;
 }
 
 .logo{
@@ -53,12 +52,12 @@ body{
   left:15px;
   top:50%;
   transform:translateY(-50%);
-  color:#555;
+  color:#666;
 }
 
-/* ===== Grid ===== */
+/* ===== المحتوى ===== */
 .content{
-  padding:130px 25px 20px 25px;
+  padding:120px 20px 20px 20px;
 }
 
 .grid{
@@ -94,68 +93,75 @@ body{
 /* ===== صفحة المسلسل ===== */
 .series-page{display:none;padding-top:120px}
 
-.series-header{
-  padding:20px;
-}
-.series-header h2{
-  margin:0 0 10px 0;
-}
-
-.play-main{
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  border:none;
-  padding:12px 30px;
-  border-radius:30px;
-  color:white;
-  cursor:pointer;
-}
-
-/* ===== الحلقات ===== */
 .episodes-grid{
   padding:20px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:1fr;
   gap:20px;
 }
 
+/* ===== تصميم الحلقات مثل الصورة ===== */
 .episode-card{
   position:relative;
-  border-radius:16px;
+  border-radius:18px;
   overflow:hidden;
   cursor:pointer;
-  transition:.3s;
 }
-.episode-card:hover{
-  transform:translateY(-6px);
-}
+
 .episode-card img{
   width:100%;
-  height:200px;
+  height:220px;
   object-fit:cover;
+}
+
+.episode-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+}
+
+.play-circle{
+  position:absolute;
+  bottom:20px;
+  left:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:3px solid #00d2a5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+
+.episode-duration{
+  position:absolute;
+  bottom:30px;
+  left:95px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.episode-number{
+  position:absolute;
+  bottom:25px;
+  right:25px;
+  font-size:26px;
+  font-weight:bold;
 }
 
 .badge{
   position:absolute;
-  top:10px;
-  left:10px;
-  padding:5px 10px;
+  top:15px;
+  left:15px;
+  padding:6px 12px;
   border-radius:15px;
-  font-size:11px;
-}
-.badge-free{ background:#00d2a5; }
-.badge-locked{ background:#ff3b3b; }
-
-.episode-number{
-  position:absolute;
-  bottom:10px;
-  right:10px;
-  background:#00d2a5;
-  padding:5px 10px;
-  border-radius:20px;
   font-size:12px;
 }
+.badge-locked{ background:#ff3b3b; }
+.badge-free{ background:#00d2a5; }
 
-/* ===== Player (بدون لمس) ===== */
+/* ===== Player بدون لمس ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -184,21 +190,19 @@ body{
   border:none;
 }
 
-/* ===== Bottom Nav ثابت ===== */
+/* ===== البار ثابت ===== */
 .bottom-nav{
   position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  width:90%;
-  height:65px;
-  background:rgba(15,35,60,.85);
+  bottom:0;
+  left:0;
+  width:100%;
+  height:70px;
+  background:rgba(15,35,60,.95);
   backdrop-filter:blur(15px);
-  border-radius:30px;
   display:flex;
   justify-content:space-around;
   align-items:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
+  z-index:3000;
 }
 
 .nav-item{
@@ -209,7 +213,6 @@ body{
   color:#00d2a5;
   cursor:pointer;
 }
-
 .nav-item span{
   font-size:11px;
   margin-top:4px;
@@ -232,11 +235,6 @@ body{
 </div>
 
 <div class="series-page" id="seriesPage">
-  <div class="series-header">
-    <button class="play-main" onclick="goHome()">⬅ رجوع</button>
-    <h2 id="seriesTitle"></h2>
-    <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
-  </div>
   <div class="episodes-grid" id="episodesList"></div>
 </div>
 
@@ -250,9 +248,9 @@ body{
 </div>
 
 <div class="bottom-nav">
-  <div class="nav-item" onclick="goHome()">🏡<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
   <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item" onclick="window.location.assign('/account.html')">🧑<span>حسابي</span></div>
+  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>حسابي</span></div>
 </div>
 
 <script>
@@ -305,11 +303,8 @@ function openSeries(id){
 
   homeContent.style.display="none";
   seriesPage.style.display="block";
-  seriesTitle.innerText=s.title;
 
   currentEpisodes=s.episodes||[];
-  mainPlayBtn.onclick=()=>playEpisode(0);
-
   episodesList.innerHTML="";
 
   currentEpisodes.forEach((ep,i)=>{
@@ -317,17 +312,18 @@ function openSeries(id){
 
     let badge="";
     if(!isSubscribed){
-      if(ep.isLocked){
-        badge=`<div class="badge badge-locked">🔒 للمشتركين</div>`;
-      }else{
-        badge=`<div class="badge badge-free">مجانية</div>`;
-      }
+      badge=ep.isLocked?
+      `<div class="badge badge-locked">🔒 للمشتركين</div>`:
+      `<div class="badge badge-free">مجانية</div>`;
     }
 
     episodesList.innerHTML+=`
       <div class="episode-card" onclick="${locked?'alert(\'هذه الحلقة للمشتركين فقط 🔒\')':'playEpisode('+i+')'}">
         <img src="${ep.image||s.image}" style="${locked?'filter:blur(4px);opacity:.6;':''}">
+        <div class="episode-overlay"></div>
         ${badge}
+        <div class="play-circle">▶</div>
+        <div class="episode-duration">${ep.duration||''}</div>
         <div class="episode-number">الحلقة ${i+1}</div>
       </div>`;
   });
