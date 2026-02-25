@@ -12,7 +12,6 @@ body{
   background:linear-gradient(to bottom,#051423,#0a223d);
   color:white;
 }
-
 .header{
   padding:25px;
   font-size:22px;
@@ -20,7 +19,6 @@ body{
   text-align:center;
   background:#081f3a;
 }
-
 .tabs{
   display:flex;
   justify-content:center;
@@ -28,31 +26,25 @@ body{
   padding:15px;
   background:#0b223d;
 }
-
 .tab-btn{
   background:#0c3a63;
   padding:8px 15px;
   border-radius:8px;
   cursor:pointer;
 }
-
-.tab-btn.active{
-  background:#00bfff;
-}
+.tab-btn.active{ background:#00bfff; }
 
 .container{
   max-width:1100px;
   margin:30px auto;
   padding:0 20px;
 }
-
 .card{
   background:#0f2c50;
   padding:25px;
   border-radius:18px;
   margin-bottom:30px;
 }
-
 input,select{
   width:100%;
   padding:10px;
@@ -62,7 +54,6 @@ input,select{
   background:#0c3a63;
   color:white;
 }
-
 button{
   padding:8px 15px;
   border:none;
@@ -71,12 +62,10 @@ button{
   font-size:13px;
   margin-top:5px;
 }
-
 .add-btn{ background:#00bfff; color:white; }
 .delete-btn{ background:#ff3b3b; color:white; }
 .green-btn{ background:#00c853; color:white; }
 .orange-btn{ background:#ff9800; color:white; }
-
 .hidden{ display:none; }
 
 .series-box{
@@ -85,25 +74,21 @@ button{
   border-radius:15px;
   margin-top:20px;
 }
-
 .episodes-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:12px;
   margin-top:15px;
 }
-
 .episode-card{
   background:#0d3a63;
   border-radius:12px;
   padding:10px;
 }
-
 .table{
   width:100%;
   border-collapse:collapse;
 }
-
 .table th,.table td{
   border-bottom:1px solid rgba(255,255,255,.1);
   padding:10px;
@@ -114,6 +99,21 @@ button{
 
 <body>
 
+<script>
+/* 🔐 حماية لوحة التحكم */
+const ADMIN_PASSWORD = "Aa10010010050555710";
+
+if(!localStorage.getItem("admin_auth")){
+  const pass = prompt("🔐 ادخل كلمة مرور لوحة التحكم:");
+  if(pass !== ADMIN_PASSWORD){
+    alert("كلمة المرور خطأ ❌");
+    window.location.href="/";
+  }else{
+    localStorage.setItem("admin_auth","1");
+  }
+}
+</script>
+
 <div class="header">👑 لوحة تحكم AURA</div>
 
 <div class="tabs">
@@ -123,7 +123,6 @@ button{
 
 <div class="container">
 
-<!-- ================= المسلسلات ================= -->
 <div id="seriesTab">
 
 <div class="card">
@@ -140,7 +139,6 @@ button{
 
 </div>
 
-<!-- ================= الحسابات ================= -->
 <div id="usersTab" class="hidden">
 
 <div class="card">
@@ -167,18 +165,13 @@ button{
 const API_BASE = "https://aura-backend-mpvi.onrender.com";
 const API = API_BASE + "/movies";
 
-/* ============ Tabs ============ */
 function showTab(id,btn){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
-
   document.getElementById("seriesTab").classList.add("hidden");
   document.getElementById("usersTab").classList.add("hidden");
-
   document.getElementById(id).classList.remove("hidden");
 }
-
-/* ============ تحميل المسلسلات ============ */
 
 async function loadSeries(){
   const res = await fetch(API);
@@ -216,9 +209,7 @@ async function loadSeries(){
       onclick="deleteSeries('${series._id}')">
       حذف المسلسل
       </button>
-
       <hr>
-
       <input type="text" id="epName-${series._id}" placeholder="اسم الحلقة">
       <input type="text" id="epVideo-${series._id}" placeholder="رابط الحلقة">
       <input type="text" id="epImage-${series._id}" placeholder="رابط صورة الحلقة">
@@ -226,24 +217,20 @@ async function loadSeries(){
       onclick="addEpisode('${series._id}')">
       إضافة حلقة
       </button>
-
       ${episodesHTML}
     </div>`;
   });
 }
 
-/* ============ إدارة الاشتراك ============ */
-
 async function loadUsers(){
   const res = await fetch(API_BASE+"/admin/users");
   const users = await res.json();
-
   const table = document.getElementById("usersTable");
   table.innerHTML="";
 
   users.forEach(u=>{
     let status="غير مشترك ❌";
-    if(u.subscriptionLifetime) status="مدى الحياة 👑";
+    if(u.subscriptionType==="مدى الحياة") status="مدى الحياة 👑";
     else if(u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt)>new Date())
       status="مشترك ✅";
 
@@ -251,7 +238,7 @@ async function loadUsers(){
     <tr>
       <td>${u.username}</td>
       <td>${status}</td>
-      <td>${u.subscriptionLifetime?"∞":
+      <td>${u.subscriptionType==="مدى الحياة"?"∞":
       (u.subscriptionExpiresAt?
       new Date(u.subscriptionExpiresAt).toLocaleDateString():"-")}</td>
       <td>
@@ -281,8 +268,6 @@ async function toggleLock(movieId,episodeId,isLocked){
   loadSeries();
 }
 
-/* ============ المسلسلات CRUD ============ */
-
 async function addSeries(){
   const title=document.getElementById("title").value;
   const image=document.getElementById("image").value;
@@ -293,6 +278,7 @@ async function addSeries(){
 }
 
 async function deleteSeries(id){
+  if(!confirm("متأكد من حذف المسلسل؟")) return;
   await fetch(API+"/"+id,{ method:"DELETE" });
   loadSeries();
 }
@@ -312,6 +298,7 @@ async function addEpisode(id){
 }
 
 async function deleteEpisode(seriesId,episodeId){
+  if(!confirm("متأكد من حذف الحلقة؟")) return;
   await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
     method:"DELETE"
   });
