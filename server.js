@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
-const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -133,6 +132,25 @@ app.post("/login", async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: "Login error" });
+  }
+});
+
+/* ================= 👤 Get Current User ================= */
+
+app.get("/me", authMiddleware, async (req,res)=>{
+  try{
+    const user = await User.findById(req.userId);
+    if(!user) return res.status(404).json({message:"User not found"});
+
+    res.json({
+      username:user.username,
+      subscriptionLifetime:user.subscriptionLifetime,
+      subscriptionExpiresAt:user.subscriptionExpiresAt,
+      subscriptionType:user.subscriptionType
+    });
+
+  }catch(err){
+    res.status(500).json({message:"Server error"});
   }
 });
 
@@ -286,7 +304,8 @@ app.post("/movies/:id/episodes", async (req, res) => {
   res.json({ message: "Episode added" });
 });
 
-/* 🔥 حذف مسلسل */
+/* ================= Delete Movie ================= */
+
 app.delete("/movies/:id", async (req, res) => {
   try {
     await Movie.findByIdAndDelete(req.params.id);
@@ -296,7 +315,8 @@ app.delete("/movies/:id", async (req, res) => {
   }
 });
 
-/* 🔥 حذف حلقة */
+/* ================= Delete Episode ================= */
+
 app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
   try {
     const { movieId, episodeId } = req.params;
