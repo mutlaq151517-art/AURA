@@ -23,13 +23,6 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET
 });
 
-/* ================= Multer ================= */
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2000 * 1024 * 1024 }
-});
-
 /* ================= MongoDB ================= */
 
 mongoose.connect(process.env.MONGO_URI)
@@ -58,7 +51,6 @@ const movieSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
-
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
   subscriptionLifetime: { type: Boolean, default: false },
@@ -144,7 +136,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ================= 🔥 Check Subscription (JWT) ================= */
+/* ================= Check Subscription ================= */
 
 app.get("/check-subscription", authMiddleware, async (req,res)=>{
 
@@ -170,12 +162,11 @@ app.get("/check-subscription", authMiddleware, async (req,res)=>{
   return res.json({ active:false });
 });
 
-/* ================= 👑 عرض كل المستخدمين ================= */
+/* ================= Admin Users ================= */
 
 app.get("/admin/users", async (req, res) => {
 
   const users = await User.find();
-
   const now = new Date();
 
   const formatted = users.map(user=>{
@@ -206,7 +197,7 @@ app.get("/admin/users", async (req, res) => {
   res.json(formatted);
 });
 
-/* ================= 🔥 إعطاء اشتراك (منطقي وذكي) ================= */
+/* ================= Give Subscription ================= */
 
 app.post("/admin/give-subscription", async (req, res) => {
 
@@ -257,7 +248,7 @@ app.post("/admin/give-subscription", async (req, res) => {
   res.json({ message: "Subscription granted successfully" });
 });
 
-/* ================= قفل / فتح حلقة ================= */
+/* ================= Toggle Episode Lock ================= */
 
 app.post("/admin/toggle-episode-lock", async (req, res) => {
 
@@ -293,6 +284,32 @@ app.post("/movies/:id/episodes", async (req, res) => {
   });
 
   res.json({ message: "Episode added" });
+});
+
+/* 🔥 حذف مسلسل */
+app.delete("/movies/:id", async (req, res) => {
+  try {
+    await Movie.findByIdAndDelete(req.params.id);
+    res.json({ message: "Movie deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete movie failed" });
+  }
+});
+
+/* 🔥 حذف حلقة */
+app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
+  try {
+    const { movieId, episodeId } = req.params;
+
+    await Movie.findByIdAndUpdate(movieId, {
+      $pull: { episodes: { _id: episodeId } }
+    });
+
+    res.json({ message: "Episode deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Delete episode failed" });
+  }
 });
 
 /* ================= Static ================= */
