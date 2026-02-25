@@ -6,6 +6,7 @@
 <title>AURA</title>
 
 <style>
+/* 🔒 نفس تصميمك بدون تغيير */
 body{
   margin:0;
   font-family:Arial, sans-serif;
@@ -13,7 +14,6 @@ body{
   color:white;
   padding-bottom:100px;
 }
-
 /* ===== Header ثابت ===== */
 .header{
   position:fixed;
@@ -25,17 +25,8 @@ body{
   backdrop-filter:blur(12px);
   z-index:2000;
 }
-
-.logo{
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
-}
-
-.search-box{
-  position:relative;
-}
-
+.logo{font-size:22px;font-weight:bold;margin-bottom:10px;}
+.search-box{position:relative;}
 .search-box input{
   width:100%;
   padding:13px 45px 13px 15px;
@@ -46,7 +37,6 @@ body{
   background:white;
   color:#000;
 }
-
 .search-box span{
   position:absolute;
   left:15px;
@@ -54,18 +44,13 @@ body{
   transform:translateY(-50%);
   color:#666;
 }
-
 /* ===== المحتوى ===== */
-.content{
-  padding:120px 20px 20px 20px;
-}
-
+.content{padding:120px 20px 20px 20px;}
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:20px;
 }
-
 .card{
   position:relative;
   border-radius:18px;
@@ -73,14 +58,8 @@ body{
   cursor:pointer;
   transition:.3s;
 }
-.card:hover{
-  transform:scale(1.05);
-}
-.card img{
-  width:100%;
-  height:230px;
-  object-fit:cover;
-}
+.card:hover{transform:scale(1.05);}
+.card img{width:100%;height:230px;object-fit:cover;}
 .card-title{
   position:absolute;
   bottom:0;
@@ -89,37 +68,30 @@ body{
   font-size:13px;
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
-
 /* ===== صفحة المسلسل ===== */
 .series-page{display:none;padding-top:120px}
-
 .episodes-grid{
   padding:20px;
   display:grid;
   grid-template-columns:1fr;
   gap:20px;
 }
-
-/* ===== تصميم الحلقات مثل الصورة ===== */
 .episode-card{
   position:relative;
   border-radius:18px;
   overflow:hidden;
   cursor:pointer;
 }
-
 .episode-card img{
   width:100%;
   height:220px;
   object-fit:cover;
 }
-
 .episode-overlay{
   position:absolute;
   inset:0;
   background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
 }
-
 .play-circle{
   position:absolute;
   bottom:20px;
@@ -133,7 +105,6 @@ body{
   justify-content:center;
   font-size:22px;
 }
-
 .episode-duration{
   position:absolute;
   bottom:30px;
@@ -141,7 +112,6 @@ body{
   font-size:18px;
   font-weight:bold;
 }
-
 .episode-number{
   position:absolute;
   bottom:25px;
@@ -149,7 +119,6 @@ body{
   font-size:26px;
   font-weight:bold;
 }
-
 .badge{
   position:absolute;
   top:15px;
@@ -160,7 +129,6 @@ body{
 }
 .badge-locked{ background:#ff3b3b; }
 .badge-free{ background:#00d2a5; }
-
 /* ===== Player بدون لمس ===== */
 #playerModal{
   display:none;
@@ -189,7 +157,6 @@ body{
   height:100%;
   border:none;
 }
-
 /* ===== البار ثابت ===== */
 .bottom-nav{
   position:fixed;
@@ -204,7 +171,6 @@ body{
   align-items:center;
   z-index:3000;
 }
-
 .nav-item{
   display:flex;
   flex-direction:column;
@@ -259,7 +225,11 @@ const API=BASE+"/movies";
 
 let allSeries=[],currentEpisodes=[];
 let isSubscribed=false;
+let currentMovieId=null;
+let currentEpisodeId=null;
+let saveInterval=null;
 
+/* ===== فحص الاشتراك ===== */
 async function checkSubscription(){
   const token=localStorage.getItem("token");
   if(!token) return;
@@ -272,12 +242,14 @@ async function checkSubscription(){
   }catch(e){}
 }
 
+/* ===== البحث ===== */
 searchInput.addEventListener("input",()=>{
   const v=searchInput.value.toLowerCase();
   const f=allSeries.filter(s=>s.title.toLowerCase().includes(v));
   renderSeries(f);
 });
 
+/* ===== تحميل المسلسلات ===== */
 async function loadSeries(){
   await checkSubscription();
   const res=await fetch(API);
@@ -304,6 +276,7 @@ function openSeries(id){
   homeContent.style.display="none";
   seriesPage.style.display="block";
 
+  currentMovieId=id;
   currentEpisodes=s.episodes||[];
   episodesList.innerHTML="";
 
@@ -329,15 +302,19 @@ function openSeries(id){
   });
 }
 
-function playEpisode(i){
+/* ===== تشغيل الحلقة + استكمال المشاهدة ===== */
+async function playEpisode(i){
   const ep=currentEpisodes[i];
   if(ep.isLocked && !isSubscribed){
     alert("هذه الحلقة متاحة للمشتركين فقط 🔒");
     return;
   }
 
+  currentEpisodeId=ep._id;
   const url=ep.video;
   playerModal.style.display="flex";
+
+  const token=localStorage.getItem("token");
 
   if(url.includes("mediadelivery")||url.includes("iframe")){
     auraVideo.style.display="none";
@@ -347,7 +324,40 @@ function playEpisode(i){
     auraFrame.style.display="none";
     auraVideo.style.display="block";
     auraVideo.src=url;
+
+    /* 🔥 جلب التقدم */
+    if(token){
+      try{
+        const res=await fetch(
+          BASE+"/get-progress/"+currentMovieId+"/"+currentEpisodeId,
+          { headers:{Authorization:"Bearer "+token} }
+        );
+        const data=await res.json();
+        if(data.progress){
+          auraVideo.currentTime=data.progress;
+        }
+      }catch(e){}
+    }
+
     auraVideo.play();
+
+    /* 🔥 حفظ كل 5 ثواني */
+    if(token){
+      saveInterval=setInterval(()=>{
+        fetch(BASE+"/save-progress",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            Authorization:"Bearer "+token
+          },
+          body:JSON.stringify({
+            movieId:currentMovieId,
+            episodeId:currentEpisodeId,
+            progress:auraVideo.currentTime
+          })
+        });
+      },5000);
+    }
   }
 }
 
@@ -356,6 +366,7 @@ closePlayer.onclick=function(){
   auraVideo.src="";
   auraFrame.src="";
   playerModal.style.display="none";
+  if(saveInterval) clearInterval(saveInterval);
 };
 
 function goHome(){
