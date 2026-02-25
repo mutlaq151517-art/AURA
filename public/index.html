@@ -9,25 +9,28 @@
 body{
   margin:0;
   font-family:Arial, sans-serif;
-  background:#071a2f;
+  background:#061a2f;
   color:white;
-  padding-bottom:110px;
+  padding-bottom:120px;
 }
 
-/* ===== Header Cinematic ===== */
+/* ===== Header ثابت ===== */
 .header{
-  padding:20px;
-  background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);
-  position:sticky;
+  position:fixed;
   top:0;
+  left:0;
+  width:100%;
+  padding:15px 20px;
+  background:rgba(10,25,45,.85);
+  backdrop-filter:blur(15px);
   z-index:1000;
-  backdrop-filter:blur(10px);
+  box-shadow:0 5px 20px rgba(0,0,0,.4);
 }
 
 .logo{
-  font-size:24px;
+  font-size:22px;
   font-weight:bold;
-  margin-bottom:15px;
+  margin-bottom:10px;
 }
 
 .search-box{
@@ -36,13 +39,13 @@ body{
 
 .search-box input{
   width:100%;
-  padding:14px 45px 14px 15px;
+  padding:13px 45px 13px 15px;
   border-radius:30px;
   border:none;
+  outline:none;
+  font-size:14px;
   background:white;
   color:#000;
-  font-size:14px;
-  outline:none;
 }
 
 .search-box span{
@@ -50,42 +53,14 @@ body{
   left:15px;
   top:50%;
   transform:translateY(-50%);
-  color:#666;
-}
-
-/* ===== Hero ===== */
-.home-hero{
-  position:relative;
-  height:70vh;
-}
-.hero-slide img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.hero-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,#071a2f 50%,transparent);
-}
-.hero-content{
-  position:absolute;
-  bottom:40px;
-  right:30px;
-}
-.btn-primary{
-  background:linear-gradient(90deg,#00d2a5,#1e90ff);
-  border:none;
-  padding:14px 30px;
-  border-radius:30px;
-  color:white;
-  cursor:pointer;
+  color:#555;
 }
 
 /* ===== Grid ===== */
-.section{
-  padding:30px;
+.content{
+  padding:130px 25px 20px 25px;
 }
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
@@ -100,7 +75,7 @@ body{
   transition:.3s;
 }
 .card:hover{
-  transform:scale(1.07);
+  transform:scale(1.05);
 }
 .card img{
   width:100%;
@@ -116,27 +91,14 @@ body{
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
 
-/* ===== Series Page ===== */
-.series-page{display:none}
+/* ===== صفحة المسلسل ===== */
+.series-page{display:none;padding-top:120px}
 
-.series-hero{
-  position:relative;
-  height:60vh;
+.series-header{
+  padding:20px;
 }
-.series-hero img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.hero-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,#071a2f 60%,transparent);
-}
-.hero-content{
-  position:absolute;
-  bottom:30px;
-  right:30px;
+.series-header h2{
+  margin:0 0 10px 0;
 }
 
 .play-main{
@@ -148,12 +110,12 @@ body{
   cursor:pointer;
 }
 
-/* ===== Episodes ===== */
+/* ===== الحلقات ===== */
 .episodes-grid{
-  padding:30px;
+  padding:20px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:25px;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:20px;
 }
 
 .episode-card{
@@ -193,17 +155,7 @@ body{
   font-size:12px;
 }
 
-.episode-duration{
-  position:absolute;
-  bottom:10px;
-  left:10px;
-  background:rgba(0,0,0,.7);
-  padding:5px 10px;
-  border-radius:20px;
-  font-size:12px;
-}
-
-/* ===== Player (لم يتم لمسه) ===== */
+/* ===== Player (بدون لمس) ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -232,7 +184,7 @@ body{
   border:none;
 }
 
-/* ===== Bottom Nav (تغيير شكل فقط) ===== */
+/* ===== Bottom Nav ثابت ===== */
 .bottom-nav{
   position:fixed;
   bottom:20px;
@@ -240,7 +192,7 @@ body{
   transform:translateX(-50%);
   width:90%;
   height:65px;
-  background:rgba(15,35,60,.7);
+  background:rgba(15,35,60,.85);
   backdrop-filter:blur(15px);
   border-radius:30px;
   display:flex;
@@ -248,6 +200,7 @@ body{
   align-items:center;
   box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
+
 .nav-item{
   display:flex;
   flex-direction:column;
@@ -256,6 +209,7 @@ body{
   color:#00d2a5;
   cursor:pointer;
 }
+
 .nav-item span{
   font-size:11px;
   margin-top:4px;
@@ -269,26 +223,19 @@ body{
   <div class="logo">AURA</div>
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="ابحث عن مسلسلك...">
-    <span>🔍</span>
+    <span>🔎</span>
   </div>
 </div>
 
-<div id="homeContent">
-  <div class="home-hero" id="homeHero"></div>
-  <div class="section">
-    <div class="grid" id="seriesGrid"></div>
-  </div>
+<div id="homeContent" class="content">
+  <div class="grid" id="seriesGrid"></div>
 </div>
 
 <div class="series-page" id="seriesPage">
-  <button class="btn-primary" onclick="goHome()">⬅ رجوع</button>
-  <div class="series-hero">
-    <img id="heroImage">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <h2 id="seriesTitle"></h2>
-      <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
-    </div>
+  <div class="series-header">
+    <button class="play-main" onclick="goHome()">⬅ رجوع</button>
+    <h2 id="seriesTitle"></h2>
+    <button class="play-main" id="mainPlayBtn">▶ تشغيل الحلقة 1</button>
   </div>
   <div class="episodes-grid" id="episodesList"></div>
 </div>
@@ -303,9 +250,9 @@ body{
 </div>
 
 <div class="bottom-nav">
-  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="goHome()">🏡<span>الرئيسية</span></div>
   <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>الحساب</span></div>
+  <div class="nav-item" onclick="window.location.assign('/account.html')">🧑<span>حسابي</span></div>
 </div>
 
 <script>
@@ -315,7 +262,6 @@ const API=BASE+"/movies";
 let allSeries=[],currentEpisodes=[];
 let isSubscribed=false;
 
-/* ===== JWT Check ===== */
 async function checkSubscription(){
   const token=localStorage.getItem("token");
   if(!token) return;
@@ -339,21 +285,7 @@ async function loadSeries(){
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
-  renderHeroSlider(data);
   renderSeries(data);
-}
-
-function renderHeroSlider(data){
-  if(!data.length)return;
-  const item=data[0];
-  homeHero.innerHTML=`
-    <div class="hero-slide">
-      <img src="${item.image}">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <button class="btn-primary" onclick="openSeries('${item._id}')">▶ شاهد الآن</button>
-      </div>
-    </div>`;
 }
 
 function renderSeries(data){
@@ -374,7 +306,6 @@ function openSeries(id){
   homeContent.style.display="none";
   seriesPage.style.display="block";
   seriesTitle.innerText=s.title;
-  heroImage.src=s.image;
 
   currentEpisodes=s.episodes||[];
   mainPlayBtn.onclick=()=>playEpisode(0);
@@ -398,7 +329,6 @@ function openSeries(id){
         <img src="${ep.image||s.image}" style="${locked?'filter:blur(4px);opacity:.6;':''}">
         ${badge}
         <div class="episode-number">الحلقة ${i+1}</div>
-        <div class="episode-duration">${ep.duration||''}</div>
       </div>`;
   });
 }
