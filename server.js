@@ -14,14 +14,6 @@ app.use(express.json({ limit: "50mb" }));
 
 const PORT = process.env.PORT || 10000;
 
-/* ================= Cloudinary ================= */
-
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET
-});
-
 /* ================= MongoDB ================= */
 
 mongoose.connect(process.env.MONGO_URI)
@@ -47,13 +39,24 @@ const movieSchema = new mongoose.Schema({
   episodes: [episodeSchema]
 });
 
+/* 👑 watch history */
+const watchSchema = new mongoose.Schema({
+  movieId: String,
+  episodeId: String,
+  progress: Number,
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: String,
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
   subscriptionLifetime: { type: Boolean, default: false },
-  subscriptionType: { type: String, default: null }
+  subscriptionType: { type: String, default: null },
+
+  /* 🔥 الجديد */
+  watchHistory: [watchSchema]
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -125,10 +128,7 @@ app.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({
-      message: "Login successful",
-      token
-    });
+    res.json({ message: "Login successful", token });
 
   } catch (err) {
     res.status(500).json({ message: "Login error" });
@@ -154,6 +154,58 @@ app.get("/me", authMiddleware, async (req,res)=>{
   }
 });
 
+/* ================= 🎬 Save Progress ================= */
+
+app.post("/save-progress", authMiddleware, async (req,res)=>{
+
+  const { movieId, episodeId, progress } = req.body;
+
+  if(!movieId || !episodeId)
+    return res.status(400).json({ message:"Missing data" });
+
+  const user = await User.findById(req.userId);
+  if(!user) return res.status(404).json({ message:"User not found" });
+
+  const existing = user.watchHistory.find(
+    w => w.movieId === movieId && w.episodeId === episodeId
+  );
+
+  if(existing){
+    existing.progress = progress;
+    existing.updatedAt = new Date();
+  }else{
+    user.watchHistory.push({
+      movieId,
+      episodeId,
+      progress
+    });
+  }
+
+  await user.save();
+
+  res.json({ message:"Progress saved" });
+});
+
+/* ================= 🎬 Get Progress ================= */
+
+app.get("/get-progress/:movieId/:episodeId", authMiddleware, async (req,res)=>{
+
+  const { movieId, episodeId } = req.params;
+
+  const user = await User.findById(req.userId);
+  if(!user) return res.json({ progress:0 });
+
+  const record = user.watchHistory.find(
+    w => w.movieId === movieId && w.episodeId === episodeId
+  );
+
+  if(record){
+    return res.json({ progress:record.progress });
+  }
+
+  return res.json({ progress:0 });
+});
+
 /* ================= Check Subscription ================= */
 
 app.get("/check-subscription", authMiddleware, async (req,res)=>{
@@ -164,10 +216,7 @@ app.get("/check-subscription", authMiddleware, async (req,res)=>{
   const now = new Date();
 
   if(user.subscriptionLifetime){
-    return res.json({
-      active:true,
-      lifetime:true
-    });
+    return res.json({ active:true, lifetime:true });
   }
 
   if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
@@ -180,156 +229,11 @@ app.get("/check-subscription", authMiddleware, async (req,res)=>{
   return res.json({ active:false });
 });
 
-/* ================= Admin Users ================= */
-
-app.get("/admin/users", async (req, res) => {
-
-  const users = await User.find();
-  const now = new Date();
-
-  const formatted = users.map(user=>{
-
-    let active = false;
-    let daysLeft = 0;
-
-    if(user.subscriptionLifetime){
-      active = true;
-      daysLeft = "∞";
-    }
-    else if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
-      active = true;
-      daysLeft = Math.ceil(
-        (user.subscriptionExpiresAt - now) / (1000*60*60*24)
-      );
-    }
-
-    return {
-      username:user.username,
-      active,
-      subscriptionType:user.subscriptionType,
-      subscriptionExpiresAt:user.subscriptionExpiresAt,
-      daysLeft
-    };
-  });
-
-  res.json(formatted);
-});
-
-/* ================= Give Subscription ================= */
-
-app.post("/admin/give-subscription", async (req, res) => {
-
-  const { username, type, customDays, customDate } = req.body;
-
-  const user = await User.findOne({ username });
-  if (!user)
-    return res.status(404).json({ message: "User not found" });
-
-  const now = new Date();
-
-  let baseDate =
-    user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
-      ? new Date(user.subscriptionExpiresAt)
-      : now;
-
-  if(type === "1m"){
-    baseDate.setMonth(baseDate.getMonth() + 1);
-    user.subscriptionType = "شهر";
-  }
-  else if(type === "1y"){
-    baseDate.setFullYear(baseDate.getFullYear() + 1);
-    user.subscriptionType = "سنة";
-  }
-  else if(type === "lifetime"){
-    user.subscriptionLifetime = true;
-    user.subscriptionExpiresAt = null;
-    user.subscriptionType = "مدى الحياة";
-  }
-  else if(type === "customDays" && customDays){
-    baseDate.setDate(baseDate.getDate() + Number(customDays));
-    user.subscriptionType = `${customDays} يوم`;
-  }
-  else if(type === "customDate" && customDate){
-    user.subscriptionExpiresAt = new Date(customDate);
-    user.subscriptionType = "مخصص";
-  }
-
-  if(type !== "lifetime"){
-    user.subscriptionLifetime = false;
-    user.subscriptionExpiresAt = baseDate;
-  }
-
-  user.subscriptionActive = true;
-
-  await user.save();
-
-  res.json({ message: "Subscription granted successfully" });
-});
-
-/* ================= Toggle Episode Lock ================= */
-
-app.post("/admin/toggle-episode-lock", async (req, res) => {
-
-  const { movieId, episodeId, isLocked } = req.body;
-
-  await Movie.updateOne(
-    { _id: movieId, "episodes._id": episodeId },
-    { $set: { "episodes.$.isLocked": isLocked } }
-  );
-
-  res.json({ message: "Episode lock status updated" });
-});
-
 /* ================= Movies ================= */
 
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
-});
-
-app.post("/movies", async (req, res) => {
-  const { title, image } = req.body;
-  const newMovie = new Movie({ title, image, episodes: [] });
-  await newMovie.save();
-  res.json({ message: "Movie added" });
-});
-
-app.post("/movies/:id/episodes", async (req, res) => {
-  const { name, video, image, isLocked } = req.body;
-
-  await Movie.findByIdAndUpdate(req.params.id, {
-    $push: { episodes: { name, video, image, isLocked: !!isLocked } }
-  });
-
-  res.json({ message: "Episode added" });
-});
-
-/* ================= Delete Movie ================= */
-
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Delete movie failed" });
-  }
-});
-
-/* ================= Delete Episode ================= */
-
-app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
-  try {
-    const { movieId, episodeId } = req.params;
-
-    await Movie.findByIdAndUpdate(movieId, {
-      $pull: { episodes: { _id: episodeId } }
-    });
-
-    res.json({ message: "Episode deleted successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Delete episode failed" });
-  }
 });
 
 /* ================= Static ================= */
@@ -346,8 +250,6 @@ app.get("*", (req, res) => {
 
   return res.sendFile(path.join(publicPath, "index.html"));
 });
-
-/* ================= Start ================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
