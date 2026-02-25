@@ -11,72 +11,183 @@ body{
   font-family:Arial;
   background:linear-gradient(135deg,#06121f,#0b1f38,#071a2f);
   color:white;
+  padding-bottom:100px;
+}
+
+/* ===== محتوى الصفحة ===== */
+.container{
+  padding:120px 20px 20px 20px;
   display:flex;
   justify-content:center;
-  align-items:center;
-  height:100vh;
 }
+
 .card{
   background:#0b1f38;
   padding:30px;
-  border-radius:20px;
-  width:90%;
-  max-width:400px;
+  border-radius:25px;
+  width:100%;
+  max-width:420px;
   text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
+
+.username{
+  font-size:20px;
+  margin-bottom:15px;
+}
+
+.subscription{
+  margin-top:10px;
+  padding:15px;
+  border-radius:15px;
+  background:#0f2a4a;
+  font-size:15px;
+}
+
+.sub-active{ border:1px solid #00d2a5; }
+.sub-expired{ border:1px solid #ff3b3b; }
+.sub-lifetime{
+  border:1px solid gold;
+  background:linear-gradient(135deg,#2a1c00,#3b2a00);
+}
+
 button{
-  margin-top:20px;
-  padding:10px 20px;
+  margin-top:25px;
+  padding:12px 25px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   background:#00d2a5;
   color:white;
   cursor:pointer;
+  font-size:14px;
+}
+
+/* ===== البار ثابت ===== */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:70px;
+  background:rgba(15,35,60,.95);
+  backdrop-filter:blur(15px);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:3000;
+}
+
+.nav-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-size:18px;
+  color:#00d2a5;
+  cursor:pointer;
+}
+.nav-item span{
+  font-size:11px;
+  margin-top:4px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>👤 حسابي</h2>
-  <p id="username">جاري التحميل...</p>
-  <button onclick="logout()">تسجيل خروج</button>
+<div class="container">
+  <div class="card">
+    <h2>👤 حسابي</h2>
+
+    <div class="username" id="username">
+      جاري التحميل...
+    </div>
+
+    <div id="subscriptionBox" class="subscription">
+      جاري التحقق من الاشتراك...
+    </div>
+
+    <button onclick="logout()">تسجيل خروج</button>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item" onclick="window.location.href='index.html'">🏠<span>الرئيسية</span></div>
+  <div class="nav-item" onclick="window.location.href='settings.html'">⚙️<span>الإعدادات</span></div>
+  <div class="nav-item">👤<span>حسابي</span></div>
 </div>
 
 <script>
-const API = "https://aura-backend-mpvi.onrender.com";
-const token = localStorage.getItem("token");
+const BASE="https://aura-backend-mpvi.onrender.com";
+const token=localStorage.getItem("token");
 
 if(!token){
-  window.location.href = "login.html";
+  window.location.href="login.html";
 }
 
-fetch(API + "/me",{
-  headers:{
-    "Authorization": token,
-    "Content-Type": "application/json"
+/* ===== جلب اسم المستخدم ===== */
+async function loadUser(){
+  try{
+    const res=await fetch(BASE+"/me",{
+      headers:{Authorization:"Bearer "+token}
+    });
+
+    if(!res.ok) throw new Error();
+
+    const data=await res.json();
+    document.getElementById("username").innerText=
+      "اسم المستخدم: "+data.username;
+
+  }catch{
+    document.getElementById("username").innerText=
+      "غير مسجل دخول";
   }
-})
-.then(res=>{
-  if(!res.ok){
-    throw new Error("Unauthorized");
+}
+
+/* ===== فحص الاشتراك ===== */
+async function checkSubscription(){
+  try{
+    const res=await fetch(BASE+"/check-subscription",{
+      headers:{Authorization:"Bearer "+token}
+    });
+
+    const data=await res.json();
+    const box=document.getElementById("subscriptionBox");
+
+    if(data.lifetime){
+      box.className="subscription sub-lifetime";
+      box.innerHTML="الاشتراك: مدى الحياة 👑";
+      return;
+    }
+
+    if(data.active && data.expiresAt){
+      const now=new Date();
+      const exp=new Date(data.expiresAt);
+      const diff=Math.ceil((exp-now)/(1000*60*60*24));
+
+      box.className="subscription sub-active";
+      box.innerHTML=
+        "الاشتراك: فعال ✅<br>" +
+        "ينتهي بتاريخ: "+exp.toLocaleDateString()+"<br>" +
+        "الأيام المتبقية: "+diff+" يوم";
+    }
+    else{
+      box.className="subscription sub-expired";
+      box.innerHTML="الاشتراك: منتهي ❌";
+    }
+
+  }catch{
+    document.getElementById("subscriptionBox").innerText=
+      "تعذر التحقق من الاشتراك";
   }
-  return res.json();
-})
-.then(data=>{
-  document.getElementById("username").innerText =
-    "اسم المستخدم: " + data.username;
-})
-.catch(()=>{
-  document.getElementById("username").innerText =
-    "غير مسجل دخول";
-});
+}
 
 function logout(){
   localStorage.removeItem("token");
-  window.location.href = "login.html";
+  window.location.href="login.html";
 }
+
+loadUser();
+checkSubscription();
 </script>
 
 </body>
