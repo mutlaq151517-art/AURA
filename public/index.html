@@ -14,7 +14,6 @@ body{
   color:white;
   padding-bottom:100px;
 }
-/* ===== Header ثابت ===== */
 .header{
   position:fixed;
   top:0;
@@ -44,7 +43,6 @@ body{
   transform:translateY(-50%);
   color:#666;
 }
-/* ===== المحتوى ===== */
 .content{padding:120px 20px 20px 20px;}
 .grid{
   display:grid;
@@ -68,7 +66,6 @@ body{
   font-size:13px;
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
-/* ===== صفحة المسلسل ===== */
 .series-page{display:none;padding-top:120px}
 .episodes-grid{
   padding:20px;
@@ -129,7 +126,6 @@ body{
 }
 .badge-locked{ background:#ff3b3b; }
 .badge-free{ background:#00d2a5; }
-/* ===== Player بدون لمس ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -157,7 +153,6 @@ body{
   height:100%;
   border:none;
 }
-/* ===== البار ثابت ===== */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -229,7 +224,6 @@ let currentMovieId=null;
 let currentEpisodeId=null;
 let saveInterval=null;
 
-/* ===== فحص الاشتراك ===== */
 async function checkSubscription(){
   const token=localStorage.getItem("token");
   if(!token) return;
@@ -242,14 +236,12 @@ async function checkSubscription(){
   }catch(e){}
 }
 
-/* ===== البحث ===== */
 searchInput.addEventListener("input",()=>{
   const v=searchInput.value.toLowerCase();
   const f=allSeries.filter(s=>s.title.toLowerCase().includes(v));
   renderSeries(f);
 });
 
-/* ===== تحميل المسلسلات ===== */
 async function loadSeries(){
   await checkSubscription();
   const res=await fetch(API);
@@ -302,7 +294,7 @@ function openSeries(id){
   });
 }
 
-/* ===== تشغيل الحلقة + استكمال المشاهدة ===== */
+/* 🔥 الحل الصحيح لاسترجاع التقدم */
 async function playEpisode(i){
   const ep=currentEpisodes[i];
   if(ep.isLocked && !isSubscribed){
@@ -316,16 +308,13 @@ async function playEpisode(i){
 
   const token=localStorage.getItem("token");
 
-  if(url.includes("mediadelivery")||url.includes("iframe")){
-    auraVideo.style.display="none";
-    auraFrame.style.display="block";
-    auraFrame.src=url;
-  }else{
-    auraFrame.style.display="none";
-    auraVideo.style.display="block";
-    auraVideo.src=url;
+  auraFrame.style.display="none";
+  auraVideo.style.display="block";
+  auraVideo.src=url;
 
-    /* 🔥 جلب التقدم */
+  auraVideo.addEventListener("loadedmetadata", async function restore(){
+    auraVideo.removeEventListener("loadedmetadata", restore);
+
     if(token){
       try{
         const res=await fetch(
@@ -333,31 +322,30 @@ async function playEpisode(i){
           { headers:{Authorization:"Bearer "+token} }
         );
         const data=await res.json();
-        if(data.progress){
+        if(data.progress && data.progress < auraVideo.duration){
           auraVideo.currentTime=data.progress;
         }
       }catch(e){}
     }
 
     auraVideo.play();
+  });
 
-    /* 🔥 حفظ كل 5 ثواني */
-    if(token){
-      saveInterval=setInterval(()=>{
-        fetch(BASE+"/save-progress",{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json",
-            Authorization:"Bearer "+token
-          },
-          body:JSON.stringify({
-            movieId:currentMovieId,
-            episodeId:currentEpisodeId,
-            progress:auraVideo.currentTime
-          })
-        });
-      },5000);
-    }
+  if(token){
+    saveInterval=setInterval(()=>{
+      fetch(BASE+"/save-progress",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:"Bearer "+token
+        },
+        body:JSON.stringify({
+          movieId:currentMovieId,
+          episodeId:currentEpisodeId,
+          progress:auraVideo.currentTime
+        })
+      });
+    },5000);
   }
 }
 
