@@ -319,7 +319,7 @@ function openSeries(id){
 
     episodesList.innerHTML+=`
       <div class="episode-card" onclick="${locked?'alert(\'هذه الحلقة للمشتركين فقط 🔒\')':'playEpisode('+i+')'}">
-        <img src="${ep.image||s.image}" style="${locked?'filter:blur(4px);opacity:.6;':''}">
+        <img src="${ep.image||s.image}">
         <div class="episode-overlay"></div>
         ${badge}
         <div class="play-circle">▶</div>
