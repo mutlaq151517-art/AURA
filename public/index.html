@@ -14,6 +14,51 @@ body{
   padding-bottom:100px;
 }
 
+/* ===== Intro Animation (المضاف فقط) ===== */
+#introScreen{
+  position:fixed;
+  inset:0;
+  background:#061a2f;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:999999;
+  animation:fadeOut 1s ease 3s forwards;
+}
+
+.intro-wrapper{
+  text-align:center;
+  animation:popIn 1.6s ease forwards;
+}
+
+.intro-logo-img{
+  width:150px;
+  margin-bottom:20px;
+  filter:drop-shadow(0 0 40px rgba(0,210,165,.6));
+}
+
+.intro-text{
+  font-size:40px;
+  font-weight:bold;
+  letter-spacing:6px;
+  background:linear-gradient(90deg,#00d2a5,#1e90ff,#ff3b8d);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow:0 0 30px rgba(0,210,165,.7));
+}
+
+@keyframes popIn{
+  0%{opacity:0;transform:scale(.6);}
+  60%{opacity:1;transform:scale(1.1);}
+  100%{transform:scale(1);}
+}
+
+@keyframes fadeOut{
+  to{opacity:0;visibility:hidden;}
+}
+/* ===== نهاية الإضافة ===== */
+
+
 /* ===== Header ثابت ===== */
 .header{
   position:fixed;
@@ -55,7 +100,6 @@ body{
   color:#666;
 }
 
-/* ===== المحتوى ===== */
 .content{
   padding:120px 20px 20px 20px;
 }
@@ -90,7 +134,6 @@ body{
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
 
-/* ===== صفحة المسلسل ===== */
 .series-page{display:none;padding-top:120px}
 
 .episodes-grid{
@@ -100,7 +143,6 @@ body{
   gap:20px;
 }
 
-/* ===== تصميم الحلقات مثل الصورة ===== */
 .episode-card{
   position:relative;
   border-radius:18px;
@@ -161,7 +203,6 @@ body{
 .badge-locked{ background:#ff3b3b; }
 .badge-free{ background:#00d2a5; }
 
-/* ===== Player بدون لمس ===== */
 #playerModal{
   display:none;
   position:fixed;
@@ -190,7 +231,6 @@ body{
   border:none;
 }
 
-/* ===== البار ثابت ===== */
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -221,6 +261,14 @@ body{
 </head>
 
 <body>
+
+<!-- ===== Intro Screen ===== -->
+<div id="introScreen">
+  <div class="intro-wrapper">
+    <img src="logo.png" class="intro-logo-img">
+    <div class="intro-text">AURAVO</div>
+  </div>
+</div>
 
 <div class="header">
   <div class="logo">AURA</div>
@@ -254,6 +302,14 @@ body{
 </div>
 
 <script>
+setTimeout(()=>{
+  const intro=document.getElementById("introScreen");
+  if(intro) intro.remove();
+},3500);
+</script>
+
+<script>
+/* سكربتك الأصلي بدون أي تغيير */
 const BASE="https://aura-backend-mpvi.onrender.com";
 const API=BASE+"/movies";
 
