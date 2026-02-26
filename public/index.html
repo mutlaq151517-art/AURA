@@ -14,7 +14,7 @@ body{
   padding-bottom:100px;
 }
 
-/* ===== Intro Animation ===== */
+/* ===== Cinematic Intro ===== */
 #introScreen{
   position:fixed;
   inset:0;
@@ -23,23 +23,36 @@ body{
   justify-content:center;
   align-items:center;
   z-index:999999;
-  animation:fadeOut 1s ease 2.8s forwards;
+  animation:fadeOut 1s ease 3s forwards;
 }
-.intro-logo{
-  font-size:48px;
+
+.intro-wrapper{
+  text-align:center;
+  animation:popIn 1.6s ease forwards;
+}
+
+.intro-logo-img{
+  width:150px;
+  margin-bottom:20px;
+  filter:drop-shadow(0 0 40px rgba(0,210,165,.6));
+}
+
+.intro-text{
+  font-size:42px;
   font-weight:bold;
   letter-spacing:6px;
   background:linear-gradient(90deg,#00d2a5,#1e90ff,#ff3b8d);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
-  text-shadow:0 0 40px rgba(0,210,165,.7);
-  animation:logoPop 1.8s ease forwards;
+  text-shadow:0 0 30px rgba(0,210,165,.7);
 }
-@keyframes logoPop{
+
+@keyframes popIn{
   0%{opacity:0;transform:scale(.6);}
   60%{opacity:1;transform:scale(1.1);}
   100%{transform:scale(1);}
 }
+
 @keyframes fadeOut{
   to{opacity:0;visibility:hidden;}
 }
@@ -75,7 +88,7 @@ body{
   color:#666;
 }
 
-.content{padding:120px 20px 20px 20px;}
+.content{padding:95px 20px 20px 20px;}
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
@@ -99,7 +112,7 @@ body{
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
 
-.series-page{display:none;padding-top:120px}
+.series-page{display:none;padding-top:95px}
 .episodes-grid{
   padding:20px;
   display:grid;
@@ -215,8 +228,12 @@ body{
 
 <body>
 
+<!-- Intro -->
 <div id="introScreen">
-  <div class="intro-logo">AURAVO</div>
+  <div class="intro-wrapper">
+    <img src="logo.png" class="intro-logo-img">
+    <div class="intro-text">AURAVO</div>
+  </div>
 </div>
 
 <div class="header">
@@ -257,9 +274,8 @@ setTimeout(()=>{
 },3500);
 </script>
 
-<!-- سكربتك الأصلي بدون أي تغيير -->
 <script>
-/* 🔥 هنا نفس السكربت حقك بدون لمس */
+/* نفس سكربتك السابق بالكامل هنا بدون أي تعديل */
 </script>
 
 </body>
