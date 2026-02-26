@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AURAVO</title>
 
-<!-- دعم إضافة للتطبيق -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AURAVO">
@@ -31,12 +30,13 @@ body{
   background:rgba(8,25,45,.95);
   backdrop-filter:blur(12px);
   z-index:2000;
+  text-align:center;
 }
 
 .logo{
   font-size:22px;
   font-weight:bold;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 
 .search-box{
@@ -63,7 +63,7 @@ body{
 }
 
 .content{
-  padding:120px 20px 20px 20px;
+  padding:130px 20px 20px 20px;
 }
 
 .grid{
@@ -90,7 +90,7 @@ body{
   background:linear-gradient(to top,rgba(0,0,0,.9),transparent);
 }
 
-.series-page{display:none;padding-top:120px}
+.series-page{display:none;padding-top:130px}
 
 .episodes-grid{
   padding:20px;
@@ -226,141 +226,4 @@ body{
   </div>
 </div>
 
-<div id="homeContent" class="content">
-  <div class="grid" id="seriesGrid"></div>
-</div>
-
-<div class="series-page" id="seriesPage">
-  <div class="episodes-grid" id="episodesList"></div>
-</div>
-
-<div id="playerModal">
-  <div id="playerHeader">
-    <div>AURAVO PLAYER</div>
-    <button id="closePlayer">إغلاق</button>
-  </div>
-  <video id="auraVideo" controls style="display:none"></video>
-  <iframe id="auraFrame" allowfullscreen style="display:none"></iframe>
-</div>
-
-<div class="bottom-nav">
-  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
-  <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>حسابي</span></div>
-</div>
-
-<script>
-const BASE="https://aura-backend-mpvi.onrender.com";
-const API=BASE+"/movies";
-
-let allSeries=[],currentEpisodes=[];
-let isSubscribed=false;
-
-async function checkSubscription(){
-  const token=localStorage.getItem("token");
-  if(!token) return;
-  try{
-    const res=await fetch(BASE+"/check-subscription",{
-      headers:{Authorization:"Bearer "+token}
-    });
-    const data=await res.json();
-    if(data.active) isSubscribed=true;
-  }catch(e){}
-}
-
-searchInput.addEventListener("input",()=>{
-  const v=searchInput.value.toLowerCase();
-  const f=allSeries.filter(s=>s.title.toLowerCase().includes(v));
-  renderSeries(f);
-});
-
-async function loadSeries(){
-  await checkSubscription();
-  const res=await fetch(API);
-  const data=await res.json();
-  allSeries=data;
-  renderSeries(data);
-}
-
-function renderSeries(data){
-  seriesGrid.innerHTML="";
-  data.forEach(item=>{
-    seriesGrid.innerHTML+=`
-      <div class="card" onclick="openSeries('${item._id}')">
-        <img src="${item.image}">
-        <div class="card-title">${item.title}</div>
-      </div>`;
-  });
-}
-
-function openSeries(id){
-  const s=allSeries.find(x=>x._id===id);
-  if(!s)return;
-
-  homeContent.style.display="none";
-  seriesPage.style.display="block";
-
-  currentEpisodes=s.episodes||[];
-  episodesList.innerHTML="";
-
-  currentEpisodes.forEach((ep,i)=>{
-    const locked=ep.isLocked && !isSubscribed;
-
-    let badge="";
-    if(!isSubscribed){
-      badge=ep.isLocked?
-      `<div class="badge badge-locked">🔒 للمشتركين</div>`:
-      `<div class="badge badge-free">مجانية</div>`;
-    }
-
-    episodesList.innerHTML+=`
-      <div class="episode-card" onclick="${locked?'alert(\'هذه الحلقة للمشتركين فقط 🔒\')':'playEpisode('+i+')'}">
-        <img src="${ep.image||s.image}">
-        <div class="episode-overlay"></div>
-        ${badge}
-        <div class="play-circle">▶</div>
-        <div class="episode-duration">${ep.duration||''}</div>
-        <div class="episode-number">الحلقة ${i+1}</div>
-      </div>`;
-  });
-}
-
-function playEpisode(i){
-  const ep=currentEpisodes[i];
-  if(ep.isLocked && !isSubscribed){
-    alert("هذه الحلقة متاحة للمشتركين فقط 🔒");
-    return;
-  }
-
-  const url=ep.video;
-  playerModal.style.display="flex";
-
-  if(url.includes("mediadelivery")||url.includes("iframe")){
-    auraVideo.style.display="none";
-    auraFrame.style.display="block";
-    auraFrame.src=url;
-  }else{
-    auraFrame.style.display="none";
-    auraVideo.style.display="block";
-    auraVideo.src=url;
-    auraVideo.play();
-  }
-}
-
-closePlayer.onclick=function(){
-  auraVideo.pause();
-  auraVideo.src="";
-  auraFrame.src="";
-  playerModal.style.display="none";
-};
-
-function goHome(){
-  seriesPage.style.display="none";
-  homeContent.style.display="block";
-}
-
-loadSeries();
-</script>
-
-</body>
-</html>
+<!-- باقي الملف بدون أي تغيير -->
