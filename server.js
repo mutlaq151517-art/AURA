@@ -37,11 +37,7 @@ const episodeSchema = new mongoose.Schema({
   name: String,
   video: String,
   image: String,
-  isLocked: { type: Boolean, default: false },
-
-  // 🔥 دعم الجدولة
-  releaseDate: { type: Date, default: null }
-
+  isLocked: { type: Boolean, default: false }
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
@@ -139,6 +135,151 @@ app.post("/login", async (req, res) => {
   }
 });
 
+/* ================= 👤 Get Current User ================= */
+
+app.get("/me", authMiddleware, async (req,res)=>{
+  try{
+    const user = await User.findById(req.userId);
+    if(!user) return res.status(404).json({message:"User not found"});
+
+    res.json({
+      username:user.username,
+      subscriptionLifetime:user.subscriptionLifetime,
+      subscriptionExpiresAt:user.subscriptionExpiresAt,
+      subscriptionType:user.subscriptionType
+    });
+
+  }catch(err){
+    res.status(500).json({message:"Server error"});
+  }
+});
+
+/* ================= Check Subscription ================= */
+
+app.get("/check-subscription", authMiddleware, async (req,res)=>{
+
+  const user = await User.findById(req.userId);
+  if(!user) return res.json({ active:false });
+
+  const now = new Date();
+
+  if(user.subscriptionLifetime){
+    return res.json({
+      active:true,
+      lifetime:true
+    });
+  }
+
+  if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
+    return res.json({
+      active:true,
+      expiresAt:user.subscriptionExpiresAt
+    });
+  }
+
+  return res.json({ active:false });
+});
+
+/* ================= Admin Users ================= */
+
+app.get("/admin/users", async (req, res) => {
+
+  const users = await User.find();
+  const now = new Date();
+
+  const formatted = users.map(user=>{
+
+    let active = false;
+    let daysLeft = 0;
+
+    if(user.subscriptionLifetime){
+      active = true;
+      daysLeft = "∞";
+    }
+    else if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
+      active = true;
+      daysLeft = Math.ceil(
+        (user.subscriptionExpiresAt - now) / (1000*60*60*24)
+      );
+    }
+
+    return {
+      username:user.username,
+      active,
+      subscriptionType:user.subscriptionType,
+      subscriptionExpiresAt:user.subscriptionExpiresAt,
+      daysLeft
+    };
+  });
+
+  res.json(formatted);
+});
+
+/* ================= Give Subscription ================= */
+
+app.post("/admin/give-subscription", async (req, res) => {
+
+  const { username, type, customDays, customDate } = req.body;
+
+  const user = await User.findOne({ username });
+  if (!user)
+    return res.status(404).json({ message: "User not found" });
+
+  const now = new Date();
+
+  let baseDate =
+    user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
+      ? new Date(user.subscriptionExpiresAt)
+      : now;
+
+  if(type === "1m"){
+    baseDate.setMonth(baseDate.getMonth() + 1);
+    user.subscriptionType = "شهر";
+  }
+  else if(type === "1y"){
+    baseDate.setFullYear(baseDate.getFullYear() + 1);
+    user.subscriptionType = "سنة";
+  }
+  else if(type === "lifetime"){
+    user.subscriptionLifetime = true;
+    user.subscriptionExpiresAt = null;
+    user.subscriptionType = "مدى الحياة";
+  }
+  else if(type === "customDays" && customDays){
+    baseDate.setDate(baseDate.getDate() + Number(customDays));
+    user.subscriptionType = `${customDays} يوم`;
+  }
+  else if(type === "customDate" && customDate){
+    user.subscriptionExpiresAt = new Date(customDate);
+    user.subscriptionType = "مخصص";
+  }
+
+  if(type !== "lifetime"){
+    user.subscriptionLifetime = false;
+    user.subscriptionExpiresAt = baseDate;
+  }
+
+  user.subscriptionActive = true;
+
+  await user.save();
+
+  res.json({ message: "Subscription granted successfully" });
+});
+
+/* ================= Toggle Episode Lock ================= */
+
+app.post("/admin/toggle-episode-lock", async (req, res) => {
+
+  const { movieId, episodeId, isLocked } = req.body;
+
+  await Movie.updateOne(
+    { _id: movieId, "episodes._id": episodeId },
+    { $set: { "episodes.$.isLocked": isLocked } }
+  );
+
+  res.json({ message: "Episode lock status updated" });
+});
+
 /* ================= Movies ================= */
 
 app.get("/movies", async (req, res) => {
@@ -153,37 +294,14 @@ app.post("/movies", async (req, res) => {
   res.json({ message: "Movie added" });
 });
 
-/* ================= Add Episode (مع دعم الآن أو مجدولة) ================= */
-
 app.post("/movies/:id/episodes", async (req, res) => {
-  const { name, video, image, isLocked, releaseDate } = req.body;
+  const { name, video, image, isLocked } = req.body;
 
   await Movie.findByIdAndUpdate(req.params.id, {
-    $push: { 
-      episodes: { 
-        name, 
-        video, 
-        image, 
-        isLocked: !!isLocked,
-        releaseDate: releaseDate ? new Date(releaseDate) : null
-      } 
-    }
+    $push: { episodes: { name, video, image, isLocked: !!isLocked } }
   });
 
-  res.json({ message: "Episode added successfully" });
-});
-
-/* ================= Toggle Episode Lock ================= */
-
-app.post("/admin/toggle-episode-lock", async (req, res) => {
-  const { movieId, episodeId, isLocked } = req.body;
-
-  await Movie.updateOne(
-    { _id: movieId, "episodes._id": episodeId },
-    { $set: { "episodes.$.isLocked": isLocked } }
-  );
-
-  res.json({ message: "Episode lock status updated" });
+  res.json({ message: "Episode added" });
 });
 
 /* ================= Delete Movie ================= */
