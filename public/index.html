@@ -17,9 +17,9 @@ body{
   font-family:Arial, sans-serif;
   background:#061a2f;
   color:white;
-  padding-bottom:100px;
 }
 
+/* HEADER */
 .header{
   position:fixed;
   top:0;
@@ -30,111 +30,121 @@ body{
   backdrop-filter:blur(12px);
   z-index:2000;
 }
-
 .logo{
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
   text-align:center;
-  width:100%;
+  font-weight:bold;
+  font-size:22px;
+  margin-bottom:10px;
 }
-
 .search-box{position:relative;}
 .search-box input{
   width:100%;
-  padding:13px 45px 13px 15px;
+  padding:12px 45px 12px 15px;
   border-radius:30px;
   border:none;
   outline:none;
-  font-size:14px;
-  background:white;
-  color:#000;
 }
 .search-box span{
   position:absolute;
   left:15px;
   top:50%;
   transform:translateY(-50%);
-  color:#666;
 }
 
-.content{
-  padding:120px 20px 20px 20px;
-}
-
-/* 🔥 عرض احترافي للمسلسلات */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:18px;
-}
-
-.card{
+/* HERO */
+.hero{
   position:relative;
-  border-radius:16px;
+  height:70vh;
   overflow:hidden;
-  cursor:pointer;
-  transition:.3s;
 }
-.card:hover{transform:scale(1.06);}
-.card img{
+.hero img{
   width:100%;
-  height:260px;
+  height:100%;
   object-fit:cover;
 }
-.card-title{
+.hero-overlay{
   position:absolute;
-  bottom:0;
-  width:100%;
-  padding:12px;
-  font-size:14px;
+  inset:0;
+  background:linear-gradient(to top,#061a2f 20%,transparent 70%);
+}
+.hero-content{
+  position:absolute;
+  bottom:40px;
+  right:20px;
+  left:20px;
+}
+.hero-title{
+  font-size:36px;
   font-weight:bold;
-  background:linear-gradient(to top,rgba(0,0,0,.95),transparent);
+  margin-bottom:10px;
+}
+.hero-buttons{
+  display:flex;
+  gap:10px;
+}
+.btn{
+  padding:12px 18px;
+  border-radius:30px;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+}
+.btn-play{
+  background:#00d2a5;
+  color:white;
+}
+.btn-add{
+  background:transparent;
+  border:2px solid #00d2a5;
+  color:white;
 }
 
-.series-page{display:none;padding-top:120px}
-
-/* 🔥 الحلقات بالعرض */
-.episodes-grid{
+/* SECTION */
+.section{
   padding:20px;
+}
+.section h3{
+  margin-bottom:15px;
+}
+.horizontal{
   display:flex;
   gap:15px;
   overflow-x:auto;
-  scroll-snap-type:x mandatory;
 }
-
-.episodes-grid::-webkit-scrollbar{
-  height:6px;
-}
-.episodes-grid::-webkit-scrollbar-thumb{
+.horizontal::-webkit-scrollbar{height:6px;}
+.horizontal::-webkit-scrollbar-thumb{
   background:#00d2a5;
   border-radius:10px;
 }
-
-.episode-card{
-  position:relative;
-  min-width:220px;
-  border-radius:16px;
+.card{
+  min-width:160px;
+  border-radius:12px;
   overflow:hidden;
   cursor:pointer;
-  scroll-snap-align:start;
-  transition:.3s;
 }
-.episode-card:hover{transform:scale(1.05);}
-
-.episode-card img{
+.card img{
   width:100%;
-  height:160px;
+  height:230px;
   object-fit:cover;
 }
 
-.episode-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+/* SERIES PAGE */
+.series-page{display:none;padding-top:120px;}
+.episode-box{
+  margin:20px;
+  background:#0f2c50;
+  border-radius:15px;
+  overflow:hidden;
 }
-
-.play-circle{
+.episode-image{
+  position:relative;
+}
+.episode-image img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+.play-btn{
   position:absolute;
   bottom:15px;
   left:15px;
@@ -145,28 +155,21 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
+}
+.episode-info{
+  padding:15px;
+}
+.episode-title{
   font-size:18px;
-}
-
-.episode-number{
-  position:absolute;
-  bottom:15px;
-  right:15px;
-  font-size:16px;
   font-weight:bold;
+  margin-bottom:8px;
+}
+.episode-desc{
+  font-size:14px;
+  color:#ccc;
 }
 
-.badge{
-  position:absolute;
-  top:10px;
-  left:10px;
-  padding:6px 12px;
-  border-radius:15px;
-  font-size:12px;
-}
-.badge-locked{ background:#ff3b3b; }
-.badge-free{ background:#00d2a5; }
-
+/* PLAYER */
 #playerModal{
   display:none;
   position:fixed;
@@ -187,38 +190,11 @@ body{
   padding:6px 12px;
   border-radius:6px;
   color:white;
-  cursor:pointer;
 }
 #auraVideo,#auraFrame{
   width:100%;
   height:100%;
   border:none;
-}
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  height:70px;
-  background:rgba(15,35,60,.95);
-  backdrop-filter:blur(15px);
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:3000;
-}
-.nav-item{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  font-size:18px;
-  color:#00d2a5;
-  cursor:pointer;
-}
-.nav-item span{
-  font-size:11px;
-  margin-top:4px;
 }
 </style>
 </head>
@@ -233,13 +209,9 @@ body{
   </div>
 </div>
 
-<div id="homeContent" class="content">
-  <div class="grid" id="seriesGrid"></div>
-</div>
+<div id="homeContent" style="padding-top:100px;"></div>
 
-<div class="series-page" id="seriesPage">
-  <div class="episodes-grid" id="episodesList"></div>
-</div>
+<div class="series-page" id="seriesPage"></div>
 
 <div id="playerModal">
   <div id="playerHeader">
@@ -248,12 +220,6 @@ body{
   </div>
   <video id="auraVideo" controls style="display:none"></video>
   <iframe id="auraFrame" allowfullscreen style="display:none"></iframe>
-</div>
-
-<div class="bottom-nav">
-  <div class="nav-item" onclick="goHome()">🏠<span>الرئيسية</span></div>
-  <div class="nav-item" onclick="window.location.href='/settings.html'">⚙️<span>الإعدادات</span></div>
-  <div class="nav-item" onclick="window.location.assign('/account.html')">👤<span>حسابي</span></div>
 </div>
 
 <script>
@@ -275,28 +241,45 @@ async function checkSubscription(){
   }catch(e){}
 }
 
-searchInput.addEventListener("input",()=>{
-  const v=searchInput.value.toLowerCase();
-  const f=allSeries.filter(s=>s.title.toLowerCase().includes(v));
-  renderSeries(f);
-});
-
 async function loadSeries(){
   await checkSubscription();
   const res=await fetch(API);
   const data=await res.json();
   allSeries=data;
-  renderSeries(data);
+  renderHome();
 }
 
-function renderSeries(data){
-  seriesGrid.innerHTML="";
-  data.forEach(item=>{
-    seriesGrid.innerHTML+=`
-      <div class="card" onclick="openSeries('${item._id}')">
-        <img src="${item.image}">
-        <div class="card-title">${item.title}</div>
-      </div>`;
+function renderHome(){
+  const container=document.getElementById("homeContent");
+  container.innerHTML="";
+  if(allSeries.length===0) return;
+
+  const featured=allSeries[0];
+
+  container.innerHTML+=`
+  <div class="hero">
+    <img src="${featured.image}">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-title">${featured.title}</div>
+      <div class="hero-buttons">
+        <button class="btn btn-play" onclick="openSeries('${featured._id}')">▶ شاهد الآن</button>
+        <button class="btn btn-add">+ أضف لقائمتي</button>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <h3>المسلسلات</h3>
+    <div class="horizontal" id="seriesRow"></div>
+  </div>
+  `;
+
+  const row=document.getElementById("seriesRow");
+  allSeries.forEach(s=>{
+    row.innerHTML+=`
+    <div class="card" onclick="openSeries('${s._id}')">
+      <img src="${s.image}">
+    </div>`;
   });
 }
 
@@ -304,30 +287,25 @@ function openSeries(id){
   const s=allSeries.find(x=>x._id===id);
   if(!s)return;
 
-  homeContent.style.display="none";
-  seriesPage.style.display="block";
+  document.getElementById("homeContent").style.display="none";
+  const page=document.getElementById("seriesPage");
+  page.style.display="block";
+  page.innerHTML="";
 
   currentEpisodes=s.episodes||[];
-  episodesList.innerHTML="";
 
   currentEpisodes.forEach((ep,i)=>{
-    const locked=ep.isLocked && !isSubscribed;
-
-    let badge="";
-    if(!isSubscribed){
-      badge=ep.isLocked?
-      `<div class="badge badge-locked">🔒 للمشتركين</div>`:
-      `<div class="badge badge-free">مجانية</div>`;
-    }
-
-    episodesList.innerHTML+=`
-      <div class="episode-card" onclick="${locked?'alert(\'هذه الحلقة للمشتركين فقط 🔒\')':'playEpisode('+i+')'}">
+    page.innerHTML+=`
+    <div class="episode-box">
+      <div class="episode-image">
         <img src="${ep.image||s.image}">
-        <div class="episode-overlay"></div>
-        ${badge}
-        <div class="play-circle">▶</div>
-        <div class="episode-number">الحلقة ${i+1}</div>
-      </div>`;
+        <div class="play-btn" onclick="playEpisode(${i})">▶</div>
+      </div>
+      <div class="episode-info">
+        <div class="episode-title">الحلقة ${i+1}</div>
+        <div class="episode-desc">${ep.name||""}</div>
+      </div>
+    </div>`;
   });
 }
 
@@ -337,10 +315,8 @@ function playEpisode(i){
     alert("هذه الحلقة متاحة للمشتركين فقط 🔒");
     return;
   }
-
   const url=ep.video;
   playerModal.style.display="flex";
-
   if(url.includes("mediadelivery")||url.includes("iframe")){
     auraVideo.style.display="none";
     auraFrame.style.display="block";
@@ -359,11 +335,6 @@ closePlayer.onclick=function(){
   auraFrame.src="";
   playerModal.style.display="none";
 };
-
-function goHome(){
-  seriesPage.style.display="none";
-  homeContent.style.display="block";
-}
 
 loadSeries();
 </script>
