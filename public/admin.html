@@ -85,16 +85,14 @@ button{
   border-radius:12px;
   padding:10px;
 }
-.schedule-box{
-  background:#0c3a63;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:10px;
+.table{
+  width:100%;
+  border-collapse:collapse;
 }
-.radio-group{
-  display:flex;
-  gap:15px;
-  margin-bottom:10px;
+.table th,.table td{
+  border-bottom:1px solid rgba(255,255,255,.1);
+  padding:10px;
+  text-align:center;
 }
 </style>
 </head>
@@ -102,6 +100,7 @@ button{
 <body>
 
 <script>
+/* 🔐 حماية لوحة التحكم */
 const ADMIN_PASSWORD = "Aa10010010050555710";
 
 if(!localStorage.getItem("admin_auth")){
@@ -141,20 +140,22 @@ if(!localStorage.getItem("admin_auth")){
 </div>
 
 <div id="usersTab" class="hidden">
+
 <div class="card">
 <h3>👤 إدارة الحسابات</h3>
-<table style="width:100%; text-align:center;">
+<table class="table">
 <thead>
 <tr>
 <th>المستخدم</th>
 <th>الحالة</th>
-<th>الانتهاء</th>
+<th>تاريخ الانتهاء</th>
 <th>اشتراك</th>
 </tr>
 </thead>
 <tbody id="usersTable"></tbody>
 </table>
 </div>
+
 </div>
 
 </div>
@@ -188,9 +189,6 @@ async function loadSeries(){
         episodesHTML+=`
         <div class="episode-card">
           <div>${ep.name}</div>
-          <small>${ep.releaseDate ? 
-          "📅 مجدولة: "+new Date(ep.releaseDate).toLocaleString() 
-          : "⚡ الآن"}</small><br>
           <button class="${ep.isLocked?'delete-btn':'green-btn'}"
           onclick="toggleLock('${series._id}','${ep._id}',${!ep.isLocked})">
           ${ep.isLocked?'🔒 مقفلة':'🔓 مفتوحة'}
@@ -212,82 +210,53 @@ async function loadSeries(){
       حذف المسلسل
       </button>
       <hr>
-
       <input type="text" id="epName-${series._id}" placeholder="اسم الحلقة">
       <input type="text" id="epVideo-${series._id}" placeholder="رابط الحلقة">
       <input type="text" id="epImage-${series._id}" placeholder="رابط صورة الحلقة">
-
-      <div class="schedule-box">
-        <div class="radio-group">
-          <label>
-            <input type="radio" name="schedule-${series._id}" value="now" checked>
-            الآن
-          </label>
-          <label>
-            <input type="radio" name="schedule-${series._id}" value="scheduled">
-            مجدولة
-          </label>
-        </div>
-
-        <input type="datetime-local"
-        id="release-${series._id}"
-        class="hidden">
-      </div>
-
       <button class="add-btn"
       onclick="addEpisode('${series._id}')">
       إضافة حلقة
       </button>
-
       ${episodesHTML}
     </div>`;
   });
+}
 
-  document.querySelectorAll("input[type=radio]").forEach(r=>{
-    r.addEventListener("change",function(){
-      const id=this.name.split("-")[1];
-      const input=document.getElementById("release-"+id);
-      if(this.value==="scheduled"){
-        input.classList.remove("hidden");
-      }else{
-        input.classList.add("hidden");
-      }
-    });
+async function loadUsers(){
+  const res = await fetch(API_BASE+"/admin/users");
+  const users = await res.json();
+  const table = document.getElementById("usersTable");
+  table.innerHTML="";
+
+  users.forEach(u=>{
+    let status="غير مشترك ❌";
+    if(u.subscriptionType==="مدى الحياة") status="مدى الحياة 👑";
+    else if(u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt)>new Date())
+      status="مشترك ✅";
+
+    table.innerHTML+=`
+    <tr>
+      <td>${u.username}</td>
+      <td>${status}</td>
+      <td>${u.subscriptionType==="مدى الحياة"?"∞":
+      (u.subscriptionExpiresAt?
+      new Date(u.subscriptionExpiresAt).toLocaleDateString():"-")}</td>
+      <td>
+        <button class="green-btn" onclick="giveSub('${u.username}','1m')">شهر</button>
+        <button class="orange-btn" onclick="giveSub('${u.username}','1y')">سنة</button>
+        <button class="add-btn" onclick="giveSub('${u.username}','lifetime')">مدى الحياة</button>
+      </td>
+    </tr>`;
   });
 }
 
-async function addEpisode(id){
-  const name=document.getElementById("epName-"+id).value;
-  const video=document.getElementById("epVideo-"+id).value;
-  const image=document.getElementById("epImage-"+id).value;
-
-  const scheduleType=document.querySelector(`input[name="schedule-${id}"]:checked`).value;
-  const releaseInput=document.getElementById("release-"+id);
-
-  let releaseDate=null;
-  if(scheduleType==="scheduled" && releaseInput.value){
-    releaseDate=releaseInput.value;
-  }
-
-  await fetch(API+"/"+id+"/episodes",{
+async function giveSub(username,type){
+  await fetch(API_BASE+"/admin/give-subscription",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ name,video,image,releaseDate })
+    body:JSON.stringify({ username,type })
   });
-
-  loadSeries();
-}
-
-async function deleteSeries(id){
-  if(!confirm("متأكد من حذف المسلسل؟")) return;
-  await fetch(API+"/"+id,{ method:"DELETE" });
-  loadSeries();
-}
-
-async function deleteEpisode(seriesId,episodeId){
-  if(!confirm("متأكد من حذف الحلقة؟")) return;
-  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{ method:"DELETE" });
-  loadSeries();
+  loadUsers();
 }
 
 async function toggleLock(movieId,episodeId,isLocked){
@@ -302,15 +271,42 @@ async function toggleLock(movieId,episodeId,isLocked){
 async function addSeries(){
   const title=document.getElementById("title").value;
   const image=document.getElementById("image").value;
-  await fetch(API,{
+  await fetch(API,{ method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ title,image }) });
+  loadSeries();
+}
+
+async function deleteSeries(id){
+  if(!confirm("متأكد من حذف المسلسل؟")) return;
+  await fetch(API+"/"+id,{ method:"DELETE" });
+  loadSeries();
+}
+
+async function addEpisode(id){
+  const name=document.getElementById("epName-"+id).value;
+  const video=document.getElementById("epVideo-"+id).value;
+  const image=document.getElementById("epImage-"+id).value;
+
+  await fetch(API+"/"+id+"/episodes",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ title,image })
+    body:JSON.stringify({ name,video,image })
+  });
+
+  loadSeries();
+}
+
+async function deleteEpisode(seriesId,episodeId){
+  if(!confirm("متأكد من حذف الحلقة؟")) return;
+  await fetch(API+"/"+seriesId+"/episodes/"+episodeId,{
+    method:"DELETE"
   });
   loadSeries();
 }
 
 loadSeries();
+loadUsers();
 
 </script>
 
