@@ -53,7 +53,8 @@ const userSchema = new mongoose.Schema({
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
   subscriptionLifetime: { type: Boolean, default: false },
-  subscriptionType: { type: String, default: null }
+  subscriptionType: { type: String, default: null },
+  freeYearClaimed: { type: Boolean, default: false } // 👈 جديد
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -94,38 +95,28 @@ app.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    /* 🔥 حملة أول 50 مستخدم */
-    const promoCount = await User.countDocuments({
-      subscriptionType: "عرض السنة المجانية"
-    });
-
-    let subscriptionData = {};
-
-    if (promoCount < 50) {
-      const oneYearLater = new Date();
-      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-
-      subscriptionData = {
-        subscriptionActive: true,
-        subscriptionExpiresAt: oneYearLater,
-        subscriptionLifetime: false,
-        subscriptionType: "عرض السنة المجانية"
-      };
-    }
-
     const newUser = new User({
       username,
-      password: hashedPassword,
-      ...subscriptionData
+      password: hashedPassword
     });
+
+    /* ================= 🎁 أول 50 مستخدم سنة مجانية ================= */
+
+    const freeUsersCount = await User.countDocuments({ freeYearClaimed: true });
+
+    if (freeUsersCount < 50) {
+      const oneYear = new Date();
+      oneYear.setFullYear(oneYear.getFullYear() + 1);
+
+      newUser.subscriptionActive = true;
+      newUser.subscriptionExpiresAt = oneYear;
+      newUser.subscriptionType = "سنة مجانية 🎁";
+      newUser.freeYearClaimed = true;
+    }
 
     await newUser.save();
 
-    res.json({
-      message: promoCount < 50
-        ? "🎉 مبروك! حصلت على اشتراك مجاني لمدة سنة"
-        : "User registered successfully"
-    });
+    res.json({ message: "User registered successfully" });
 
   } catch (err) {
     res.status(500).json({ message: "Registration error" });
@@ -160,7 +151,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ===== باقي الملف بدون أي تغيير ===== */
+/* ================= 👤 Get Current User ================= */
 
 app.get("/me", authMiddleware, async (req,res)=>{
   try{
@@ -178,6 +169,8 @@ app.get("/me", authMiddleware, async (req,res)=>{
     res.status(500).json({message:"Server error"});
   }
 });
+
+/* ================= Check Subscription ================= */
 
 app.get("/check-subscription", authMiddleware, async (req,res)=>{
 
@@ -203,24 +196,100 @@ app.get("/check-subscription", authMiddleware, async (req,res)=>{
   return res.json({ active:false });
 });
 
-/* ================= باقي الأكواد بدون أي تعديل ================= */
+/* ================= Admin Users ================= */
+
+app.get("/admin/users", async (req, res) => {
+
+  const users = await User.find();
+  const now = new Date();
+
+  const formatted = users.map(user=>{
+
+    let active = false;
+    let daysLeft = 0;
+
+    if(user.subscriptionLifetime){
+      active = true;
+      daysLeft = "∞";
+    }
+    else if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
+      active = true;
+      daysLeft = Math.ceil(
+        (user.subscriptionExpiresAt - now) / (1000*60*60*24)
+      );
+    }
+
+    return {
+      username:user.username,
+      active,
+      subscriptionType:user.subscriptionType,
+      subscriptionExpiresAt:user.subscriptionExpiresAt,
+      daysLeft
+    };
+  });
+
+  res.json(formatted);
+});
+
+/* ================= باقي السيرفر بدون أي تغيير ================= */
+
+app.post("/admin/give-subscription", async (req, res) => {
+  const { username, type, customDays, customDate } = req.body;
+  const user = await User.findOne({ username });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const now = new Date();
+  let baseDate =
+    user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
+      ? new Date(user.subscriptionExpiresAt)
+      : now;
+
+  if(type === "1m"){
+    baseDate.setMonth(baseDate.getMonth() + 1);
+    user.subscriptionType = "شهر";
+  }
+  else if(type === "1y"){
+    baseDate.setFullYear(baseDate.getFullYear() + 1);
+    user.subscriptionType = "سنة";
+  }
+  else if(type === "lifetime"){
+    user.subscriptionLifetime = true;
+    user.subscriptionExpiresAt = null;
+    user.subscriptionType = "مدى الحياة";
+  }
+  else if(type === "customDays" && customDays){
+    baseDate.setDate(baseDate.getDate() + Number(customDays));
+    user.subscriptionType = `${customDays} يوم`;
+  }
+  else if(type === "customDate" && customDate){
+    user.subscriptionExpiresAt = new Date(customDate);
+    user.subscriptionType = "مخصص";
+  }
+
+  if(type !== "lifetime"){
+    user.subscriptionLifetime = false;
+    user.subscriptionExpiresAt = baseDate;
+  }
+
+  user.subscriptionActive = true;
+
+  await user.save();
+  res.json({ message: "Subscription granted successfully" });
+});
+
+/* ================= Movies & Static (بدون تغيير) ================= */
 
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
 });
 
-const publicPath = path.join(__dirname, "public");
-app.use(express.static(publicPath));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {
-  const filePath = path.join(publicPath, req.path);
-  if (fs.existsSync(filePath) && fs.lstatSync(filePath).isFile()) {
-    return res.sendFile(filePath);
-  }
-  return res.sendFile(path.join(publicPath, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log("ZARO Backend Running 🚀");
+  console.log("AURA Backend Running 🚀");
 });
