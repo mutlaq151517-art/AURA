@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AURA - لوحة التحكم</title>
+<title>ZARO - لوحة التحكم</title>
 
 <style>
 body{
@@ -45,7 +45,7 @@ body{
   border-radius:18px;
   margin-bottom:30px;
 }
-input,select{
+input{
   width:100%;
   padding:10px;
   margin-bottom:10px;
@@ -100,7 +100,6 @@ button{
 <body>
 
 <script>
-/* 🔐 حماية لوحة التحكم */
 const ADMIN_PASSWORD = "Aa10010010050555710";
 
 if(!localStorage.getItem("admin_auth")){
@@ -114,7 +113,7 @@ if(!localStorage.getItem("admin_auth")){
 }
 </script>
 
-<div class="header">👑 لوحة تحكم AURA</div>
+<div class="header">👑 لوحة تحكم ZARO</div>
 
 <div class="tabs">
   <div class="tab-btn active" onclick="showTab('seriesTab',this)">🎬 المسلسلات</div>
@@ -162,8 +161,8 @@ if(!localStorage.getItem("admin_auth")){
 
 <script>
 
-const API_BASE = "https://aura-backend-mpvi.onrender.com";
-const API = API_BASE + "/movies";
+const API_BASE = "";
+const API = "/movies";
 
 function showTab(id,btn){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
@@ -223,7 +222,7 @@ async function loadSeries(){
 }
 
 async function loadUsers(){
-  const res = await fetch(API_BASE+"/admin/users");
+  const res = await fetch("/admin/users");
   const users = await res.json();
   const table = document.getElementById("usersTable");
   table.innerHTML="";
@@ -251,7 +250,7 @@ async function loadUsers(){
 }
 
 async function giveSub(username,type){
-  await fetch(API_BASE+"/admin/give-subscription",{
+  await fetch("/admin/give-subscription",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ username,type })
@@ -260,7 +259,7 @@ async function giveSub(username,type){
 }
 
 async function toggleLock(movieId,episodeId,isLocked){
-  await fetch(API_BASE+"/admin/toggle-episode-lock",{
+  await fetch("/admin/toggle-episode-lock",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ movieId,episodeId,isLocked })
@@ -271,9 +270,11 @@ async function toggleLock(movieId,episodeId,isLocked){
 async function addSeries(){
   const title=document.getElementById("title").value;
   const image=document.getElementById("image").value;
-  await fetch(API,{ method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body:JSON.stringify({ title,image }) });
+  await fetch(API,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ title,image })
+  });
   loadSeries();
 }
 
