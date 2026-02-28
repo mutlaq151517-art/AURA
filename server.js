@@ -53,8 +53,7 @@ const userSchema = new mongoose.Schema({
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpiresAt: { type: Date, default: null },
   subscriptionLifetime: { type: Boolean, default: false },
-  subscriptionType: { type: String, default: null },
-  freeYearClaimed: { type: Boolean, default: false } // 👈 جديد
+  subscriptionType: { type: String, default: null }
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
@@ -100,22 +99,7 @@ app.post("/register", async (req, res) => {
       password: hashedPassword
     });
 
-    /* ================= 🎁 أول 50 مستخدم سنة مجانية ================= */
-
-    const freeUsersCount = await User.countDocuments({ freeYearClaimed: true });
-
-    if (freeUsersCount < 50) {
-      const oneYear = new Date();
-      oneYear.setFullYear(oneYear.getFullYear() + 1);
-
-      newUser.subscriptionActive = true;
-      newUser.subscriptionExpiresAt = oneYear;
-      newUser.subscriptionType = "سنة مجانية 🎁";
-      newUser.freeYearClaimed = true;
-    }
-
     await newUser.save();
-
     res.json({ message: "User registered successfully" });
 
   } catch (err) {
@@ -231,14 +215,18 @@ app.get("/admin/users", async (req, res) => {
   res.json(formatted);
 });
 
-/* ================= باقي السيرفر بدون أي تغيير ================= */
+/* ================= Give Subscription ================= */
 
 app.post("/admin/give-subscription", async (req, res) => {
+
   const { username, type, customDays, customDate } = req.body;
+
   const user = await User.findOne({ username });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  if (!user)
+    return res.status(404).json({ message: "User not found" });
 
   const now = new Date();
+
   let baseDate =
     user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
       ? new Date(user.subscriptionExpiresAt)
@@ -274,21 +262,92 @@ app.post("/admin/give-subscription", async (req, res) => {
   user.subscriptionActive = true;
 
   await user.save();
+
   res.json({ message: "Subscription granted successfully" });
 });
 
-/* ================= Movies & Static (بدون تغيير) ================= */
+/* ================= Toggle Episode Lock ================= */
+
+app.post("/admin/toggle-episode-lock", async (req, res) => {
+
+  const { movieId, episodeId, isLocked } = req.body;
+
+  await Movie.updateOne(
+    { _id: movieId, "episodes._id": episodeId },
+    { $set: { "episodes.$.isLocked": isLocked } }
+  );
+
+  res.json({ message: "Episode lock status updated" });
+});
+
+/* ================= Movies ================= */
 
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+app.post("/movies", async (req, res) => {
+  const { title, image } = req.body;
+  const newMovie = new Movie({ title, image, episodes: [] });
+  await newMovie.save();
+  res.json({ message: "Movie added" });
+});
+
+app.post("/movies/:id/episodes", async (req, res) => {
+  const { name, video, image, isLocked } = req.body;
+
+  await Movie.findByIdAndUpdate(req.params.id, {
+    $push: { episodes: { name, video, image, isLocked: !!isLocked } }
+  });
+
+  res.json({ message: "Episode added" });
+});
+
+/* ================= Delete Movie ================= */
+
+app.delete("/movies/:id", async (req, res) => {
+  try {
+    await Movie.findByIdAndDelete(req.params.id);
+    res.json({ message: "Movie deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete movie failed" });
+  }
+});
+
+/* ================= Delete Episode ================= */
+
+app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
+  try {
+    const { movieId, episodeId } = req.params;
+
+    await Movie.findByIdAndUpdate(movieId, {
+      $pull: { episodes: { _id: episodeId } }
+    });
+
+    res.json({ message: "Episode deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: "Delete episode failed" });
+  }
+});
+
+/* ================= Static ================= */
+
+const publicPath = path.join(__dirname, "public");
+app.use(express.static(publicPath));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  const filePath = path.join(publicPath, req.path);
+
+  if (fs.existsSync(filePath) && fs.lstatSync(filePath).isFile()) {
+    return res.sendFile(filePath);
+  }
+
+  return res.sendFile(path.join(publicPath, "index.html"));
 });
+
+/* ================= Start ================= */
 
 app.listen(PORT, () => {
   console.log("AURA Backend Running 🚀");
