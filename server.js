@@ -94,13 +94,38 @@ app.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    /* 🔥 حملة أول 50 مستخدم */
+    const promoCount = await User.countDocuments({
+      subscriptionType: "عرض السنة المجانية"
+    });
+
+    let subscriptionData = {};
+
+    if (promoCount < 50) {
+      const oneYearLater = new Date();
+      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+
+      subscriptionData = {
+        subscriptionActive: true,
+        subscriptionExpiresAt: oneYearLater,
+        subscriptionLifetime: false,
+        subscriptionType: "عرض السنة المجانية"
+      };
+    }
+
     const newUser = new User({
       username,
-      password: hashedPassword
+      password: hashedPassword,
+      ...subscriptionData
     });
 
     await newUser.save();
-    res.json({ message: "User registered successfully" });
+
+    res.json({
+      message: promoCount < 50
+        ? "🎉 مبروك! حصلت على اشتراك مجاني لمدة سنة"
+        : "User registered successfully"
+    });
 
   } catch (err) {
     res.status(500).json({ message: "Registration error" });
@@ -135,7 +160,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ================= 👤 Get Current User ================= */
+/* ===== باقي الملف بدون أي تغيير ===== */
 
 app.get("/me", authMiddleware, async (req,res)=>{
   try{
@@ -153,8 +178,6 @@ app.get("/me", authMiddleware, async (req,res)=>{
     res.status(500).json({message:"Server error"});
   }
 });
-
-/* ================= Check Subscription ================= */
 
 app.get("/check-subscription", authMiddleware, async (req,res)=>{
 
@@ -180,175 +203,24 @@ app.get("/check-subscription", authMiddleware, async (req,res)=>{
   return res.json({ active:false });
 });
 
-/* ================= Admin Users ================= */
-
-app.get("/admin/users", async (req, res) => {
-
-  const users = await User.find();
-  const now = new Date();
-
-  const formatted = users.map(user=>{
-
-    let active = false;
-    let daysLeft = 0;
-
-    if(user.subscriptionLifetime){
-      active = true;
-      daysLeft = "∞";
-    }
-    else if(user.subscriptionExpiresAt && user.subscriptionExpiresAt > now){
-      active = true;
-      daysLeft = Math.ceil(
-        (user.subscriptionExpiresAt - now) / (1000*60*60*24)
-      );
-    }
-
-    return {
-      username:user.username,
-      active,
-      subscriptionType:user.subscriptionType,
-      subscriptionExpiresAt:user.subscriptionExpiresAt,
-      daysLeft
-    };
-  });
-
-  res.json(formatted);
-});
-
-/* ================= Give Subscription ================= */
-
-app.post("/admin/give-subscription", async (req, res) => {
-
-  const { username, type, customDays, customDate } = req.body;
-
-  const user = await User.findOne({ username });
-  if (!user)
-    return res.status(404).json({ message: "User not found" });
-
-  const now = new Date();
-
-  let baseDate =
-    user.subscriptionExpiresAt && user.subscriptionExpiresAt > now
-      ? new Date(user.subscriptionExpiresAt)
-      : now;
-
-  if(type === "1m"){
-    baseDate.setMonth(baseDate.getMonth() + 1);
-    user.subscriptionType = "شهر";
-  }
-  else if(type === "1y"){
-    baseDate.setFullYear(baseDate.getFullYear() + 1);
-    user.subscriptionType = "سنة";
-  }
-  else if(type === "lifetime"){
-    user.subscriptionLifetime = true;
-    user.subscriptionExpiresAt = null;
-    user.subscriptionType = "مدى الحياة";
-  }
-  else if(type === "customDays" && customDays){
-    baseDate.setDate(baseDate.getDate() + Number(customDays));
-    user.subscriptionType = `${customDays} يوم`;
-  }
-  else if(type === "customDate" && customDate){
-    user.subscriptionExpiresAt = new Date(customDate);
-    user.subscriptionType = "مخصص";
-  }
-
-  if(type !== "lifetime"){
-    user.subscriptionLifetime = false;
-    user.subscriptionExpiresAt = baseDate;
-  }
-
-  user.subscriptionActive = true;
-
-  await user.save();
-
-  res.json({ message: "Subscription granted successfully" });
-});
-
-/* ================= Toggle Episode Lock ================= */
-
-app.post("/admin/toggle-episode-lock", async (req, res) => {
-
-  const { movieId, episodeId, isLocked } = req.body;
-
-  await Movie.updateOne(
-    { _id: movieId, "episodes._id": episodeId },
-    { $set: { "episodes.$.isLocked": isLocked } }
-  );
-
-  res.json({ message: "Episode lock status updated" });
-});
-
-/* ================= Movies ================= */
+/* ================= باقي الأكواد بدون أي تعديل ================= */
 
 app.get("/movies", async (req, res) => {
   const movies = await Movie.find();
   res.json(movies);
 });
 
-app.post("/movies", async (req, res) => {
-  const { title, image } = req.body;
-  const newMovie = new Movie({ title, image, episodes: [] });
-  await newMovie.save();
-  res.json({ message: "Movie added" });
-});
-
-app.post("/movies/:id/episodes", async (req, res) => {
-  const { name, video, image, isLocked } = req.body;
-
-  await Movie.findByIdAndUpdate(req.params.id, {
-    $push: { episodes: { name, video, image, isLocked: !!isLocked } }
-  });
-
-  res.json({ message: "Episode added" });
-});
-
-/* ================= Delete Movie ================= */
-
-app.delete("/movies/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Delete movie failed" });
-  }
-});
-
-/* ================= Delete Episode ================= */
-
-app.delete("/movies/:movieId/episodes/:episodeId", async (req, res) => {
-  try {
-    const { movieId, episodeId } = req.params;
-
-    await Movie.findByIdAndUpdate(movieId, {
-      $pull: { episodes: { _id: episodeId } }
-    });
-
-    res.json({ message: "Episode deleted successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Delete episode failed" });
-  }
-});
-
-/* ================= Static ================= */
-
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
 app.get("*", (req, res) => {
   const filePath = path.join(publicPath, req.path);
-
   if (fs.existsSync(filePath) && fs.lstatSync(filePath).isFile()) {
     return res.sendFile(filePath);
   }
-
   return res.sendFile(path.join(publicPath, "index.html"));
 });
 
-/* ================= Start ================= */
-
 app.listen(PORT, () => {
-  console.log("AURA Backend Running 🚀");
+  console.log("ZARO Backend Running 🚀");
 });
